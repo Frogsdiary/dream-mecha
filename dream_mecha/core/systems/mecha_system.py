@@ -4,7 +4,7 @@ Mecha System - Core mecha management and stats
 Handles individual mecha stats, upgrades, and state management.
 """
 
-from typing import Dict, List, Optional, Tuple
+from typing import Dict, List, Optional, Tuple, Any
 from dataclasses import dataclass
 from enum import Enum
 
@@ -125,4 +125,39 @@ class Mecha:
         
         # Implementation for grid expansion
         # This would add rows/columns to the grid
-        return True 
+        return True
+    
+    def to_dict(self) -> Dict[str, Any]:
+        """Convert mecha to dictionary for serialization"""
+        return {
+            'player_id': self.player_id,
+            'name': self.name,
+            'stats': {
+                'hp': self.stats.hp,
+                'max_hp': self.stats.max_hp,
+                'attack': self.stats.attack,
+                'defense': self.stats.defense,
+                'speed': self.stats.speed
+            },
+            'state': self.state.value,
+            'grid_size': self.grid_size,
+            'grid': self.grid,
+            'piece_library': self.piece_library,
+            'zoltans': self.zoltans
+        }
+    
+    @classmethod
+    def from_dict(cls, data: Dict[str, Any]) -> 'Mecha':
+        """Create mecha from dictionary"""
+        mecha = cls(data['player_id'], data['name'])
+        mecha.stats.hp = data['stats']['hp']
+        mecha.stats.max_hp = data['stats']['max_hp']
+        mecha.stats.attack = data['stats']['attack']
+        mecha.stats.defense = data['stats']['defense']
+        mecha.stats.speed = data['stats']['speed']
+        mecha.state = MechaState(data['state'])
+        mecha.grid_size = data['grid_size']
+        mecha.grid = data['grid']
+        mecha.piece_library = data['piece_library']
+        mecha.zoltans = data['zoltans']
+        return mecha 

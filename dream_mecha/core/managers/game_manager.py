@@ -8,10 +8,10 @@ from typing import Dict, List, Optional, Any
 from datetime import datetime, timedelta
 import json
 
-from ..systems.mecha_system import MechaSystem, Mecha
-from ..systems.combat_system import CombatSystem
-from ..systems.shop_system import ShopSystem
-from ..systems.grid_system import GridSystem
+from core.systems.mecha_system import MechaSystem, Mecha
+from core.systems.combat_system import CombatSystem
+from core.systems.shop_system import ShopSystem
+from core.systems.grid_system import GridSystem
 
 
 class GameManager:

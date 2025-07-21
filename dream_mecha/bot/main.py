@@ -9,9 +9,9 @@ import discord
 from discord.ext import commands, tasks
 from dotenv import load_dotenv
 
-from ..core.managers.game_manager import GameManager
-from ..core.managers.player_manager import PlayerManager
-from ..core.managers.voidstate_manager import VoidstateManager
+from core.managers.game_manager import GameManager
+from core.managers.player_manager import PlayerManager
+from core.managers.voidstate_manager import VoidstateManager
 
 # Load environment variables
 load_dotenv()
@@ -65,7 +65,10 @@ class DreamMechaBot(commands.Bot):
         print("🔄 Starting daily cycle...")
         
         # Generate new shop
-        self.game_manager.shop_system.generate_daily_shop()
+        self.game_manager.shop_system.generate_daily_shop(
+            voidstate=self.voidstate_manager.voidstate,
+            player_count=len(self.player_manager.players)
+        )
         
         # Announce daily boss
         await self.announce_daily_boss()
@@ -205,12 +208,12 @@ async def setup(bot):
             player = bot.player_manager.create_player(player_id, ctx.author.display_name)
         
         # Check if player has a mecha
-        if not player.mechas:
+        if not player.mecha:
             await ctx.send("❌ You don't have a mecha yet! Use the grid manager to build one.")
             return
         
         # Launch mecha
-        mecha = player.mechas[0]  # Use first mecha for now
+        mecha = player.mecha
         if mecha.state != mecha.state.READY:
             await ctx.send(f"❌ Your mecha is {mecha.state.name.lower()} and cannot launch.")
             return
@@ -277,6 +280,9 @@ async def setup(bot):
 def main():
     """Main function to run the bot"""
     bot = DreamMechaBot()
+    
+    # Setup bot commands
+    asyncio.run(setup(bot))
     
     # Get bot token from environment
     token = os.getenv('DISCORD_BOT_TOKEN')

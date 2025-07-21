@@ -8,8 +8,8 @@ from typing import Dict, List, Optional, Any
 from datetime import datetime, timedelta
 import json
 
-from ..systems.mecha_system import Mecha
-from ..systems.grid_system import GridSystem
+from core.systems.mecha_system import Mecha
+from core.systems.grid_system import GridSystem
 
 
 class PlayerManager:
@@ -180,7 +180,7 @@ class Player:
         
         # Load mecha data
         if data.get('mecha_data'):
-            from ..systems.mecha_system import Mecha
+            from core.systems.mecha_system import Mecha
             player.mecha = Mecha.from_dict(data['mecha_data'])
         
         return player 
