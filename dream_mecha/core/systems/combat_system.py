@@ -1,0 +1,211 @@
+"""
+Combat System - Turn-based combat resolution
+
+Handles mecha vs enemy combat, damage calculation, and battle results.
+"""
+
+from typing import Dict, List, Optional, Tuple
+from dataclasses import dataclass
+from enum import Enum
+
+
+class CombatState(Enum):
+    """Combat phase states"""
+    PREPARING = "preparing"
+    LAUNCHING = "launching"
+    COMBAT = "combat"
+    RESOLVED = "resolved"
+
+
+@dataclass
+class Enemy:
+    """Enemy entity for combat"""
+    name: str
+    hp: int
+    max_hp: int
+    attack: int
+    defense: int
+    speed: int
+    voidstate_level: int
+
+
+@dataclass
+class CombatResult:
+    """Result of a combat round"""
+    mecha_id: str
+    damage_dealt: int
+    damage_taken: int
+    enemy_destroyed: bool
+    mecha_downed: bool
+
+
+class CombatSystem:
+    """Manages turn-based combat between mechas and enemies"""
+    
+    def __init__(self):
+        self.state = CombatState.PREPARING
+        self.launched_mechas: List['Mecha'] = []
+        self.enemies: List[Enemy] = []
+        self.combat_log: List[str] = []
+        self.voidstate = 0
+    
+    def add_mecha(self, mecha: 'Mecha') -> bool:
+        """Add mecha to combat queue"""
+        if mecha.state.value != 'ready':
+            return False
+        
+        if mecha in self.launched_mechas:
+            return False
+        
+        self.launched_mechas.append(mecha)
+        mecha.state.value = 'launched'
+        return True
+    
+    def generate_enemies(self, voidstate: int, player_power: int) -> List[Enemy]:
+        """Generate enemies based on voidstate and player power"""
+        self.voidstate = voidstate
+        self.enemies.clear()
+        
+        # Base enemy count scales with voidstate
+        base_count = 1 + (voidstate // 10)
+        enemy_count = min(base_count, 10)  # Cap at 10 enemies
+        
+        for i in range(enemy_count):
+            enemy = self._create_enemy(i, voidstate, player_power)
+            self.enemies.append(enemy)
+        
+        return self.enemies
+    
+    def _create_enemy(self, index: int, voidstate: int, player_power: int) -> Enemy:
+        """Create a single enemy with scaled stats"""
+        # Enemy stats scale with voidstate and player power
+        base_hp = 100 * (1 + voidstate * 0.1)
+        base_attack = 20 * (1 + voidstate * 0.05)
+        base_defense = 10 * (1 + voidstate * 0.03)
+        
+        # Adjust based on total player power
+        power_factor = max(0.5, min(2.0, player_power / 10000))
+        
+        enemy = Enemy(
+            name=f"Void Drone {index + 1}",
+            hp=int(base_hp * power_factor),
+            max_hp=int(base_hp * power_factor),
+            attack=int(base_attack * power_factor),
+            defense=int(base_defense * power_factor),
+            speed=10 + (voidstate * 2),
+            voidstate_level=voidstate
+        )
+        
+        return enemy
+    
+    def resolve_combat(self) -> Dict[str, any]:
+        """Resolve the entire combat round"""
+        if not self.launched_mechas or not self.enemies:
+            return {'success': False, 'message': 'No combatants'}
+        
+        self.state = CombatState.COMBAT
+        self.combat_log.clear()
+        
+        # Sort mechas by speed for attack order
+        mechas_by_speed = sorted(self.launched_mechas, key=lambda m: m.stats.speed, reverse=True)
+        
+        # Mecha attack phase
+        for mecha in mechas_by_speed:
+            if mecha.stats.hp <= 0:
+                continue
+            
+            # Find target enemy (highest HP first)
+            target_enemy = max(self.enemies, key=lambda e: e.hp) if self.enemies else None
+            if not target_enemy:
+                break
+            
+            # Calculate damage
+            damage = self._calculate_damage(mecha.stats.attack, target_enemy.defense)
+            target_enemy.hp = max(0, target_enemy.hp - damage)
+            
+            self.combat_log.append(f"{mecha.name} attacks {target_enemy.name} for {damage} damage")
+            
+            # Check if enemy destroyed
+            if target_enemy.hp <= 0:
+                self.enemies.remove(target_enemy)
+                self.combat_log.append(f"{target_enemy.name} destroyed!")
+        
+        # Enemy retaliation phase
+        for enemy in self.enemies[:]:  # Copy list to avoid modification during iteration
+            if enemy.hp <= 0:
+                continue
+            
+            # Target highest HP mecha
+            target_mecha = max(mechas_by_speed, key=lambda m: m.stats.hp) if mechas_by_speed else None
+            if not target_mecha or target_mecha.stats.hp <= 0:
+                continue
+            
+            # Calculate damage
+            damage = self._calculate_damage(enemy.attack, target_mecha.stats.defense)
+            actual_damage = target_mecha.take_damage(damage)
+            
+            self.combat_log.append(f"{enemy.name} attacks {target_mecha.name} for {actual_damage} damage")
+            
+            # Check if mecha downed
+            if target_mecha.stats.hp <= 0:
+                self.combat_log.append(f"{target_mecha.name} has been downed!")
+        
+        # Calculate rewards
+        zoltan_rewards = self._calculate_rewards()
+        
+        # Update voidstate
+        if self.enemies:
+            self.voidstate += 1  # Enemies survived, voidstate increases
+        else:
+            self.voidstate = max(0, self.voidstate - 1)  # All enemies defeated
+        
+        self.state = CombatState.RESOLVED
+        
+        return {
+            'success': True,
+            'enemies_remaining': len(self.enemies),
+            'mechas_downed': len([m for m in mechas_by_speed if m.stats.hp <= 0]),
+            'zoltan_rewards': zoltan_rewards,
+            'voidstate_change': self.voidstate,
+            'combat_log': self.combat_log
+        }
+    
+    def _calculate_damage(self, attack: int, defense: int) -> int:
+        """Calculate damage using defense formula"""
+        if defense <= 0:
+            return attack
+        
+        damage_reduction = defense / (defense + attack)
+        actual_damage = int(attack * (1 - damage_reduction))
+        return max(1, actual_damage)  # Minimum 1 damage
+    
+    def _calculate_rewards(self) -> Dict[str, int]:
+        """Calculate Zoltan rewards for each player"""
+        rewards = {}
+        
+        # Base reward for participation
+        base_reward = 100
+        
+        # Bonus for enemy defeats
+        enemies_defeated = len([e for e in self.enemies if e.hp <= 0])
+        defeat_bonus = enemies_defeated * 50
+        
+        # Voidstate bonus (higher voidstate = higher rewards)
+        voidstate_bonus = self.voidstate * 10
+        
+        total_reward = base_reward + defeat_bonus + voidstate_bonus
+        
+        for mecha in self.launched_mechas:
+            if mecha.stats.hp > 0:  # Only reward surviving mechas
+                rewards[mecha.player_id] = total_reward
+            else:
+                rewards[mecha.player_id] = total_reward // 2  # Half reward for downed mechas
+        
+        return rewards
+    
+    def reset_combat(self):
+        """Reset combat system for new round"""
+        self.state = CombatState.PREPARING
+        self.launched_mechas.clear()
+        self.enemies.clear()
+        self.combat_log.clear() 
