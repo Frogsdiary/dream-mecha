@@ -148,9 +148,16 @@ class DreamMechaBot(commands.Bot):
         else:
             await ctx.send(f"❌ An error occurred: {error}")
 
+
+
 # Bot commands
 async def setup(bot):
     """Setup bot commands"""
+    
+    @bot.command(name='health')
+    async def health_check(ctx):
+        """Health check for Railway"""
+        await ctx.send("✅ Bot is healthy and running!")
     
     @bot.command(name='help')
     async def help_command(ctx):
