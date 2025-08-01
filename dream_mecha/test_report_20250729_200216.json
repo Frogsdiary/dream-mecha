@@ -1,0 +1,17 @@
+{
+  "timestamp": "2025-07-29T20:02:14.357821",
+  "system_info": {
+    "players_count": 0,
+    "fortress_hp": 100000000000,
+    "voidstate": 0,
+    "web_ui_url": "http://localhost:3000"
+  },
+  "test_results": {
+    "managers": true,
+    "fortress": true,
+    "enemies": true,
+    "players": false,
+    "persistence": true,
+    "web_ui": true
+  }
+}

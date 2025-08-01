@@ -1,0 +1,749 @@
+/* Layout System - inherit consistent terminal font from body */
+* {
+    font-family: inherit;
+}
+
+/* ===== UNIVERSAL BUTTON RESET ===== */
+/* Remove ALL rounded styling from mobile browsers */
+button, input[type="button"], input[type="submit"], .btn {
+    border-radius: 0 !important;
+    -webkit-border-radius: 0 !important;
+    -moz-border-radius: 0 !important;
+    -webkit-appearance: none !important;
+    -moz-appearance: none !important;
+    appearance: none !important;
+}
+
+/* ===== ENHANCED CONTAINER BOUNDARY SYSTEM ===== */
+
+/* Containers that can be layout-managed */
+.layout-manageable {
+    position: relative;
+    /* Only transition opacity and transform to avoid layout disruption */
+    transition: opacity 0.3s ease, transform 0.3s ease;
+}
+
+/* ▣ Boundary indicators using pseudo-elements */
+.layout-manageable::before,
+.layout-manageable::after {
+    content: '▣';
+    position: absolute;
+    color: var(--corner-symbol);
+    font-size: var(--font-size-sm);
+    z-index: 10;
+    opacity: 0.3;
+    pointer-events: none;
+    font-family: var(--terminal-font);
+    transition: opacity 0.3s ease;
+}
+
+.layout-manageable::before {
+    top: var(--dot-2);
+    left: var(--dot-2);
+}
+
+.layout-manageable::after {
+    top: var(--dot-2);
+    right: var(--dot-2);
+}
+
+/* Bottom corners via additional pseudo-elements on child elements */
+.layout-manageable .boundary-bottom-left,
+.layout-manageable .boundary-bottom-right {
+    position: absolute;
+    color: var(--corner-symbol);
+    font-size: var(--font-size-sm);
+    bottom: var(--dot-2);
+    z-index: 10;
+    opacity: 0.3;
+    pointer-events: none;
+    font-family: var(--terminal-font);
+    transition: opacity 0.3s ease;
+}
+
+.layout-manageable .boundary-bottom-left::before {
+    content: '▣';
+}
+
+.layout-manageable .boundary-bottom-right::before {
+    content: '▣';
+}
+
+.layout-manageable .boundary-bottom-left {
+    left: var(--dot-2);
+}
+
+.layout-manageable .boundary-bottom-right {
+    right: var(--dot-2);
+}
+
+/* Layout mode active states */
+.layout-mode-active .layout-manageable::before,
+.layout-mode-active .layout-manageable::after,
+.layout-mode-active .layout-manageable .boundary-bottom-left,
+.layout-mode-active .layout-manageable .boundary-bottom-right {
+    opacity: 0.6;
+}
+
+/* Selected container state */
+.layout-manageable.selected::before,
+.layout-manageable.selected::after,
+.layout-manageable.selected .boundary-bottom-left,
+.layout-manageable.selected .boundary-bottom-right {
+    opacity: 1 !important;
+    color: var(--accent) !important;
+    animation: boundary-pulse 2s infinite;
+}
+
+@keyframes boundary-pulse {
+    0% { opacity: 1; }
+    50% { opacity: 0.7; }
+    100% { opacity: 1; }
+}
+
+/* Mobile touch targets - 2x larger */
+@media (hover: none) and (pointer: coarse) {
+    .layout-manageable::before,
+    .layout-manageable::after,
+    .layout-manageable .boundary-bottom-left,
+    .layout-manageable .boundary-bottom-right {
+        font-size: var(--font-size-md);
+        padding: var(--dot-2);
+        margin: calc(-1 * var(--dot-2));
+    }
+}
+
+/* ===== SIMPLE LAYOUT MODE - INVISIBLE CHANGES ONLY ===== */
+
+/* Layout mode: containers stay exactly where they are, just become draggable */
+.layout-mode-active .layout-manageable {
+    /* Native drag */
+    cursor: move;
+    user-select: none;
+    
+    /* Native resize */
+    resize: both;
+    overflow: auto;
+    
+    /* That's it. No positioning changes, no grid, no bullshit. */
+}
+
+/* ===== MOBILE LAYOUT MODE FIXES ===== */
+/* Override mobile full-width rules in layout mode */
+@media (max-width: 768px) {
+    .layout-mode-active .layout-manageable {
+        /* Allow containers to be smaller than full width */
+        width: auto !important;
+        max-width: none !important;
+        min-width: 250px; /* Minimum touch-friendly size */
+        
+        /* Better mobile dragging */
+        touch-action: none;
+        -webkit-user-drag: none;
+        
+        /* Ensure containers stay above other content */
+        z-index: 1000;
+        
+        /* Add subtle mobile indication */
+        box-shadow: 0 2px 8px rgba(255, 255, 255, 0.2);
+    }
+    
+    /* Mobile container selector positioning */
+    .layout-mode-active #containerSelector {
+        position: fixed !important;
+        top: 60px !important;
+        left: 10px !important;
+        right: 10px !important;
+        width: auto !important;
+        z-index: 2000;
+        
+        /* Make buttons more touch-friendly */
+        display: flex;
+        flex-wrap: wrap;
+        gap: var(--dot-2);
+    }
+    
+    .layout-mode-active #containerSelector button {
+        flex: 1;
+        min-width: 80px;
+        min-height: 44px; /* Touch target size */
+        font-size: 14px;
+    }
+    
+    /* Mobile layout controls positioning */
+    .layout-mode-active #layoutControls {
+        position: fixed !important;
+        bottom: 10px !important;
+        left: 10px !important;
+        right: 10px !important;
+        width: auto !important;
+        z-index: 2000;
+        
+        /* Better mobile layout */
+        display: flex;
+        justify-content: space-around;
+        gap: var(--dot-2);
+    }
+    
+    .layout-mode-active #layoutControls button {
+        flex: 1;
+        min-height: 44px; /* Touch target size */
+        font-size: 14px;
+    }
+    
+    /* ===== MOBILE REORDER INTERFACE ===== */
+    .mobile-reorder-interface {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        background: rgba(0, 0, 0, 0.95);
+        border-bottom: 2px solid var(--accent);
+        padding: var(--dot-4);
+        z-index: 3000;
+        text-align: center;
+    }
+    
+    .mobile-header h3 {
+        color: var(--accent);
+        margin: 0 0 var(--dot-2) 0;
+        font-size: 18px;
+    }
+    
+    .mobile-header p {
+        color: var(--text-secondary);
+        margin: 0 0 var(--dot-4) 0;
+        font-size: 14px;
+    }
+    
+    .mobile-controls {
+        display: flex;
+        gap: var(--dot-2);
+        justify-content: center;
+    }
+    
+    .mobile-btn {
+        background: var(--bg-primary);
+        border: 2px solid var(--text-secondary);
+        color: var(--text-primary);
+        padding: var(--dot-3) var(--dot-4);
+        font-family: var(--terminal-font);
+        font-size: 14px;
+        min-height: 44px;
+        flex: 1;
+        max-width: 120px;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        border-radius: 0; /* Remove rounded edges */
+        -webkit-border-radius: 0;
+        -moz-border-radius: 0;
+    }
+    
+    .mobile-btn:hover,
+    .mobile-btn:active {
+        background: var(--text-secondary);
+        color: var(--bg-primary);
+    }
+    
+    .mobile-btn.primary {
+        background: var(--accent);
+        color: var(--bg-primary);
+        border-color: var(--accent);
+    }
+    
+    /* ===== MOBILE REORDER CONTROLS ===== */
+    .mobile-reorder-controls {
+        position: absolute;
+        top: var(--dot-2);
+        right: var(--dot-2);
+        display: flex;
+        flex-direction: column;
+        gap: var(--dot);
+        z-index: 100;
+    }
+    
+    .reorder-btn {
+        background: rgba(0, 0, 0, 0.8);
+        border: 2px solid var(--accent);
+        color: var(--accent);
+        width: 44px;
+        height: 44px;
+        font-size: 18px;
+        font-weight: bold;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: all 0.2s ease;
+        border-radius: 0; /* Remove rounded edges */
+        -webkit-border-radius: 0;
+        -moz-border-radius: 0;
+    }
+    
+    .reorder-btn:hover,
+    .reorder-btn:active {
+        background: var(--accent);
+        color: var(--bg-primary);
+        transform: scale(1.1);
+    }
+    
+    .reorder-btn:disabled {
+        opacity: 0.3;
+        cursor: not-allowed;
+        transform: none;
+    }
+    
+    .reorder-btn:disabled:hover {
+        background: rgba(0, 0, 0, 0.8);
+        color: var(--accent);
+    }
+    
+    /* Add margin to body when mobile interface is active */
+    .layout-mode-active .main-content {
+        margin-top: 120px; /* Space for mobile interface */
+        overflow-x: auto; /* Allow horizontal scrolling for wide containers */
+    }
+    
+    /* Ensure mobile containers don't get cut off */
+    .layout-mode-active .layout-manageable {
+        min-height: auto !important;
+        overflow: visible !important;
+    }
+}
+
+/* Layout Controls */
+.layout-controls {
+    background: rgba(0, 0, 0, 0.8);
+    border: 2px solid var(--text-secondary);
+    padding: var(--dot-2);
+    display: flex;
+    flex-direction: column;
+    gap: var(--dot-2);
+    font-family: 'Courier New', monospace;
+}
+
+.layout-controls button {
+    background: rgba(0, 0, 0, 0.8);
+    border: 2px solid var(--text-secondary);
+    color: var(--text-primary);
+    padding: var(--dot-2);
+    cursor: pointer;
+    font-size: var(--font-size-xs);
+    text-transform: uppercase;
+    letter-spacing: var(--dot);
+    font-family: 'Courier New', monospace;
+}
+
+.layout-controls button:hover {
+    background: var(--text-secondary);
+    color: var(--bg-primary);
+}
+
+/* Container Selector */
+.container-selector {
+    background: rgba(0, 0, 0, 0.8);
+    border: 2px solid var(--text-secondary);
+    padding: var(--dot-2);
+    display: none;
+    flex-direction: column;
+    gap: var(--dot-2);
+    font-family: 'Courier New', monospace;
+}
+
+.container-selector.show {
+    display: flex;
+}
+
+.container-selector button {
+    background: rgba(0, 0, 0, 0.8);
+    border: 2px solid var(--text-secondary);
+    color: var(--text-primary);
+    padding: var(--dot-2);
+    cursor: pointer;
+    font-size: var(--font-size-xs);
+    text-transform: uppercase;
+    letter-spacing: var(--dot);
+    text-align: left;
+    font-family: 'Courier New', monospace;
+}
+
+.container-selector button:hover {
+    background: var(--text-secondary);
+    color: var(--bg-primary);
+}
+
+.container-selector button.selected {
+    background: var(--accent);
+    color: var(--bg-primary);
+}
+
+/* Layout Mode */
+.layout-mode {
+    background: rgba(0, 0, 0, 0.8);
+    border: 2px solid var(--accent);
+    padding: var(--dot-2);
+    text-align: center;
+    max-width: 300px;
+    font-size: var(--font-size-xs);
+    font-family: 'Courier New', monospace;
+}
+
+.layout-mode h3 {
+    color: var(--accent);
+    margin-bottom: var(--dot-2);
+    text-transform: uppercase;
+    letter-spacing: var(--dot);
+    font-size: var(--font-size-sm);
+}
+
+.layout-mode p {
+    margin-bottom: var(--dot-1);
+    font-size: var(--font-size-xs);
+}
+
+.layout-controls button.active {
+    background: var(--accent);
+    color: var(--bg-primary);
+}
+
+/* Modern UI Features */
+.resizable-panel {
+    resize: both;
+    overflow: auto;
+    min-width: 200px;
+    min-height: 200px;
+}
+
+.draggable-panel {
+    cursor: move;
+    user-select: none;
+}
+
+.splitter {
+    background: var(--text-secondary);
+    width: 4px;
+    cursor: col-resize;
+    transition: background 0.2s;
+}
+
+.splitter:hover {
+    background: var(--accent-color);
+}
+
+.splitter.active {
+    background: var(--accent-color);
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .pilot-names {
+        flex-direction: column;
+        gap: var(--dot-2);
+    }
+    
+    /* Mobile-first responsive design */
+    .main-content {
+        gap: var(--dot-4);
+        padding: var(--dot-2);
+    }
+    
+    .stats-controls-row {
+        grid-template-columns: 1fr;
+        gap: var(--dot-4);
+    }
+    
+    .grid-section {
+        order: 1;
+        padding: var(--dot-4);
+    }
+    
+    .controls-section {
+        order: 2;
+        width: 100%;
+        display: flex;
+        flex-direction: column;
+        gap: var(--dot-4);
+    }
+    
+    .stats-controls-row {
+        flex-direction: column;
+        gap: var(--dot-4);
+    }
+    
+    .grid {
+        grid-template-columns: repeat(8, 1fr);
+        grid-template-rows: repeat(8, 1fr);
+        max-width: 320px;
+        margin: 0 auto;
+    }
+    
+    .grid-cell {
+        width: 35px;
+        height: 35px;
+        font-size: 14px;
+    }
+    
+    .grid-statistics {
+        max-width: 100%;
+        margin: 0 auto var(--dot-3) auto;
+        padding: var(--dot-2);
+    }
+    
+    .mecha-stats, .tune-up-section, .upgrade-grid-section {
+        max-width: 100%;
+        margin: 0 auto;
+        padding: var(--dot-3);
+    }
+    
+    .control-button {
+        padding: 12px 20px;
+        font-size: 14px;
+        min-height: 44px; /* Touch-friendly */
+    }
+    
+    .edit-button {
+        padding: 8px 16px;
+        font-size: 12px;
+        min-height: 36px;
+    }
+    
+    .header-section {
+        flex-direction: column;
+        gap: var(--dot-2);
+        text-align: center;
+    }
+    
+    .auth-section {
+        flex-direction: column;
+        gap: var(--dot-2);
+    }
+    
+    .title-section {
+        text-align: center;
+        margin-bottom: var(--dot-4);
+    }
+
+    .layout-controls {
+        top: var(--dot-2);
+        right: var(--dot-2);
+        padding: var(--dot-2);
+    }
+
+    /* Mobile Layout - Exact Order Specification */
+    .main-content {
+        grid-template-columns: 1fr;
+        gap: var(--dot-4);
+        display: flex;
+        flex-direction: column;
+    }
+
+    /* 1. Header (already first) */
+    
+    /* 2. Grid Statistics */
+    .grid-statistics {
+        order: 1;
+        max-width: 250px;
+        margin: 0 auto var(--dot-3) auto;
+    }
+
+    /* 3. Stats + Controls side by side */
+    .stats-controls-row {
+        order: 2;
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: var(--dot-4);
+        margin-bottom: var(--dot-4);
+        max-width: 800px;
+        margin-left: auto;
+        margin-right: auto;
+    }
+
+    .stats {
+        background: rgba(34, 34, 34, 0.8);
+        border: 1px solid var(--text-secondary);
+        padding: var(--dot-3);
+    }
+
+    .controls-section {
+        display: flex;
+        flex-direction: column;
+        gap: var(--dot-2);
+    }
+
+    .tune-up-section {
+        margin-bottom: var(--dot-2);
+    }
+
+    .upgrade-grid-section {
+        margin-bottom: 0;
+    }
+
+    /* 4. Upgrade Grid */
+    .grid-section {
+        order: 3;
+        margin-bottom: var(--dot-4);
+    }
+
+    /* 5. Grid Controls */
+    .grid-controls {
+        order: 4;
+        margin-bottom: var(--dot-4);
+    }
+
+    /* 6. Launch */
+    .launch-section {
+        order: 5;
+        margin-bottom: var(--dot-4);
+    }
+
+    /* 7. Library */
+    .piece-library {
+        order: 6;
+        width: 100%;
+        height: 800px; /* Double the height for proper visibility */
+        display: flex;
+        flex-direction: column;
+        resize: vertical;
+        min-height: 600px;
+        max-height: 1000px;
+        overflow: hidden;
+        margin-bottom: var(--dot-4);
+    }
+
+    .piece-library .library-filters {
+        width: 100%;
+        min-width: auto;
+        flex-direction: row;
+        flex-wrap: wrap;
+        gap: var(--dot-3);
+        padding: var(--dot-3);
+    }
+
+    .piece-library .library-filters .filter-group {
+        flex: 1;
+        min-width: 120px;
+    }
+
+    .piece-library .library-controls {
+        margin-top: 0;
+        padding-top: 0;
+        border-top: none;
+        width: 100%;
+        order: -1;
+    }
+
+    /* 8. Shop (already last) */
+    .shop-section {
+        order: 7;
+    }
+
+    .sidebar {
+        display: contents; /* This makes sidebar children appear as direct children of main-content */
+    }
+
+    /* Mobile floating library adjustments */
+    .floating-library {
+        width: 70vw;
+        max-width: 280px;
+        max-height: 50vh;
+        right: 5vw;
+        top: 10px;
+        left: auto;
+        min-width: 240px;
+        min-height: 300px;
+    }
+
+    .floating-library-content {
+        max-height: calc(50vh - 80px);
+    }
+
+    /* Hide regular library on mobile when floating is active */
+    .piece-library.floating-active {
+        display: none;
+    }
+
+    /* Hide filters when floating library is active */
+    .piece-library.floating-active .library-filters {
+        display: none;
+    }
+
+    /* Compact stats on mobile */
+    .stats .stat-item {
+        margin-bottom: 6px;
+    }
+
+    .stat-label, .stat-value {
+        font-size: 14px;
+    }
+
+    /* Mobile piece library is handled by flex layout */
+}
+
+/* Tablet responsiveness */
+@media (min-width: 769px) and (max-width: 1024px) {
+    .main-content {
+        gap: var(--dot-6);
+        padding: var(--dot-3);
+    }
+    
+    .stats-controls-row {
+        gap: var(--dot-6);
+    }
+    
+    .grid {
+        grid-template-columns: repeat(10, 1fr);
+        grid-template-rows: repeat(10, 1fr);
+    }
+    
+    .grid-cell {
+        width: 40px;
+        height: 40px;
+        font-size: 16px;
+    }
+    
+    .controls-section {
+        gap: var(--dot-3);
+    }
+}
+
+/* Desktop optimizations */
+@media (min-width: 1025px) {
+    .main-content {
+        gap: var(--dot-8);
+        padding: var(--dot-4);
+    }
+    
+    .stats-controls-row {
+        gap: var(--dot-8);
+    }
+    
+    .grid {
+        grid-template-columns: repeat(12, 1fr);
+        grid-template-rows: repeat(12, 1fr);
+    }
+    
+    .grid-cell {
+        width: 60px;
+        height: 60px;
+        font-size: 20px;
+    }
+    
+    /* Larger desktop elements */
+    .grid-statistics {
+        max-width: 400px;
+        font-size: 16px;
+    }
+    
+    .mecha-stats, .tune-up-section, .upgrade-grid-section {
+        max-width: 400px;
+        font-size: 16px;
+    }
+    
+    .floating-library {
+        width: 500px;
+        height: 600px;
+        font-size: 16px;
+    }
+} 
+
+/* Removed overengineered mobile/desktop grid bullshit */ 

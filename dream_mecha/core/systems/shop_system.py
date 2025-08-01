@@ -67,15 +67,50 @@ class ShopSystem:
         return self.daily_inventory
     
     def _generate_piece(self, min_blocks: int, max_blocks: int, voidstate: int) -> ShopPiece:
-        """Generate a single piece with specified block range"""
-        # Generate random shape using blockmaker rules
+        """Generate a single piece with specified block range using blockmaker"""
         block_count = random.randint(min_blocks, max_blocks)
-        shape = self._generate_shape(block_count)
         
-        # Calculate stats based on block count (exponential scaling)
+        try:
+            # Use blockmaker for complete piece generation
+            from blockmaker.blockmaker_window import DailyShopWindow
+            
+            shop_generator = DailyShopWindow()
+            piece_data = shop_generator.generate_single_piece_manual(block_count, "random")
+            
+            # Extract blockmaker data
+            shape = self._pattern_to_bool_grid(piece_data.get("pattern", ""))
+            stats = piece_data.get("stats", {})
+            price = piece_data.get("price", 100)
+            
+            # Convert stats format (blockmaker uses att/def/spd, dream_mecha uses attack/defense/speed)
+            formatted_stats = {
+                'hp': stats.get('hp', 0),
+                'attack': stats.get('att', 0),
+                'defense': stats.get('def', 0),
+                'speed': stats.get('spd', 0)
+            }
+            
+            piece = ShopPiece(
+                piece_id=f"piece_{random.randint(10000, 99999)}",
+                name=f"Void Fragment {block_count}",
+                shape=shape,
+                stats=formatted_stats,
+                price=price,
+                piece_type='stat'
+            )
+            
+            return piece
+            
+        except Exception as e:
+            print(f"Blockmaker generation failed: {e}")
+            # Fallback to simple generation
+            return self._generate_fallback_piece(min_blocks, max_blocks, voidstate)
+    
+    def _generate_fallback_piece(self, min_blocks: int, max_blocks: int, voidstate: int) -> ShopPiece:
+        """Fallback piece generation if blockmaker fails"""
+        block_count = random.randint(min_blocks, max_blocks)
+        shape = self._generate_fallback_shape(block_count)
         stats = self._calculate_piece_stats(block_count, voidstate)
-        
-        # Calculate price
         price = self._calculate_piece_price(block_count, stats)
         
         piece = ShopPiece(
@@ -90,8 +125,44 @@ class ShopSystem:
         return piece
     
     def _generate_shape(self, block_count: int) -> List[List[bool]]:
-        """Generate a valid shape for the piece"""
-        # Simple shape generation - can be enhanced with blockmaker integration
+        """Generate a valid shape using blockmaker algorithm"""
+        try:
+            # Try to use blockmaker for proper generation
+            from blockmaker.blockmaker_window import DailyShopWindow
+            
+            # Create a temporary instance for generation
+            shop_generator = DailyShopWindow()
+            piece_data = shop_generator.generate_single_piece_manual(block_count, "random")
+            
+            # Convert pattern to boolean grid
+            pattern = piece_data.get("pattern", "")
+            return self._pattern_to_bool_grid(pattern)
+            
+        except Exception as e:
+            print(f"Blockmaker integration failed, using fallback: {e}")
+            return self._generate_fallback_shape(block_count)
+    
+    def _pattern_to_bool_grid(self, pattern: str) -> List[List[bool]]:
+        """Convert ASCII pattern to boolean grid"""
+        lines = pattern.strip().split('\n')
+        # Skip header lines that don't contain the pattern
+        pattern_lines = [line for line in lines if '█' in line or '▓' in line or '░' in line]
+        
+        if not pattern_lines:
+            return [[True]]  # Fallback for single block
+        
+        # Convert to boolean grid
+        grid = []
+        for line in pattern_lines:
+            row = []
+            for char in line:
+                row.append(char in ['█', '▓'])  # Solid blocks are True
+            grid.append(row)
+        
+        return grid if grid else [[True]]
+    
+    def _generate_fallback_shape(self, block_count: int) -> List[List[bool]]:
+        """Fallback shape generation if blockmaker fails"""
         if block_count == 1:
             return [[True]]
         elif block_count == 2:
@@ -119,28 +190,21 @@ class ShopSystem:
         base_multiplier = 100 * (block_count ** 2)
         voidstate_bonus = 1 + (voidstate * 0.1)
         
-        # Random stat distribution
+        # Calculate total power for this piece
         total_power = int(base_multiplier * voidstate_bonus)
         
-        # Distribute power across stats
-        hp_ratio = random.uniform(0.3, 0.6)
-        attack_ratio = random.uniform(0.2, 0.4)
-        defense_ratio = random.uniform(0.1, 0.3)
-        speed_ratio = random.uniform(0.05, 0.15)
+        # Each piece gives ONLY ONE stat
+        stat_types = ['hp', 'attack', 'defense', 'speed']
+        chosen_stat = random.choice(stat_types)
         
-        # Normalize ratios
-        total_ratio = hp_ratio + attack_ratio + defense_ratio + speed_ratio
-        hp_ratio /= total_ratio
-        attack_ratio /= total_ratio
-        defense_ratio /= total_ratio
-        speed_ratio /= total_ratio
-        
+        # All power goes to the chosen stat
         stats = {
-            'hp': int(total_power * hp_ratio),
-            'attack': int(total_power * attack_ratio),
-            'defense': int(total_power * defense_ratio),
-            'speed': int(total_power * speed_ratio)
+            'hp': 0,
+            'attack': 0,
+            'defense': 0,
+            'speed': 0
         }
+        stats[chosen_stat] = total_power
         
         return stats
     

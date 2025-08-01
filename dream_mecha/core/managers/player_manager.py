@@ -34,6 +34,13 @@ class PlayerManager:
         """Get player by ID"""
         return self.players.get(player_id)
     
+    def get_or_create_player(self, player_id: str, username: str) -> 'Player':
+        """Get existing player or create new one"""
+        player = self.get_player(player_id)
+        if not player:
+            player = self.create_player(player_id, username)
+        return player
+    
     def get_all_players(self) -> List['Player']:
         """Get all players"""
         return list(self.players.values())
@@ -110,6 +117,7 @@ class Player:
         self.mecha: Optional[Mecha] = None
         self.piece_library: List[Dict] = []
         self.grid_system = GridSystem()
+        self.ui_layout: Dict[str, Any] = {}  # Store UI layout preferences
     
     def create_mecha(self, name: str = None) -> Mecha:
         """Create a mecha for this player"""
@@ -138,6 +146,13 @@ class Player:
         """Increment combat participation counter"""
         self.combat_participation += 1
     
+    def update_ui_layout(self, layout_data: Dict[str, Any]):
+        """Update player's UI layout preferences"""
+        if isinstance(layout_data, dict):
+            self.ui_layout = layout_data
+        else:
+            raise ValueError("Layout data must be a dictionary")
+    
     def get_repair_discount(self) -> float:
         """Calculate repair discount based on inactivity"""
         days_inactive = (datetime.now() - self.last_active).days
@@ -160,7 +175,8 @@ class Player:
             'combat_participation': self.combat_participation,
             'piece_library': self.piece_library,
             'grid_data': self.grid_system.to_json() if self.grid_system else None,
-            'mecha_data': self.mecha.to_dict() if self.mecha else None
+            'mecha_data': self.mecha.to_dict() if self.mecha else None,
+            'ui_layout': self.ui_layout
         }
     
     @classmethod
@@ -173,6 +189,7 @@ class Player:
         player.total_zoltans_earned = data['total_zoltans_earned']
         player.combat_participation = data['combat_participation']
         player.piece_library = data.get('piece_library', [])
+        player.ui_layout = data.get('ui_layout', {})
         
         # Load grid data
         if data.get('grid_data'):

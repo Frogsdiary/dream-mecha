@@ -1,0 +1,62 @@
+{
+  "date": "2025-07-22",
+  "voidstate": 2,
+  "generation_metadata": {
+    "player_count": 5,
+    "pieces_generated": 3,
+    "generation_time": "2025-07-22T18:00:00Z"
+  },
+  "shop_pieces": [
+    {
+      "id": "piece_20250722_001",
+      "pattern": "+ 2 3\n4 5 .\n6 . .",
+      "pattern_array": [
+        [
+          1,
+          2,
+          3
+        ],
+        [
+          4,
+          5,
+          0
+        ],
+        [
+          6,
+          0,
+          0
+        ]
+      ],
+      "blocks": 6,
+      "size_category": "small",
+      "generation_method": "random",
+      "beta_mode": true,
+      "stats": {
+        "hp": 8450,
+        "att": 0,
+        "def": 0,
+        "spd": 0
+      },
+      "stat_type": "hp",
+      "price": 845,
+      "rarity": "common"
+    }
+  ],
+  "enemies": [
+    {
+      "id": "enemy_20250722_001",
+      "hp": 150000,
+      "att": 25000,
+      "def": 8000,
+      "spd": 3000,
+      "description": "A hulking void beast bristling with razor claws",
+      "threat_level": "moderate"
+    }
+  ],
+  "economy_data": {
+    "base_zoltan_reward": 50000,
+    "voidstate_bonus": 20000,
+    "total_zoltan_reward": 70000,
+    "repair_cost_multiplier": 0.05
+  }
+}

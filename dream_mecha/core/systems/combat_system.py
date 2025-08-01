@@ -208,4 +208,46 @@ class CombatSystem:
         self.state = CombatState.PREPARING
         self.launched_mechas.clear()
         self.enemies.clear()
-        self.combat_log.clear() 
+        self.combat_log.clear()
+    
+    def initiate_combat(self, player_id: str, enemy_id: str = None) -> Dict[str, any]:
+        """Initiate combat for a player"""
+        try:
+            # Find player's mecha
+            player_mecha = None
+            for mecha in self.launched_mechas:
+                if hasattr(mecha, 'player_id') and mecha.player_id == player_id:
+                    player_mecha = mecha
+                    break
+            
+            if not player_mecha:
+                return {'success': False, 'error': 'Mecha not launched'}
+            
+            # If no enemies, generate them
+            if not self.enemies:
+                # Generate enemies based on current voidstate
+                self.generate_enemies(voidstate=self.voidstate, player_power=1000)
+            
+            # Resolve combat
+            result = self.resolve_combat()
+            
+            # Update player rewards
+            if player_id in result.get('zoltan_rewards', {}):
+                reward = result['zoltan_rewards'][player_id]
+                # This would need to be connected to player manager
+                result['player_reward'] = reward
+            
+            return result
+            
+        except Exception as e:
+            return {'success': False, 'error': str(e)}
+    
+    def get_combat_status(self) -> Dict[str, any]:
+        """Get current combat status"""
+        return {
+            'state': self.state.value,
+            'enemies_remaining': len(self.enemies),
+            'mechas_launched': len(self.launched_mechas),
+            'voidstate': self.voidstate,
+            'combat_log': self.combat_log[-10:]  # Last 10 log entries
+        } 

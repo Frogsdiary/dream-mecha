@@ -5,6 +5,12 @@ python-dotenv>=1.0.0
 # Web framework for UI
 Flask>=2.3.0
 Flask-CORS>=4.0.0
+Flask-OAuthlib>=0.9.6
+Flask-Limiter>=3.5.0
+
+# Security and validation
+marshmallow>=3.20.0
+jsonschema>=4.19.0
 
 # Database
 # sqlite3 is built into Python - no need to install

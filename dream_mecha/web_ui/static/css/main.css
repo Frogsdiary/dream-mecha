@@ -1,0 +1,143 @@
+@font-face {
+    font-family: 'NCLRaxor';
+    src: url('../font/NCLRaxor-Demo.otf') format('opentype'),
+         url('../font/NCLRaxor-Demo.otf') format('truetype');
+    font-weight: normal;
+    font-style: normal;
+    font-display: swap;
+}
+
+:root {
+    /* Font families */
+    --terminal-font: 'Consolas', 'Monaco', 'Lucida Console', 'Liberation Mono', 'DejaVu Sans Mono', 'Bitstream Vera Sans Mono', 'Courier New', monospace;
+    --header-font: 'NCLRaxor', 'Consolas', 'Monaco', 'Lucida Console', 'Courier New', monospace;
+    
+    /* Base Unit - 1 dot = 4px */
+    --dot: 4px;
+    --dot-2: 8px;
+    --dot-3: 12px;
+    --dot-4: 16px;
+    --dot-5: 20px;
+    --dot-6: 24px;
+    --dot-8: 32px;
+    --dot-10: 40px;
+    --dot-12: 48px;
+    --dot-16: 64px;
+    --dot-20: 80px;
+    --dot-24: 96px;
+    --dot-32: 128px;
+    --dot-40: 160px;
+    --dot-48: 192px;
+    --dot-64: 256px;
+    
+    /* Colors */
+    --bg-primary: #000;
+    --text-primary: #fff;
+    --text-secondary: #ccc;
+    --accent: #fff;
+    --corner-symbol: #fff;
+    --dot-matrix: rgba(255, 255, 255, 0.2);
+    --dot-matrix-size: var(--dot-4); /* 16px spacing */
+    
+    /* Typography */
+    --font-size-xs: var(--dot-3);    /* 12px */
+    --font-size-sm: var(--dot-4);    /* 16px */
+    --font-size-md: var(--dot-5);    /* 20px */
+    --font-size-lg: var(--dot-6);    /* 24px */
+    --font-size-xl: var(--dot-8);    /* 32px */
+    --font-size-2xl: var(--dot-10);  /* 40px */
+    --font-size-3xl: var(--dot-12);  /* 48px */
+    
+    /* Grid System */
+    --grid-cell: var(--dot-10);      /* 40px base grid cell */
+    --grid-gap: var(--dot);          /* 4px gap */
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: var(--terminal-font);
+    background: var(--bg-primary);
+    background-image: 
+        radial-gradient(circle at 1px 1px, var(--dot-matrix) 1px, transparent 0);
+    background-size: var(--dot-matrix-size) var(--dot-matrix-size);
+    color: var(--text-primary);
+    line-height: 1.4;
+    font-size: var(--font-size-sm);
+    padding: var(--dot-4); /* 16px padding from edge */
+}
+
+.container {
+    max-width: calc(var(--dot-64) * 4); /* 1024px max */
+    margin: 0 auto;
+}
+
+/* Header - positioned on dot grid */
+.header {
+    text-align: center;
+    margin-bottom: var(--dot-12); /* 48px = 3 dots */
+    padding-bottom: var(--dot-6); /* 24px = 1.5 dots */
+    border-bottom: var(--dot) solid var(--text-secondary);
+}
+
+.header h1 {
+    font-family: var(--header-font) !important;
+    font-size: var(--font-size-3xl);
+    margin-bottom: var(--dot-4); /* 16px = 1 dot */
+    /* text-transform: uppercase; -- Removed to allow proper case */
+    letter-spacing: var(--dot);
+    font-weight: normal; /* Changed from bold to normal for custom font */
+    font-style: normal;
+    /* Debug: Add a unique style to confirm this CSS is loading */
+    text-shadow: 0 0 2px rgba(255, 255, 255, 0.3);
+}
+
+.header p {
+    color: var(--text-secondary);
+    font-size: var(--font-size-md);
+}
+
+.pilot-info {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--dot-2);
+}
+
+.pilot-names {
+    display: flex;
+    align-items: center;
+    gap: var(--dot-3);
+    font-size: var(--font-size-sm);
+    flex-wrap: wrap;
+    justify-content: center;
+}
+
+.operator-name, .mecha-name {
+    color: var(--text-secondary);
+}
+
+.operator-name strong, .mecha-name strong {
+    color: var(--accent);
+}
+
+.edit-name-btn {
+    background: var(--bg-primary);
+    border: 1px solid var(--text-secondary);
+    color: var(--text-secondary);
+    padding: var(--dot-1) var(--dot-2);
+    font-size: var(--font-size-xs);
+    font-family: var(--terminal-font);
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.edit-name-btn:hover {
+    background: var(--text-secondary);
+    color: var(--bg-primary);
+    border-color: var(--accent);
+} 

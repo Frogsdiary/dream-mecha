@@ -1,0 +1,4946 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dream Mecha - Grid Manager</title>
+    <style>
+        :root {
+            /* Base Unit - 1 dot = 4px */
+            --dot: 4px;
+            --dot-2: 8px;
+            --dot-3: 12px;
+            --dot-4: 16px;
+            --dot-5: 20px;
+            --dot-6: 24px;
+            --dot-8: 32px;
+            --dot-10: 40px;
+            --dot-12: 48px;
+            --dot-16: 64px;
+            --dot-20: 80px;
+            --dot-24: 96px;
+            --dot-32: 128px;
+            --dot-40: 160px;
+            --dot-48: 192px;
+            --dot-64: 256px;
+            
+            /* Colors */
+            --bg-primary: #000;
+            --text-primary: #fff;
+            --text-secondary: #ccc;
+            --accent: #fff;
+            --corner-symbol: #fff;
+            --dot-matrix: rgba(255, 255, 255, 0.2);
+            --dot-matrix-size: var(--dot-4); /* 16px spacing */
+            
+            /* Typography */
+            --font-size-xs: var(--dot-3);    /* 12px */
+            --font-size-sm: var(--dot-4);    /* 16px */
+            --font-size-md: var(--dot-5);    /* 20px */
+            --font-size-lg: var(--dot-6);    /* 24px */
+            --font-size-xl: var(--dot-8);    /* 32px */
+            --font-size-2xl: var(--dot-10);  /* 40px */
+            --font-size-3xl: var(--dot-12);  /* 48px */
+            
+            /* Grid System */
+            --grid-cell: var(--dot-10);      /* 40px base grid cell */
+            --grid-gap: var(--dot);          /* 4px gap */
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Courier New', monospace;
+            background: var(--bg-primary);
+            background-image: 
+                radial-gradient(circle at 1px 1px, var(--dot-matrix) 1px, transparent 0);
+            background-size: var(--dot-matrix-size) var(--dot-matrix-size);
+            color: var(--text-primary);
+            line-height: 1.4;
+            font-size: var(--font-size-sm);
+            padding: var(--dot-4); /* 16px padding from edge */
+        }
+
+        .container {
+            max-width: calc(var(--dot-64) * 4); /* 1024px max */
+            margin: 0 auto;
+        }
+
+        /* Header - positioned on dot grid */
+        .header {
+            text-align: center;
+            margin-bottom: var(--dot-12); /* 48px = 3 dots */
+            padding-bottom: var(--dot-6); /* 24px = 1.5 dots */
+            border-bottom: var(--dot) solid var(--text-secondary);
+        }
+
+        .header h1 {
+            font-size: var(--font-size-3xl);
+            margin-bottom: var(--dot-4); /* 16px = 1 dot */
+            text-transform: uppercase;
+            letter-spacing: var(--dot);
+            font-weight: bold;
+        }
+
+        .header p {
+            color: var(--text-secondary);
+            font-size: var(--font-size-md);
+        }
+
+        .pilot-info {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: var(--dot-2);
+        }
+
+        .pilot-names {
+            display: flex;
+            align-items: center;
+            gap: var(--dot-3);
+            font-size: var(--font-size-sm);
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        .operator-name, .mecha-name {
+            color: var(--text-secondary);
+        }
+
+        .operator-name strong, .mecha-name strong {
+            color: var(--accent);
+        }
+
+        .edit-name-btn {
+            background: var(--bg-primary);
+            border: 1px solid var(--text-secondary);
+            color: var(--text-secondary);
+            padding: var(--dot-1) var(--dot-2);
+            font-size: var(--font-size-xs);
+            font-family: 'Courier New', monospace;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .edit-name-btn:hover {
+            background: var(--text-secondary);
+            color: var(--bg-primary);
+            border-color: var(--accent);
+        }
+
+        @media (max-width: 768px) {
+            .pilot-names {
+                flex-direction: column;
+                gap: var(--dot-2);
+            }
+            
+            /* Mobile-first responsive design */
+            .main-content {
+                gap: var(--dot-4);
+                padding: var(--dot-2);
+            }
+            
+            .stats-controls-row {
+                grid-template-columns: 1fr;
+                gap: var(--dot-4);
+            }
+            
+            .grid-section {
+                order: 1;
+                padding: var(--dot-4);
+            }
+            
+            .controls-section {
+                order: 2;
+                width: 100%;
+                display: flex;
+                flex-direction: column;
+                gap: var(--dot-4);
+            }
+            
+            .stats-controls-row {
+                flex-direction: column;
+                gap: var(--dot-4);
+            }
+            
+            .grid {
+                grid-template-columns: repeat(8, 1fr);
+                grid-template-rows: repeat(8, 1fr);
+                max-width: 320px;
+                margin: 0 auto;
+            }
+            
+            .grid-cell {
+                width: 35px;
+                height: 35px;
+                font-size: 14px;
+            }
+            
+            .grid-statistics {
+                max-width: 100%;
+                margin: 0 auto var(--dot-3) auto;
+                padding: var(--dot-2);
+            }
+            
+            .mecha-stats, .tune-up-section, .upgrade-grid-section {
+                max-width: 100%;
+                margin: 0 auto;
+                padding: var(--dot-3);
+            }
+            
+            .control-button {
+                padding: 12px 20px;
+                font-size: 14px;
+                min-height: 44px; /* Touch-friendly */
+            }
+            
+            .edit-button {
+                padding: 8px 16px;
+                font-size: 12px;
+                min-height: 36px;
+            }
+            
+            .header-section {
+                flex-direction: column;
+                gap: var(--dot-2);
+                text-align: center;
+            }
+            
+            .auth-section {
+                flex-direction: column;
+                gap: var(--dot-2);
+            }
+            
+            .title-section {
+                text-align: center;
+                margin-bottom: var(--dot-4);
+            }
+        }
+        
+        /* Tablet responsiveness */
+        @media (min-width: 769px) and (max-width: 1024px) {
+            .main-content {
+                gap: var(--dot-6);
+                padding: var(--dot-3);
+            }
+            
+            .stats-controls-row {
+                gap: var(--dot-6);
+            }
+            
+            .grid {
+                grid-template-columns: repeat(10, 1fr);
+                grid-template-rows: repeat(10, 1fr);
+            }
+            
+            .grid-cell {
+                width: 40px;
+                height: 40px;
+                font-size: 16px;
+            }
+            
+            .controls-section {
+                gap: var(--dot-3);
+            }
+        }
+        
+        /* Desktop optimizations */
+        @media (min-width: 1025px) {
+            .main-content {
+                gap: var(--dot-8);
+                padding: var(--dot-4);
+            }
+            
+            .stats-controls-row {
+                gap: var(--dot-8);
+            }
+            
+            .grid {
+                grid-template-columns: repeat(12, 1fr);
+                grid-template-rows: repeat(12, 1fr);
+            }
+            
+            .grid-cell {
+                width: 60px;
+                height: 60px;
+                font-size: 20px;
+            }
+            
+            /* Larger desktop elements */
+            .grid-statistics {
+                max-width: 400px;
+                font-size: 16px;
+            }
+            
+            .mecha-stats, .tune-up-section, .upgrade-grid-section {
+                max-width: 400px;
+                font-size: 16px;
+            }
+            
+            .floating-library {
+                width: 500px;
+                height: 600px;
+                font-size: 16px;
+            }
+        }
+        
+        /* Modern UI Features */
+        .resizable-panel {
+            resize: both;
+            overflow: auto;
+            min-width: 200px;
+            min-height: 200px;
+        }
+        
+        .draggable-panel {
+            cursor: move;
+            user-select: none;
+        }
+        
+        .splitter {
+            background: var(--text-secondary);
+            width: 4px;
+            cursor: col-resize;
+            transition: background 0.2s;
+        }
+        
+        .splitter:hover {
+            background: var(--accent-color);
+        }
+        
+        .splitter.active {
+            background: var(--accent-color);
+        }
+
+
+
+        /* Main content grid - positioned on dot grid */
+        .main-content {
+            display: flex;
+            flex-direction: column;
+            gap: var(--dot-8); /* 32px = 2 dots */
+            margin-bottom: var(--dot-12); /* 48px = 3 dots */
+        }
+        
+        .stats-controls-row {
+            display: flex;
+            gap: var(--dot-8);
+        }
+        
+        .stats {
+            flex: 0 0 60%;
+        }
+        
+        .controls-section {
+            flex: 0 0 40%;
+        }
+
+        /* Grid section - no borders, positioned on dot grid */
+        .grid-section {
+            position: relative;
+            padding: var(--dot-8); /* 32px = 2 dots */
+        }
+
+        .grid-section h2 {
+            margin-bottom: var(--dot-8); /* 32px = 2 dots */
+            text-transform: uppercase;
+            letter-spacing: var(--dot);
+            font-size: var(--font-size-lg);
+            color: var(--text-secondary);
+        }
+
+        .grid-instructions {
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid var(--text-secondary);
+            padding: var(--dot-3);
+            margin-bottom: var(--dot-4);
+            border-radius: 4px;
+        }
+
+        .grid-instructions p {
+            margin: 0;
+            font-size: var(--font-size-sm);
+            color: var(--text-secondary);
+            text-align: center;
+        }
+
+        /* Corner symbols for grid section */
+        .grid-section::before,
+        .grid-section::after {
+            content: '▣';
+            position: absolute;
+            color: var(--corner-symbol);
+            font-size: var(--font-size-md);
+            z-index: 1;
+        }
+
+        .grid-section::before {
+            top: var(--dot-2); /* 8px = 0.5 dots */
+            left: var(--dot-2);
+        }
+
+        .grid-section::after {
+            top: var(--dot-2);
+            right: var(--dot-2);
+        }
+
+        .grid-section .corner-bottom-left,
+        .grid-section .corner-bottom-right {
+            position: absolute;
+            color: var(--corner-symbol);
+            font-size: var(--font-size-md);
+            bottom: var(--dot-2);
+            z-index: 1;
+        }
+
+        .grid-section .corner-bottom-left {
+            left: var(--dot-2);
+        }
+
+        .grid-section .corner-bottom-right {
+            right: var(--dot-2);
+        }
+
+        .grid-status {
+            background: rgba(34, 34, 34, 0.8);
+            padding: var(--dot-4);
+            border: 1px solid var(--text-secondary);
+            margin-bottom: var(--dot-4);
+        }
+
+        .grid-statistics {
+            background: rgba(0, 0, 0, 0.8);
+            border: 2px solid var(--text-secondary);
+            padding: var(--dot-2);
+            margin-bottom: var(--dot-3);
+            font-family: 'Courier New', monospace;
+            max-width: 300px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .grid-statistics h4 {
+            margin: 0 0 var(--dot-2) 0;
+            color: var(--accent);
+            font-size: var(--font-size-xs);
+            text-transform: uppercase;
+            letter-spacing: var(--dot);
+            border-bottom: 1px solid var(--text-secondary);
+            padding-bottom: var(--dot-1);
+        }
+
+        .grid-stats-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: var(--dot-1);
+            font-size: var(--font-size-xs);
+        }
+
+        .grid-stats-row:last-child {
+            margin-bottom: 0;
+        }
+
+        .grid-stats-row .stat-label {
+            color: var(--text-secondary);
+        }
+
+        .grid-stats-row .stat-value {
+            color: var(--accent);
+            font-weight: bold;
+        }
+
+        .grid-instructions {
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid var(--text-secondary);
+            padding: var(--dot-3);
+            margin-bottom: var(--dot-4);
+            border-radius: 4px;
+        }
+
+        .grid-instructions p {
+            margin: 0;
+            font-size: var(--font-size-sm);
+            color: var(--text-secondary);
+            text-align: center;
+        }
+
+        .stat-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: var(--dot-1);
+            font-size: var(--font-size-sm);
+        }
+
+        .grid-container {
+            display: flex;
+            justify-content: center;
+            margin-bottom: var(--dot-8); /* 32px = 2 dots */
+        }
+
+        .full-grid-container {
+            display: flex;
+            justify-content: center;
+            padding: var(--dot-4);
+            background: rgba(17, 17, 17, 0.6);
+            border: 1px solid var(--text-secondary);
+            position: relative;
+        }
+
+        /* Dynamic Grid System */
+        .mecha-grid-full {
+            display: grid;
+            gap: var(--dot);
+            padding: var(--dot-2);
+            /* Grid template will be set dynamically in JavaScript */
+        }
+
+        .grid-cell {
+            width: var(--grid-cell);
+            height: var(--grid-cell);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: 'Courier New', monospace;
+            font-weight: bold;
+            font-size: 14px;
+            color: #000;
+        }
+
+        /* Inactive grid cells (potential expansion area) */
+        .grid-cell.inactive {
+            background: rgba(68, 68, 68, 0.3);
+            border-color: rgba(255, 255, 255, 0.1);
+            cursor: default;
+        }
+
+        /* Active grid cells (current usable area) */
+        .grid-cell.active {
+            background: rgba(34, 34, 34, 0.9);
+            border-color: var(--text-secondary);
+            cursor: pointer;
+        }
+
+        .grid-cell.active:hover {
+            border-color: var(--accent);
+            transform: scale(1.02);
+            box-shadow: 0 0 8px rgba(255, 255, 255, 0.3);
+        }
+
+        /* Expansion cells (shown during tune-up mode) */
+        .grid-cell.expansion {
+            background: rgba(68, 136, 255, 0.3);
+            border: 2px dashed #4488ff;
+            cursor: pointer;
+        }
+
+        .grid-cell.expansion:hover {
+            background: rgba(68, 136, 255, 0.5);
+            border-color: #66aaff;
+            transform: scale(1.05);
+        }
+
+        .grid-cell.expansion::before {
+            content: '+';
+            color: #4488ff;
+            font-size: var(--font-size-lg);
+            font-weight: bold;
+        }
+
+        .grid-cell.piece {
+            background: #ff4444;
+            border-color: var(--accent);
+            animation: piecePlacement 0.4s ease-out;
+        }
+
+        @keyframes piecePlacement {
+            0% { 
+                transform: scale(0.8); 
+                opacity: 0.7;
+            }
+            50% { 
+                transform: scale(1.1); 
+                opacity: 0.9;
+            }
+            100% { 
+                transform: scale(1); 
+                opacity: 1;
+            }
+        }
+
+        .grid-cell.piece.anchor {
+            color: #fff;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.8);
+        }
+
+        .grid-cell.selected {
+            box-shadow: 0 0 12px var(--accent);
+            border: 2px solid var(--accent) !important;
+            transform: scale(1.05);
+            animation: selectedPulse 2s infinite;
+        }
+
+        @keyframes selectedPulse {
+            0% { box-shadow: 0 0 12px var(--accent); }
+            50% { box-shadow: 0 0 20px var(--accent), 0 0 30px rgba(255, 255, 255, 0.3); }
+            100% { box-shadow: 0 0 12px var(--accent); }
+        }
+
+        .grid-cell.drop-zone {
+            background: rgba(255, 255, 255, 0.3) !important;
+            border: 2px dashed var(--accent) !important;
+            animation: pulse 1.5s infinite;
+        }
+
+        @keyframes pulse {
+            0% { opacity: 0.6; }
+            50% { opacity: 1; }
+            100% { opacity: 0.6; }
+        }
+
+        /* Stat colors for pieces */
+        .piece.stat-hp { background: #44ff44; }      /* HP - GREEN */
+        .piece.stat-attack { background: #ff4444; }   /* ATT - RED */
+        .piece.stat-defense { background: #ff8800; }  /* DEF - ORANGE */
+        .piece.stat-speed { background: #ffff44; }    /* SPD - YELLOW */
+
+        /* Grid Controls - Row Layout */
+        .grid-controls {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: var(--dot-2);
+            margin-bottom: var(--dot-4);
+            justify-content: center;
+        }
+
+        .grid-controls .btn {
+            flex: 0 1 auto;
+            min-width: var(--dot-16);
+            max-width: var(--dot-20);
+            padding: var(--dot-2) var(--dot-3);
+            font-size: var(--font-size-xs);
+        }
+
+        .launch-section {
+            text-align: center;
+            margin-bottom: var(--dot-4);
+        }
+
+        .launch-btn {
+            background: var(--bg-primary);
+            color: var(--accent);
+            border: 2px solid var(--accent);
+            font-weight: bold;
+            font-size: var(--font-size-md);
+            padding: var(--dot-4) var(--dot-6);
+            width: 90%;
+            position: relative;
+            font-family: 'Courier New', monospace;
+            text-transform: uppercase;
+            letter-spacing: var(--dot);
+            transition: all 0.3s ease;
+        }
+
+        .launch-btn:hover {
+            background: var(--accent);
+            color: var(--bg-primary);
+            box-shadow: 0 0 var(--dot-4) var(--accent);
+        }
+
+        .launch-btn:disabled {
+            background: #333;
+            color: #666;
+            border-color: #666;
+            box-shadow: none;
+        }
+
+        .launch-decoration {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            pointer-events: none;
+        }
+
+        .corner-dot {
+            position: absolute;
+            font-size: var(--font-size-xs);
+            color: var(--accent);
+        }
+
+        .corner-dot:nth-child(1) { top: 2px; left: 2px; }
+        .corner-dot:nth-child(2) { top: 2px; right: 2px; }
+        .corner-dot:nth-child(3) { bottom: 2px; left: 2px; }
+        .corner-dot:nth-child(4) { bottom: 2px; right: 2px; }
+
+        .launch-sequence {
+            background: rgba(0, 0, 0, 0.9);
+            border: 1px solid var(--accent);
+            padding: var(--dot-4);
+            margin-top: var(--dot-4);
+            font-family: 'Courier New', monospace;
+        }
+
+        .command-line {
+            margin-bottom: var(--dot-2);
+            font-size: var(--font-size-sm);
+            color: var(--accent);
+        }
+
+        .prompt {
+            color: var(--accent);
+        }
+
+        .loading-dots {
+            color: var(--accent);
+            margin-left: var(--dot-2);
+        }
+
+        .engage-btn {
+            background: #ff4444;
+            color: #fff;
+            border: 2px solid #ff4444;
+            font-weight: bold;
+            font-size: var(--font-size-lg);
+            padding: var(--dot-4) var(--dot-8);
+            width: 100%;
+            font-family: 'Courier New', monospace;
+            text-transform: uppercase;
+            letter-spacing: var(--dot-2);
+            margin-top: var(--dot-4);
+            animation: pulse-engage 2s infinite;
+        }
+
+        @keyframes pulse-engage {
+            0% { box-shadow: 0 0 0 0 rgba(255, 68, 68, 0.7); }
+            70% { box-shadow: 0 0 0 10px rgba(255, 68, 68, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(255, 68, 68, 0); }
+        }
+
+        .engage-btn:hover {
+            background: #ff6666;
+            border-color: #ff6666;
+        }
+
+        /* Controls - positioned on dot grid */
+        .controls {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(var(--dot-20), 1fr));
+            gap: var(--dot-4); /* 16px = 1 dot */
+            justify-content: center;
+        }
+
+        .btn {
+            background: var(--accent);
+            color: var(--bg-primary);
+            border: none;
+            padding: var(--dot-4) var(--dot-6); /* 16px 24px = 1 dot 1.5 dots */
+            cursor: pointer;
+            font-weight: bold;
+            text-transform: uppercase;
+            letter-spacing: var(--dot);
+            transition: all 0.2s ease;
+            font-size: var(--font-size-sm);
+            font-family: inherit;
+        }
+
+        .btn:hover {
+            background: var(--text-secondary);
+            transform: translateY(-var(--dot));
+        }
+
+        .btn:active {
+            transform: translateY(0);
+        }
+
+        .btn.secondary {
+            background: transparent;
+            color: var(--text-primary);
+            border: 1px solid var(--text-secondary);
+        }
+
+        .btn.secondary:hover {
+            background: var(--text-secondary);
+            color: var(--bg-primary);
+        }
+
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        /* Sidebar - no borders, positioned on dot grid */
+        .sidebar {
+            position: relative;
+            padding: var(--dot-8); /* 32px = 2 dots */
+        }
+
+        /* Corner symbols for sidebar */
+        .sidebar::before,
+        .sidebar::after {
+            content: '▣';
+            position: absolute;
+            color: var(--corner-symbol);
+            font-size: var(--font-size-md);
+            z-index: 1;
+        }
+
+        .sidebar::before {
+            top: var(--dot-2);
+            left: var(--dot-2);
+        }
+
+        .sidebar::after {
+            top: var(--dot-2);
+            right: var(--dot-2);
+        }
+
+        .sidebar .corner-bottom-left,
+        .sidebar .corner-bottom-right {
+            position: absolute;
+            color: var(--corner-symbol);
+            font-size: var(--font-size-md);
+            bottom: var(--dot-2);
+            z-index: 1;
+        }
+
+        .sidebar .corner-bottom-left {
+            left: var(--dot-2);
+        }
+
+        .sidebar .corner-bottom-right {
+            right: var(--dot-2);
+        }
+
+        .sidebar h3 {
+            margin-bottom: var(--dot-6); /* 24px = 1.5 dots */
+            text-transform: uppercase;
+            letter-spacing: var(--dot);
+            font-size: var(--font-size-md);
+            color: var(--text-secondary);
+        }
+
+        /* HP Bar System - Integrated with Stats */
+        .hp-stat-item {
+            flex-direction: column;
+            align-items: stretch;
+        }
+
+        .hp-stat-item .hp-display {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: var(--dot-2);
+        }
+
+        .hp-stat-item .stat-label {
+            color: var(--text-secondary);
+        }
+
+        .hp-stat-item .stat-value {
+            font-family: 'Courier New', monospace;
+            font-weight: bold;
+            color: var(--accent);
+        }
+
+        .hp-bar {
+            display: grid;
+            grid-template-columns: repeat(20, 1fr);
+            gap: 1px;
+            background: rgba(0, 0, 0, 0.6);
+            padding: var(--dot-2);
+            border: 1px solid var(--text-secondary);
+            margin-bottom: var(--dot-3);
+            border-radius: 2px;
+        }
+
+        .hp-cell {
+            aspect-ratio: 1;
+            background: rgba(17, 17, 17, 0.9);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            transition: all 0.2s ease;
+        }
+
+        .hp-cell.filled {
+            background: #44ff44;
+            box-shadow: 0 0 2px #44ff44;
+        }
+
+        .hp-cell.damaged {
+            background: #ff4444;
+            animation: pulse-damage 1s infinite;
+        }
+
+        @keyframes pulse-damage {
+            0% { opacity: 0.6; }
+            50% { opacity: 1; }
+            100% { opacity: 0.6; }
+        }
+
+        .tune-up-section {
+            margin-bottom: var(--dot-8);
+            background: rgba(0, 0, 0, 0.8);
+            border: 2px solid var(--text-secondary);
+            padding: var(--dot-2);
+            font-family: 'Courier New', monospace;
+        }
+
+        .tune-up-controls {
+            display: flex;
+            flex-direction: column;
+            gap: var(--dot-3);
+        }
+
+        .tune-up-buttons {
+            display: flex;
+            gap: var(--dot-2);
+        }
+
+        .tune-up-buttons .btn {
+            flex: 1;
+            font-size: var(--font-size-sm);
+            padding: var(--dot-3) var(--dot-4);
+        }
+
+        .custom-input-group {
+            display: flex;
+            flex-direction: column;
+            gap: var(--dot-2);
+        }
+
+        .custom-input-group label {
+            font-size: var(--font-size-xs);
+            color: var(--text-secondary);
+        }
+
+        .custom-input-group input {
+            background: var(--bg-primary);
+            border: var(--dot) solid var(--text-secondary);
+            color: var(--text-primary);
+            padding: var(--dot-2);
+            font-family: 'Courier New', monospace;
+            font-size: var(--font-size-sm);
+            border-radius: var(--dot);
+        }
+
+        .confirmation-section {
+            background: var(--bg-primary);
+            border: var(--dot) solid var(--accent);
+            padding: var(--dot-3);
+            border-radius: var(--dot);
+        }
+
+        .confirmation-text {
+            color: var(--accent);
+            font-family: 'Courier New', monospace;
+            text-align: center;
+            margin-bottom: var(--dot-3);
+            font-weight: bold;
+        }
+
+        .confirmation-buttons {
+            display: flex;
+            gap: var(--dot-2);
+        }
+
+        .confirm-btn {
+            flex: 1;
+            background: #44ff44;
+            color: #000;
+        }
+
+        .cancel-btn {
+            flex: 1;
+            background: #ff4444;
+            color: #fff;
+        }
+
+        .tune-up-btn {
+            background: #44ff44;
+            color: #000;
+            font-size: var(--font-size-sm);
+            padding: var(--dot-3) var(--dot-4);
+            font-weight: bold;
+        }
+
+        .tune-up-btn:hover {
+            background: #66ff66;
+        }
+
+        .tune-up-btn:disabled {
+            background: #666;
+            color: #ccc;
+        }
+
+        .tune-up-info {
+            text-align: center;
+        }
+
+        .tune-up-info small {
+            color: var(--text-secondary);
+            font-family: 'Courier New', monospace;
+        }
+
+        .upgrade-grid-section {
+            margin-bottom: var(--dot-8);
+            background: rgba(0, 0, 0, 0.8);
+            border: 2px solid var(--text-secondary);
+            padding: var(--dot-2);
+            font-family: 'Courier New', monospace;
+        }
+
+        .upgrade-grid-btn {
+            background: #4488ff;
+            color: #fff;
+            font-size: var(--font-size-sm);
+            padding: var(--dot-3) var(--dot-4);
+            font-weight: bold;
+            width: 100%;
+        }
+
+        .upgrade-grid-btn:hover {
+            background: #6699ff;
+        }
+
+        .upgrade-grid-btn:disabled {
+            background: #666;
+            color: #ccc;
+        }
+
+        .upgrade-grid-btn.active {
+            background: #66aaff;
+            box-shadow: 0 0 8px #4488ff;
+        }
+
+        .upgrade-info {
+            text-align: center;
+            margin-top: var(--dot-2);
+        }
+
+        .upgrade-info small {
+            color: var(--text-secondary);
+            font-family: 'Courier New', monospace;
+        }
+
+        .stats {
+            margin-bottom: var(--dot-8); /* 32px = 2 dots */
+        }
+
+        .stat-item {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 12px;
+            padding: 6px 0;
+        }
+
+        .stat-label {
+            color: var(--text-secondary);
+            font-size: 16px;
+        }
+
+        .stat-value {
+            font-weight: bold;
+            font-family: 'Courier New', monospace;
+            font-size: 16px;
+        }
+
+        .piece-library {
+            margin-bottom: var(--dot-8); /* 32px = 2 dots */
+            background: rgba(0, 0, 0, 0.8);
+            border: 2px solid var(--text-secondary);
+            padding: var(--dot-2);
+            display: flex;
+            flex-direction: row;
+            height: 600px;
+            gap: var(--dot-4);
+            position: relative;
+            font-family: 'Courier New', monospace;
+        }
+
+        .piece-library::before {
+            content: '▣';
+            position: absolute;
+            top: var(--dot-2);
+            left: var(--dot-2);
+            color: var(--corner-symbol);
+            font-size: var(--font-size-sm);
+        }
+
+        .piece-library::after {
+            content: '▣';
+            position: absolute;
+            top: var(--dot-2);
+            right: var(--dot-2);
+            color: var(--corner-symbol);
+            font-size: var(--font-size-sm);
+        }
+
+        .piece-library h3 {
+            margin-top: 0;
+            color: var(--accent);
+            text-align: center;
+            border-bottom: var(--dot) solid var(--text-secondary);
+            padding-bottom: var(--dot-2);
+            margin-bottom: var(--dot-4);
+            flex-shrink: 0;
+            text-transform: uppercase;
+            letter-spacing: var(--dot);
+            font-size: var(--font-size-lg);
+        }
+
+        .library-content {
+            flex: 1;
+            overflow-y: auto;
+            overflow-x: hidden;
+            background: rgba(0, 0, 0, 0.8);
+            border: 2px solid var(--text-secondary);
+            padding: var(--dot-2);
+            font-family: 'Courier New', monospace;
+        }
+
+        .library-content::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .library-content::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        .library-content::-webkit-scrollbar-thumb {
+            background: var(--accent);
+            border-radius: 3px;
+        }
+
+        .library-filters {
+            background: rgba(0, 0, 0, 0.8);
+            border: 2px solid var(--text-secondary);
+            padding: var(--dot-2);
+            flex-shrink: 0;
+            width: 280px;
+            min-width: 280px;
+            display: flex;
+            flex-direction: column;
+            gap: var(--dot-3);
+            font-family: 'Courier New', monospace;
+        }
+
+        .library-filters h4 {
+            margin: 0 0 var(--dot-3) 0;
+            font-size: var(--font-size-xs);
+            color: var(--accent);
+            text-transform: uppercase;
+            letter-spacing: var(--dot);
+        }
+
+        .filter-group {
+            margin-bottom: var(--dot-3);
+        }
+
+        .filter-group label {
+            display: block;
+            font-size: var(--font-size-xs);
+            color: var(--text-secondary);
+            margin-bottom: var(--dot-1);
+        }
+
+        .filter-group select {
+            width: 100%;
+            background: var(--bg-primary);
+            border: var(--dot) solid var(--text-secondary);
+            color: var(--text-primary);
+            padding: var(--dot-2);
+            font-family: inherit;
+            font-size: var(--font-size-xs);
+            border-radius: var(--dot);
+        }
+
+        .filter-slider {
+            width: 100%;
+            margin-bottom: var(--dot-1);
+        }
+
+        .range-display {
+            font-size: var(--font-size-xs);
+            color: var(--text-secondary);
+            font-family: 'Courier New', monospace;
+        }
+
+        .filter-reset-btn {
+            width: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            border: 2px solid var(--text-secondary);
+            color: var(--text-primary);
+            font-size: var(--font-size-xs);
+            padding: var(--dot-2);
+            cursor: pointer;
+            transition: all 0.2s ease;
+            font-family: 'Courier New', monospace;
+        }
+
+        .filter-reset-btn:hover {
+            background: var(--text-secondary);
+            color: var(--bg-primary);
+        }
+
+        .library-controls {
+            margin-top: auto;
+            padding-top: var(--dot-3);
+            border-top: var(--dot) solid var(--text-secondary);
+        }
+
+        .library-toggle-btn {
+            width: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            border: 2px solid var(--accent);
+            color: var(--accent);
+            font-size: var(--font-size-xs);
+            padding: var(--dot-2);
+            cursor: pointer;
+            transition: all 0.2s ease;
+            text-transform: uppercase;
+            letter-spacing: var(--dot);
+            font-family: 'Courier New', monospace;
+        }
+
+        .library-toggle-btn:hover {
+            background: var(--accent);
+            color: var(--bg-primary);
+        }
+
+        .filter-reset-btn:hover {
+            background: #888;
+        }
+
+        .piece-item {
+            background: rgba(0, 0, 0, 0.8);
+            border: 2px solid var(--text-secondary);
+            padding: var(--dot-4);
+            margin-bottom: var(--dot-3);
+            cursor: pointer;
+            transition: all 0.2s ease;
+            font-family: 'Courier New', monospace;
+        }
+
+        .piece-item:hover {
+            background: var(--text-secondary);
+            border-color: var(--accent);
+            transform: translateY(-2px);
+        }
+
+        .piece-item.selected {
+            border-color: var(--accent);
+            box-shadow: 0 0 var(--dot-2) var(--accent);
+        }
+
+        .piece-name {
+            font-weight: bold;
+            margin-bottom: 8px;
+            font-size: 14px;
+            text-align: center;
+        }
+
+        .piece-stats {
+            font-size: 12px;
+            color: var(--text-secondary);
+            font-family: 'Courier New', monospace;
+            margin-bottom: 8px;
+            text-align: center;
+        }
+
+        .piece-preview {
+            margin: 8px 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 60px;
+        }
+
+        .piece-grid {
+            display: grid;
+            gap: 2px;
+            background: rgba(0, 0, 0, 0.5);
+            padding: 6px;
+            border: 1px solid var(--text-secondary);
+            margin: 8px auto;
+            max-width: 120px;
+        }
+
+        .piece-cell {
+            width: 18px;
+            height: 18px;
+            background: rgba(0, 0, 0, 0.6);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: 'Courier New', monospace;
+            font-size: 11px;
+            font-weight: bold;
+            color: #000;
+            min-width: 18px;
+            min-height: 18px;
+        }
+
+        .piece-cell.filled {
+            background: #ff4444; /* Default fallback */
+            color: #000;
+        }
+        
+        /* Piece cell stat colors */
+        .piece-cell.filled.stat-hp { background: #44ff44; }      /* HP - GREEN */
+        .piece-cell.filled.stat-attack { background: #ff4444; }   /* ATT - RED */
+        .piece-cell.filled.stat-defense { background: #ff8800; }  /* DEF - ORANGE */
+        .piece-cell.filled.stat-speed { background: #ffff44; }    /* SPD - YELLOW */
+
+        /* Shop section - no borders, positioned on dot grid */
+        .shop-section {
+            position: relative;
+            padding: var(--dot-8); /* 32px = 2 dots */
+        }
+
+        /* Corner symbols for shop section */
+        .shop-section::before,
+        .shop-section::after {
+            content: '▣';
+            position: absolute;
+            color: var(--corner-symbol);
+            font-size: var(--font-size-md);
+            z-index: 1;
+        }
+
+        .shop-section::before {
+            top: var(--dot-2);
+            left: var(--dot-2);
+        }
+
+        .shop-section::after {
+            top: var(--dot-2);
+            right: var(--dot-2);
+        }
+
+        .shop-section .corner-bottom-left,
+        .shop-section .corner-bottom-right {
+            position: absolute;
+            color: var(--corner-symbol);
+            font-size: var(--font-size-md);
+            bottom: var(--dot-2);
+            z-index: 1;
+        }
+
+        .shop-section .corner-bottom-left {
+            left: var(--dot-2);
+        }
+
+        .shop-section .corner-bottom-right {
+            right: var(--dot-2);
+        }
+
+        .shop-section h2 {
+            margin-bottom: var(--dot-8); /* 32px = 2 dots */
+            text-transform: uppercase;
+            letter-spacing: var(--dot);
+            font-size: var(--font-size-lg);
+            color: var(--text-secondary);
+        }
+
+        .shop-items {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+        }
+
+        .shop-item {
+            background: rgba(34, 34, 34, 0.9);
+            padding: 20px;
+            text-align: center;
+            border: 1px solid var(--text-secondary);
+        }
+
+        .shop-item h4 {
+            margin-bottom: 10px;
+            font-size: 18px;
+        }
+
+        .shop-item .price {
+            color: var(--text-secondary);
+            margin-bottom: 10px;
+            font-family: 'Courier New', monospace;
+            font-size: 16px;
+        }
+
+        .shop-item .btn {
+            width: 100%;
+        }
+
+        .shop-item .btn:hover {
+            opacity: 0.8;
+        }
+
+        .piece-preview {
+            margin-bottom: var(--dot-2);
+        }
+
+        .piece-preview-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 1px;
+            width: var(--dot-16);
+            height: var(--dot-16);
+            margin: 0 auto;
+        }
+
+        .preview-cell {
+            width: 100%;
+            height: 100%;
+            background: var(--text-secondary);
+            opacity: 0.3;
+        }
+
+        .preview-cell.active {
+            background: var(--accent);
+            opacity: 1;
+        }
+
+        .shop-item .stats {
+            display: flex;
+            flex-wrap: wrap;
+            gap: var(--dot);
+            margin: var(--dot-2) 0;
+            font-size: var(--font-size-xs);
+        }
+
+        .shop-item .stat {
+            background: var(--text-secondary);
+            color: var(--bg-primary);
+            padding: 2px var(--dot);
+        }
+
+
+
+        /* Floating Library Widget */
+        .floating-library {
+            position: fixed;
+            top: 60px;
+            right: 20px;
+            width: 300px;
+            max-height: 500px;
+            min-width: 250px;
+            min-height: 300px;
+            background: rgba(0, 0, 0, 0.95);
+            border: 2px solid var(--text-secondary);
+            z-index: 1000;
+            display: none;
+            backdrop-filter: blur(10px);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.7);
+            resize: both;
+            overflow: hidden;
+            font-family: 'Courier New', monospace;
+            color: var(--text-primary);
+        }
+
+        .floating-library.active {
+            display: block;
+        }
+
+        .floating-library-header {
+            padding: var(--dot-3);
+            background: rgba(255, 255, 255, 0.1);
+            border-bottom: 1px solid var(--text-secondary);
+            cursor: move;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .floating-library-header h4 {
+            margin: 0;
+            font-size: var(--font-size-sm);
+            color: var(--accent);
+        }
+
+        .floating-library-close {
+            background: none;
+            border: none;
+            color: var(--accent);
+            font-size: 24px;
+            cursor: pointer;
+            padding: var(--dot-2);
+            width: 32px;
+            height: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: background 0.2s ease;
+        }
+
+        .floating-library-close:hover {
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        @media (max-width: 768px) {
+            .floating-library-close {
+                font-size: 28px;
+                width: 40px;
+                height: 40px;
+                padding: var(--dot-3);
+            }
+        }
+
+        .floating-library-content {
+            padding: var(--dot-3);
+            max-height: 320px;
+            overflow-y: auto;
+        }
+
+        .floating-library-content::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .floating-library-content::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        .floating-library-content::-webkit-scrollbar-thumb {
+            background: var(--accent);
+            border-radius: 3px;
+        }
+
+        /* Floating Combat Log Widget */
+        .floating-combat-log {
+            position: fixed;
+            top: 60px;
+            right: 20px;
+            width: 300px;
+            max-height: 400px;
+            min-width: 250px;
+            min-height: 250px;
+            background: rgba(34, 34, 34, 0.95);
+            border: 2px solid #ff4444;
+            z-index: 1000;
+            display: none;
+            backdrop-filter: blur(10px);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.7);
+            resize: both;
+            overflow: hidden;
+        }
+
+        .floating-combat-log.active {
+            display: block;
+        }
+
+        .floating-combat-log-header {
+            padding: var(--dot-3);
+            background: rgba(255, 68, 68, 0.2);
+            border-bottom: 1px solid #ff4444;
+            cursor: move;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .floating-combat-log-header h4 {
+            margin: 0;
+            font-size: var(--font-size-sm);
+            color: #ff4444;
+        }
+
+        .floating-combat-log-close {
+            background: none;
+            border: none;
+            color: #ff4444;
+            font-size: 24px;
+            cursor: pointer;
+            padding: var(--dot-2);
+            width: 32px;
+            height: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 4px;
+            transition: background 0.2s ease;
+        }
+
+        .floating-combat-log-close:hover {
+            background: rgba(255, 68, 68, 0.2);
+        }
+
+        .floating-combat-log-content {
+            padding: var(--dot-3);
+            max-height: 320px;
+            overflow-y: auto;
+            font-family: 'Courier New', monospace;
+            font-size: var(--font-size-xs);
+            line-height: 1.4;
+        }
+
+        .floating-combat-log-content::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .floating-combat-log-content::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        .floating-combat-log-content::-webkit-scrollbar-thumb {
+            background: #ff4444;
+            border-radius: 3px;
+        }
+
+        .combat-log-entry {
+            margin-bottom: var(--dot-2);
+            padding: var(--dot-2);
+            background: rgba(255, 68, 68, 0.1);
+            border-left: 2px solid #ff4444;
+            border-radius: 2px;
+        }
+
+        .combat-log-entry.attack {
+            border-left-color: #ff8800;
+            background: rgba(255, 136, 0, 0.1);
+        }
+
+        .combat-log-entry.damage {
+            border-left-color: #ff4444;
+            background: rgba(255, 68, 68, 0.1);
+        }
+
+        .combat-log-entry.destroyed {
+            border-left-color: #44ff44;
+            background: rgba(68, 255, 68, 0.1);
+        }
+
+        .combat-log-entry.downed {
+            border-left-color: #ff4444;
+            background: rgba(255, 68, 68, 0.2);
+        }
+
+        .combat-log-timestamp {
+            color: var(--text-secondary);
+            font-size: 10px;
+        }
+
+        .combat-log-message {
+            color: var(--text-primary);
+            font-weight: bold;
+        }
+
+        .floating-library .piece-item {
+            margin-bottom: var(--dot-2);
+            padding: var(--dot-2);
+        }
+
+        .floating-library .piece-preview {
+            min-height: 40px;
+        }
+
+        .library-toggle-btn {
+            background: var(--accent);
+            color: var(--bg-primary);
+            border: none;
+            padding: var(--dot-2) var(--dot-3);
+            margin-bottom: var(--dot-3);
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: bold;
+            width: 100%;
+            font-family: inherit;
+            flex-shrink: 0;
+        }
+
+        .library-toggle-btn:hover {
+            background: var(--text-secondary);
+        }
+
+        @media (max-width: 768px) {
+            .main-content {
+                grid-template-columns: 1fr;
+                gap: var(--dot-4);
+            }
+
+            /* Mobile Layout - Exact Order Specification */
+            .main-content {
+                grid-template-columns: 1fr;
+                gap: var(--dot-4);
+                display: flex;
+                flex-direction: column;
+            }
+
+            /* 1. Header (already first) */
+            
+            /* 2. Grid Statistics */
+            .grid-statistics {
+                order: 1;
+                max-width: 250px;
+                margin: 0 auto var(--dot-3) auto;
+            }
+
+            /* 3. Stats + Controls side by side */
+            .stats-controls-row {
+                order: 2;
+                display: grid;
+                grid-template-columns: 1fr 1fr;
+                gap: var(--dot-4);
+                margin-bottom: var(--dot-4);
+                max-width: 800px;
+                margin-left: auto;
+                margin-right: auto;
+            }
+
+                    .stats {
+            background: rgba(34, 34, 34, 0.8);
+            border: 1px solid var(--text-secondary);
+            padding: var(--dot-3);
+        }
+
+            .controls-section {
+                display: flex;
+                flex-direction: column;
+                gap: var(--dot-2);
+            }
+
+            .tune-up-section {
+                margin-bottom: var(--dot-2);
+            }
+
+            .upgrade-grid-section {
+                margin-bottom: 0;
+            }
+
+            /* 4. Upgrade Grid */
+            .grid-section {
+                order: 3;
+                margin-bottom: var(--dot-4);
+            }
+
+            /* 5. Grid Controls */
+            .grid-controls {
+                order: 4;
+                margin-bottom: var(--dot-4);
+            }
+
+            /* 6. Launch */
+            .launch-section {
+                order: 5;
+                margin-bottom: var(--dot-4);
+            }
+
+            /* 7. Library */
+            .piece-library {
+                order: 6;
+                width: 100%;
+                height: 800px; /* Double the height for proper visibility */
+                display: flex;
+                flex-direction: column;
+                resize: vertical;
+                min-height: 600px;
+                max-height: 1000px;
+                overflow: hidden;
+                margin-bottom: var(--dot-4);
+            }
+
+            .piece-library .library-filters {
+                width: 100%;
+                min-width: auto;
+                flex-direction: row;
+                flex-wrap: wrap;
+                gap: var(--dot-3);
+                padding: var(--dot-3);
+            }
+
+            .piece-library .library-filters .filter-group {
+                flex: 1;
+                min-width: 120px;
+            }
+
+            .piece-library .library-controls {
+                margin-top: 0;
+                padding-top: 0;
+                border-top: none;
+                width: 100%;
+                order: -1;
+            }
+
+            /* 8. Shop (already last) */
+            .shop-section {
+                order: 7;
+            }
+
+            .sidebar {
+                display: contents; /* This makes sidebar children appear as direct children of main-content */
+            }
+
+
+            /* Mobile floating library adjustments */
+            .floating-library {
+                width: 70vw;
+                max-width: 280px;
+                max-height: 50vh;
+                right: 5vw;
+                top: 10px;
+                left: auto;
+                min-width: 240px;
+                min-height: 300px;
+            }
+
+            .floating-library-content {
+                max-height: calc(50vh - 80px);
+            }
+
+            /* Hide regular library on mobile when floating is active */
+            .piece-library.floating-active {
+                display: none;
+            }
+
+            /* Hide filters when floating library is active */
+            .piece-library.floating-active .library-filters {
+                display: none;
+            }
+
+            /* Compact stats on mobile */
+            .stats .stat-item {
+                margin-bottom: 6px;
+            }
+
+            .stat-label, .stat-value {
+                font-size: 14px;
+            }
+
+            /* Mobile piece library is handled by flex layout */
+        }
+
+        /* First Time Setup Overlay */
+                .first-time-setup {
+            position: fixed;
+            top: 0;
+            left: 0;
+                width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.98);
+            z-index: 2000;
+            display: none; /* DISABLED: Hidden by default */
+            align-items: center;
+            justify-content: center;
+            padding: var(--dot-4);
+            overflow: hidden; /* Prevent background scrolling */
+        }
+
+        .setup-terminal {
+            background: rgba(0, 0, 0, 0.9);
+            border: 2px solid var(--accent);
+            padding: var(--dot-6);
+            max-width: 800px;
+            width: 100%;
+            max-height: 90vh;
+            overflow-y: auto;
+            font-family: 'Courier New', monospace;
+        }
+
+        .setup-header {
+            text-align: center;
+            margin-bottom: var(--dot-6);
+            color: var(--accent);
+            font-size: var(--font-size-lg);
+            text-transform: uppercase;
+            letter-spacing: var(--dot);
+        }
+
+        .setup-content {
+            min-height: 300px;
+        }
+
+        .setup-line {
+            color: var(--text-primary);
+            margin-bottom: var(--dot-3);
+            font-size: var(--font-size-sm);
+            line-height: 1.6;
+            opacity: 0;
+            animation: fadeInUp 0.5s ease forwards;
+        }
+
+        .setup-line.prompt {
+            color: var(--accent);
+            font-weight: bold;
+        }
+
+        .setup-line.company {
+            color: #4488ff;
+            font-weight: bold;
+            text-align: center;
+        }
+
+        .setup-line.title {
+            color: var(--accent);
+            font-size: var(--font-size-xl);
+            font-weight: bold;
+            text-align: center;
+            letter-spacing: var(--dot-2);
+        }
+
+        .setup-line.manual {
+            color: #44ff44;
+            font-weight: bold;
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .setup-input-group {
+            margin: var(--dot-6) 0;
+            text-align: center;
+        }
+
+        .setup-input {
+            background: rgba(17, 17, 17, 0.9);
+            border: 2px solid var(--accent);
+            color: var(--text-primary);
+            padding: var(--dot-4);
+            font-family: 'Courier New', monospace;
+            font-size: var(--font-size-md);
+            text-align: center;
+            width: 100%;
+            max-width: 400px;
+        }
+
+        .setup-input:focus {
+            outline: none;
+            box-shadow: 0 0 10px var(--accent);
+        }
+
+        .setup-button {
+            background: var(--accent);
+            color: var(--bg-primary);
+            border: 2px solid var(--accent);
+            padding: var(--dot-4) var(--dot-8);
+            font-family: 'Courier New', monospace;
+            font-size: var(--font-size-md);
+            font-weight: bold;
+            text-transform: uppercase;
+            letter-spacing: var(--dot);
+            cursor: pointer;
+            margin-top: var(--dot-4);
+            transition: all 0.3s ease;
+        }
+
+        .setup-button:hover {
+            background: var(--text-secondary);
+            box-shadow: 0 0 15px var(--accent);
+        }
+
+        .setup-button:disabled {
+            background: #666;
+            color: #ccc;
+            cursor: not-allowed;
+            box-shadow: none;
+        }
+
+        .typing-cursor {
+            animation: blink 1s infinite;
+        }
+
+        @keyframes blink {
+            0%, 50% { opacity: 1; }
+            51%, 100% { opacity: 0; }
+        }
+
+        .edit-name-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            backdrop-filter: blur(5px);
+            z-index: 1500;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            padding: var(--dot-4);
+        }
+
+        .edit-name-modal.active {
+            display: flex;
+        }
+
+        .edit-name-content {
+            background: rgba(34, 34, 34, 0.95);
+            border: 2px solid var(--accent);
+            padding: var(--dot-6);
+            text-align: center;
+            font-family: 'Courier New', monospace;
+        }
+
+        .edit-name-content h3 {
+            color: var(--accent);
+            margin-bottom: var(--dot-4);
+        }
+
+        .edit-name-content input {
+            background: rgba(17, 17, 17, 0.9);
+            border: 1px solid var(--text-secondary);
+            color: var(--text-primary);
+            padding: var(--dot-3);
+            font-family: 'Courier New', monospace;
+            font-size: var(--font-size-sm);
+            text-align: center;
+            width: 250px;
+            margin-bottom: var(--dot-4);
+        }
+
+                    .edit-name-buttons {
+                display: flex;
+                gap: var(--dot-3);
+                justify-content: center;
+            }
+
+            /* Authentication Styles */
+            .auth-section {
+                display: flex;
+                justify-content: flex-end;
+                margin-top: var(--dot-2);
+            }
+
+            .auth-status {
+                display: flex;
+                align-items: center;
+                gap: var(--dot-3);
+                font-size: var(--font-size-sm);
+            }
+
+            .auth-btn {
+                background: var(--accent);
+                color: var(--bg-primary);
+                border: 2px solid var(--accent);
+                padding: var(--dot-2) var(--dot-4);
+                font-family: 'Courier New', monospace;
+                font-size: var(--font-size-sm);
+                cursor: pointer;
+                transition: all 0.2s ease;
+            }
+
+            .auth-btn:hover {
+                background: var(--bg-primary);
+                color: var(--accent);
+            }
+
+            #authUsername {
+                color: var(--text-secondary);
+                font-weight: bold;
+        }
+
+
+
+        /* Layout System */
+        .layout-container {
+            position: relative;
+            transition: all 0.2s ease;
+        }
+
+        .layout-container.draggable {
+            cursor: move;
+        }
+
+        .layout-container.selected {
+            outline: 2px solid var(--accent);
+            outline-offset: 2px;
+        }
+
+        .layout-container.selected .corner-box {
+            display: flex !important;
+        }
+
+        /* Corner Boxes */
+        .corner-box {
+            position: absolute;
+            width: var(--dot-4);
+            height: var(--dot-4);
+            background: var(--accent);
+            border: var(--dot) solid var(--text-secondary);
+            cursor: pointer;
+            z-index: 100;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            font-size: var(--font-size-xs);
+            color: var(--bg-primary);
+            transition: all 0.2s ease;
+        }
+
+        .corner-box:hover {
+            background: var(--text-primary);
+            transform: scale(1.1);
+        }
+
+        .corner-box.top-left {
+            top: calc(-1 * var(--dot-2));
+            left: calc(-1 * var(--dot-2));
+            cursor: nw-resize;
+        }
+
+        .corner-box.top-right {
+            top: calc(-1 * var(--dot-2));
+            right: calc(-1 * var(--dot-2));
+            cursor: ne-resize;
+        }
+
+        .corner-box.bottom-left {
+            bottom: calc(-1 * var(--dot-2));
+            left: calc(-1 * var(--dot-2));
+            cursor: sw-resize;
+        }
+
+        .corner-box.bottom-right {
+            bottom: calc(-1 * var(--dot-2));
+            right: calc(-1 * var(--dot-2));
+            cursor: se-resize;
+        }
+
+        /* Layout Controls */
+        .layout-controls {
+            background: rgba(0, 0, 0, 0.8);
+            border: 2px solid var(--text-secondary);
+            padding: var(--dot-2);
+            display: flex;
+            flex-direction: column;
+            gap: var(--dot-2);
+            font-family: 'Courier New', monospace;
+        }
+
+        .layout-controls button {
+            background: rgba(0, 0, 0, 0.8);
+            border: 2px solid var(--text-secondary);
+            color: var(--text-primary);
+            padding: var(--dot-2);
+            cursor: pointer;
+            font-size: var(--font-size-xs);
+            text-transform: uppercase;
+            letter-spacing: var(--dot);
+            font-family: 'Courier New', monospace;
+        }
+
+        .layout-controls button:hover {
+            background: var(--text-secondary);
+            color: var(--bg-primary);
+        }
+
+        /* Container Selector */
+        .container-selector {
+            background: rgba(0, 0, 0, 0.8);
+            border: 2px solid var(--text-secondary);
+            padding: var(--dot-2);
+            display: flex;
+            flex-direction: column;
+            gap: var(--dot-2);
+            font-family: 'Courier New', monospace;
+        }
+
+        .container-selector button {
+            background: rgba(0, 0, 0, 0.8);
+            border: 2px solid var(--text-secondary);
+            color: var(--text-primary);
+            padding: var(--dot-2);
+            cursor: pointer;
+            font-size: var(--font-size-xs);
+            text-transform: uppercase;
+            letter-spacing: var(--dot);
+            font-family: 'Courier New', monospace;
+        }
+
+        .container-selector button:hover {
+            background: var(--text-secondary);
+            color: var(--bg-primary);
+        }
+
+        .container-selector button.selected {
+            background: var(--accent);
+            color: var(--bg-primary);
+        }
+
+        /* Layout Mode */
+        .layout-mode {
+            background: rgba(0, 0, 0, 0.8);
+            border: 2px solid var(--accent);
+            padding: var(--dot-2);
+            text-align: center;
+            max-width: 300px;
+            font-size: var(--font-size-xs);
+            font-family: 'Courier New', monospace;
+        }
+
+        .layout-mode h3 {
+            color: var(--accent);
+            margin-bottom: var(--dot-2);
+            text-transform: uppercase;
+            letter-spacing: var(--dot);
+            font-size: var(--font-size-sm);
+        }
+
+        .layout-mode p {
+            margin-bottom: var(--dot-1);
+            font-size: var(--font-size-xs);
+        }
+
+        .layout-controls button.active {
+            background: var(--accent);
+            color: var(--bg-primary);
+        }
+
+        .container-selector button:hover {
+            background: var(--text-secondary);
+            color: var(--bg-primary);
+        }
+
+        .container-selector button.selected {
+            background: var(--accent);
+            color: var(--bg-primary);
+        }
+
+        /* Container Selection */
+        .container-selector {
+            background: rgba(0, 0, 0, 0.8);
+            border: 2px solid var(--text-secondary);
+            padding: var(--dot-2);
+            display: none;
+            flex-direction: column;
+            gap: var(--dot-2);
+            font-family: 'Courier New', monospace;
+        }
+
+        .container-selector.show {
+            display: flex;
+        }
+
+        .container-selector button {
+            background: rgba(0, 0, 0, 0.8);
+            border: 2px solid var(--text-secondary);
+            color: var(--text-primary);
+            padding: var(--dot-2);
+            cursor: pointer;
+            font-size: var(--font-size-xs);
+            text-transform: uppercase;
+            letter-spacing: var(--dot);
+            text-align: left;
+            font-family: 'Courier New', monospace;
+        }
+
+        .container-selector button:hover {
+            background: var(--text-secondary);
+            color: var(--bg-primary);
+        }
+
+        .container-selector button.selected {
+            background: var(--accent);
+            color: var(--bg-primary);
+        }
+
+
+
+        /* Mobile Layout Adjustments */
+        @media (max-width: 768px) {
+            .layout-controls {
+                top: var(--dot-2);
+                right: var(--dot-2);
+                padding: var(--dot-2);
+            }
+
+            .corner-box {
+                width: var(--dot-5);
+                height: var(--dot-5);
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Dream Mecha</h1>
+            <div class="pilot-info">
+                <div class="pilot-names">
+                    <span class="operator-name">Operator: <strong id="operatorName">Unknown</strong></span>
+                    <button class="btn edit-name-btn" id="editOperatorBtn">[EDIT]</button>
+                    <span class="mecha-name">Mecha: <strong id="mechaName">Unnamed</strong></span>
+                    <button class="btn edit-name-btn" id="editMechaBtn">[EDIT]</button>
+                </div>
+            <p>Grid Management System</p>
+            </div>
+            <div class="auth-section">
+                <div id="authStatus" class="auth-status">
+                    <span id="authUsername">Not authenticated</span>
+                    <button id="loginBtn" class="btn auth-btn">Login with Discord</button>
+                    <button id="logoutBtn" class="btn auth-btn" style="display: none;">Logout</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Layout Controls -->
+        <!-- Layout Controls -->
+        <div class="layout-controls" id="layoutControls" style="position: fixed; bottom: var(--dot-4); left: var(--dot-4); z-index: 2000;">
+            <button id="layoutModeBtn">Layout Mode</button>
+            <button id="selectContainersBtn">Select Containers</button>
+            <button id="resetLayoutBtn">Reset Layout</button>
+            <button id="saveLayoutBtn">Save Layout</button>
+        </div>
+
+        <!-- Container Selector -->
+        <div class="container-selector" id="containerSelector" style="position: fixed; top: var(--dot-4); left: var(--dot-4); z-index: 2000; display: none;">
+            <button data-container="gridStats">Grid Statistics</button>
+            <button data-container="mechaStats">Mecha Stats</button>
+            <button data-container="tuneUp">Tune Up</button>
+            <button data-container="gridExpansion">Grid Expansion</button>
+            <button data-container="grid">Grid</button>
+            <button data-container="pieceLibrary">Piece Library</button>
+            <button data-container="shop">Shop</button>
+        </div>
+
+        <!-- Layout Mode Info -->
+        <div class="layout-mode" id="layoutMode" style="position: fixed; bottom: var(--dot-4); right: var(--dot-4); z-index: 2000; display: none;">
+            <h3>Layout Mode Active</h3>
+            <p>Drag corner boxes to move containers</p>
+            <p>Resize by dragging corner boxes</p>
+            <button id="exitLayoutModeBtn">Exit Layout Mode</button>
+        </div>
+
+        <!-- CLEAN REBUILD - DREAM MECHA GRID SYSTEM -->
+        <div class="main-content">
+            <!-- Grid Statistics (separate from grid) -->
+            <div class="layout-container" id="gridStatsLayoutContainer">
+                <div class="corner-box top-left" data-resize="nw">▣</div>
+                <div class="corner-box top-right" data-resize="ne">▣</div>
+                <div class="corner-box bottom-left" data-resize="sw">▣</div>
+                <div class="corner-box bottom-right" data-resize="se">▣</div>
+                
+                <div class="grid-statistics">
+                        <h4>Grid Statistics</h4>
+                    <div class="grid-stats-row">
+                        <span class="stat-label">Grid Size:</span>
+                        <span class="stat-value">(<span id="totalCells">64</span> cells)</span>
+                        </div>
+                    <div class="grid-stats-row">
+                        <span class="stat-label">Installed:</span>
+                        <span class="stat-value" id="installedUpgrades">0 upgrades</span>
+                        </div>
+                    <div class="grid-stats-row">
+                        <span class="stat-label">Available:</span>
+                        <span class="stat-value" id="availableUpgrades">64 cells</span>
+                        </div>
+                    <div class="grid-stats-row">
+                        <span class="stat-label">Fill Rate:</span>
+                        <span class="stat-value" id="fillRate">0%</span>
+                        </div>
+                    </div>
+            </div>
+                
+                        <!-- Mobile Layout: Stats + Controls Side by Side -->
+            <div class="stats-controls-row">
+                <div class="layout-container" id="statsLayoutContainer">
+                    <div class="corner-box top-left" data-resize="nw">▣</div>
+                    <div class="corner-box top-right" data-resize="ne">▣</div>
+                    <div class="corner-box bottom-left" data-resize="sw">▣</div>
+                    <div class="corner-box bottom-right" data-resize="se">▣</div>
+                    
+                    <div class="stats resizable-panel">
+                        <h3>Mecha Stats</h3>
+                        
+                        <!-- HP Bar integrated with stats -->
+                        <div class="stat-item hp-stat-item">
+                            <div class="hp-display">
+                                <span class="stat-label">HP:</span>
+                                <span class="stat-value"><span id="currentHp">0</span> / <span id="maxHp">0</span></span>
+                    </div>
+                            <div class="hp-bar" id="hpBar">
+                                <!-- HP bar cells will be generated -->
+                            </div>
+                </div>
+
+                        <div class="stat-item">
+                            <span class="stat-label">ATK:</span>
+                            <span class="stat-value" id="attackStat">0</span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-label">DEF:</span>
+                            <span class="stat-value" id="defenseStat">0</span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-label">SPD:</span>
+                            <span class="stat-value" id="speedStat">0</span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-label">Zoltans:</span>
+                            <span class="stat-value" id="zoltansStat">10000</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="splitter" id="mainSplitter"></div>
+                <div class="controls-section resizable-panel">
+                    <div class="layout-container" id="tuneUpLayoutContainer">
+                        <div class="corner-box top-left" data-resize="nw">▣</div>
+                        <div class="corner-box top-right" data-resize="ne">▣</div>
+                        <div class="corner-box bottom-left" data-resize="sw">▣</div>
+                        <div class="corner-box bottom-right" data-resize="se">▣</div>
+                        
+                        <div class="tune-up-section">
+                            <h3>Tune Up</h3>
+                            <div class="tune-up-controls">
+                                <div class="tune-up-buttons">
+                                    <button class="btn tune-up-btn" id="tuneUpFullBtn">FULL</button>
+                                    <button class="btn tune-up-btn" id="tuneUpCustomBtn">Custom</button>
+                                </div>
+                                
+                                <div class="custom-input-group" id="customInputGroup" style="display: none;">
+                                    <label for="tuneUpAmount">Heal Amount (Z):</label>
+                                    <input type="number" id="tuneUpAmount" min="1" placeholder="Enter Z amount">
+                                </div>
+                                
+                                <div class="confirmation-section" id="confirmationSection" style="display: none;">
+                                    <div class="confirmation-text" id="confirmationText"></div>
+                                    <div class="confirmation-buttons">
+                                        <button class="btn confirm-btn" id="confirmBtn">CONFIRM</button>
+                                        <button class="btn cancel-btn" id="cancelBtn">CANCEL</button>
+                                    </div>
+                                </div>
+                                
+                                <div class="tune-up-info">
+                                    <small>Cost: <span id="tuneUpCost">0.1</span>Z per HP</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="layout-container" id="gridExpansionLayoutContainer">
+                        <div class="corner-box top-left" data-resize="nw">▣</div>
+                        <div class="corner-box top-right" data-resize="ne">▣</div>
+                        <div class="corner-box bottom-left" data-resize="sw">▣</div>
+                        <div class="corner-box bottom-right" data-resize="se">▣</div>
+                        
+                        <div class="upgrade-grid-section">
+                            <h3>Grid Expansion</h3>
+                            <button class="btn upgrade-grid-btn" id="upgradeGridBtn">Upgrade Grid (<span id="upgradePointsBtn">20</span> points)</button>
+                            <div class="upgrade-info">
+                                <small>Click to enter expansion mode</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Upgrade Grid Section -->
+            <div class="layout-container" id="gridLayoutContainer">
+                <div class="corner-box top-left" data-resize="nw">▣</div>
+                <div class="corner-box top-right" data-resize="ne">▣</div>
+                <div class="corner-box bottom-left" data-resize="sw">▣</div>
+                <div class="corner-box bottom-right" data-resize="se">▣</div>
+                
+                <div class="grid-section">
+                    <div class="grid-container">
+                        <div class="full-grid-container" id="fullGridContainer">
+                            <div class="mecha-grid-full" id="mechaGridFull">
+                                <!-- Dynamic grid will be generated based on active area -->
+                            </div>
+                        </div>
+                    </div>
+                    <div class="corner-bottom-left">▣</div>
+                    <div class="corner-bottom-right">▣</div>
+                </div>
+            </div>
+
+            <!-- Grid Controls -->
+            <div class="layout-container" id="gridControlsLayoutContainer">
+                <div class="corner-box top-left" data-resize="nw">▣</div>
+                <div class="corner-box top-right" data-resize="ne">▣</div>
+                <div class="corner-box bottom-left" data-resize="sw">▣</div>
+                <div class="corner-box bottom-right" data-resize="se">▣</div>
+                
+                <div class="grid-controls">
+                    <button class="btn" id="rotateBtn">Rotate (R)</button>
+                    <button class="btn" id="removeBtn">Remove (Del)</button>
+                    <button class="btn" id="clearBtn">Clear All</button>
+                    <button class="btn" id="combatLogBtn">Combat Log</button>
+                </div>
+            </div>
+
+            <!-- Launch Section -->
+            <div class="launch-section">
+                <button class="btn launch-btn" id="launchBtn">
+                    <span class="launch-text">LAUNCH MECHA</span>
+                    <div class="launch-decoration">
+                        <span class="corner-dot">▣</span>
+                        <span class="corner-dot">▣</span>
+                        <span class="corner-dot">▣</span>
+                        <span class="corner-dot">▣</span>
+                    </div>
+                </button>
+                <div class="launch-sequence" id="launchSequence" style="display: none;">
+                    <div class="command-line">
+                        <span class="prompt">&gt; INITIALIZING MECHA SYSTEMS</span>
+                        <span class="loading-dots" id="loadingDots"></span>
+                    </div>
+                    <div class="command-line" id="systemCheck" style="display: none;">
+                        <span class="prompt">&gt; SYSTEMS READY</span>
+                    </div>
+                    <button class="btn engage-btn" id="engageBtn" style="display: none;">ENGAGE</button>
+                </div>
+            </div>
+
+            <!-- Future: Save/Load Loadouts Section -->
+            <!-- Reserved space for future save/load functionality -->
+
+            <!-- Piece Library -->
+            <div class="layout-container" id="libraryLayoutContainer">
+                <div class="corner-box top-left" data-resize="nw">▣</div>
+                <div class="corner-box top-right" data-resize="ne">▣</div>
+                <div class="corner-box bottom-left" data-resize="sw">▣</div>
+                <div class="corner-box bottom-right" data-resize="se">▣</div>
+                
+                <div class="piece-library">
+                    <h3>Piece Library</h3>
+                    
+                    <!-- Left Side: Filters and Controls -->
+                    <div class="library-filters" id="libraryFilters">
+                        <h4>Filters</h4>
+                        
+                        <div class="filter-group">
+                            <label>Stat Type:</label>
+                            <select id="statTypeFilter">
+                                <option value="all">All Types</option>
+                                <option value="hp">HP Focus</option>
+                                <option value="attack">Attack Focus</option>
+                                <option value="defense">Defense Focus</option>
+                                <option value="speed">Speed Focus</option>
+                            </select>
+                        </div>
+                        
+                        <div class="filter-group">
+                            <label>HP Range:</label>
+                            <input type="range" id="hpRangeFilter" min="0" max="500" value="500" class="filter-slider">
+                            <span class="range-display">0 - <span id="hpRangeDisplay">500</span></span>
+                        </div>
+                        
+                        <div class="filter-group">
+                            <label>Block Count:</label>
+                            <input type="range" id="blockCountFilter" min="1" max="10" value="10" class="filter-slider">
+                            <span class="range-display">1 - <span id="blockCountDisplay">10</span> blocks</span>
+                        </div>
+                        
+                        <button class="btn filter-reset-btn" id="resetFiltersBtn">Reset Filters</button>
+                        
+                        <div class="library-controls">
+                            <button class="library-toggle-btn" id="libraryToggleBtn">Float Library</button>
+                        </div>
+                    </div>
+                    
+                    <!-- Right Side: Piece Inventory -->
+                    <div class="library-content" id="pieceLibrary">
+                        <!-- Clean piece library -->
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Floating Library Widget -->
+        <div class="floating-library" id="floatingLibrary">
+            <div class="floating-library-header" id="floatingLibraryHeader">
+                <h4>Piece Library</h4>
+                <button class="floating-library-close" id="floatingLibraryClose">×</button>
+            </div>
+            <div class="floating-library-content" id="floatingLibraryContent">
+                <!-- Floating library pieces will be populated here -->
+            </div>
+        </div>
+
+        <!-- Floating Combat Log Widget -->
+        <div class="floating-combat-log" id="floatingCombatLog">
+            <div class="floating-combat-log-header" id="floatingCombatLogHeader">
+                <h4>Combat Log</h4>
+                <button class="floating-combat-log-close" id="floatingCombatLogClose">×</button>
+            </div>
+            <div class="floating-combat-log-content" id="floatingCombatLogContent">
+                <!-- Combat log entries will be populated here -->
+            </div>
+        </div>
+
+        <!-- First Time Setup Overlay -->
+        <div class="first-time-setup" id="firstTimeSetup">
+            <div class="setup-terminal">
+                <div class="setup-header">RBHI NEURAL INTERFACE</div>
+                <div class="setup-content" id="setupContent">
+                    <!-- Dynamic content will be generated here -->
+                </div>
+                <!-- Debug skip button -->
+                <div class="setup-debug" style="position: absolute; top: 10px; right: 10px; z-index: 1000;">
+                    <button onclick="window.mechaGrid.skipSetup()" style="background: #ff4444; color: white; border: none; padding: 5px 10px; border-radius: 3px; cursor: pointer; font-size: 12px;">SKIP SETUP</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Edit Name Modal -->
+        <div class="edit-name-modal" id="editNameModal">
+            <div class="edit-name-content">
+                <h3 id="editNameTitle">Edit Name</h3>
+                <input type="text" id="editNameInput" placeholder="Enter name">
+                <div class="edit-name-buttons">
+                    <button class="btn" id="saveNameBtn">Save</button>
+                    <button class="btn secondary" id="cancelNameBtn">Cancel</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="layout-container" id="shopLayoutContainer">
+            <div class="corner-box top-left" data-resize="nw">▣</div>
+            <div class="corner-box top-right" data-resize="ne">▣</div>
+            <div class="corner-box bottom-left" data-resize="sw">▣</div>
+            <div class="corner-box bottom-right" data-resize="se">▣</div>
+            
+            <div class="shop-section">
+                <h2>Daily Shop</h2>
+                <div class="shop-items" id="shopItems">
+                    <!-- Clean shop system -->
+                </div>
+                <div class="corner-bottom-left">▣</div>
+                <div class="corner-bottom-right">▣</div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ===== CLEAN DREAM MECHA GRID SYSTEM =====
+        
+        // Parse blockmaker ASCII patterns into coordinate arrays
+        function parsePattern(pattern) {
+                const lines = pattern.trim().split('\n');
+                const coords = [];
+                let anchorX = 0, anchorY = 0;
+                
+            // Find anchor point (+)
+                lines.forEach((line, y) => {
+                    const cells = line.trim().split(/\s+/);
+                    cells.forEach((cell, x) => {
+                    if (cell === '+') {
+                            anchorX = x;
+                            anchorY = y;
+                        }
+                    });
+                });
+                
+            // Get all filled cells relative to anchor
+                lines.forEach((line, y) => {
+                    const cells = line.trim().split(/\s+/);
+                    cells.forEach((cell, x) => {
+                    if (cell && cell !== '.' && cell !== '0') {
+                            const relX = x - anchorX;
+                            const relY = y - anchorY;
+                            coords.push([relX, relY]);
+                        }
+                    });
+                });
+                
+                return coords.length > 0 ? coords : [[0, 0]];
+            }
+            
+        // Main grid system class
+        class MechaGrid {
+            constructor() {
+                // Grid system - individual cell tracking  
+                this.maxGridSize = 18; // Game rules maximum
+                this.baseActiveWidth = 8;   // Starting active area width
+                this.baseActiveHeight = 8;  // Starting active area height
+                this.activeStartX = 0;  // Active area starts at top-left
+                this.activeStartY = 0;
+                
+                // Track individually expanded cells
+                this.expandedCells = new Set(); // Set of "x,y" strings for expanded cells
+                
+                // Full grid is always 18x18, but only active area is usable
+                this.fullGrid = Array(this.maxGridSize).fill().map(() => Array(this.maxGridSize).fill(null));
+                
+                this.pieces = {};
+                this.selectedPiece = null;
+                this.activePiece = null;
+                this.floatingLibraryActive = false;
+                this.upgradeMode = false; // New: upgrade mode for grid expansion
+                this.pendingTuneUp = null; // Tune-up confirmation state
+                
+                // Player identity with fallback
+                this.operatorName = localStorage.getItem('operatorName') || null;
+                this.mechaName = localStorage.getItem('mechaName') || null;
+                
+                // Setup complete - no first-time setup needed
+                
+                this.isFirstTime = false; // DISABLED: Never show first-time setup
+                
+                // Player stats
+                this.maxHp = 0;
+                this.currentHp = 0;
+                this.zoltans = 10000; // Starting currency
+                this.upgradePoints = 20; // Starting with 20 for testing grid expansion
+                this.hpCostMultiplier = 0.1; // 0.1 Z per HP point (placeholder)
+                
+                // Library filters
+                this.filters = {
+                    statType: 'all',
+                    maxHp: 500,
+                    maxBlockCount: 10
+                };
+                
+                // Authentication
+                this.authenticated = false;
+                this.currentUserId = null;
+                this.currentUsername = null;
+                
+                this.init();
+            }
+            
+            init() {
+                // Set default names if not already set
+                if (!this.operatorName) {
+                    this.operatorName = 'Operator';
+                    localStorage.setItem('operatorName', this.operatorName);
+                }
+                if (!this.mechaName) {
+                    this.mechaName = 'Dream Mecha';
+                    localStorage.setItem('mechaName', this.mechaName);
+                }
+                
+                // Always go directly to main UI
+                this.initializeMainUI();
+            }
+
+            initializeMainUI() {
+                // Check if required elements exist before proceeding
+                const gridElement = document.getElementById('mechaGridFull');
+                if (!gridElement) {
+                    console.warn('Grid element not found, delaying initialization...');
+                    // Prevent infinite retry loops
+                    if (!this._initRetryCount) this._initRetryCount = 0;
+                    this._initRetryCount++;
+                    
+                    if (this._initRetryCount > 50) { // Max 5 seconds
+                        console.error('Failed to initialize UI after 50 retries');
+                        return;
+                    }
+                    
+                    setTimeout(() => this.initializeMainUI(), 100);
+                    return;
+                }
+                
+                this.setupAuthentication();
+                this.createFullGrid();
+                this.createHpBar();
+                this.loadSamplePieces();
+                this.setupControls();
+                this.setupFloatingLibrary();
+                this.setupTuneUp();
+                this.setupFilters();
+                this.setupNameEditing();
+                this.setupCombatLog();
+                this.updateStats();
+                this.updateGridStatistics();
+                this.updateHeaderNames();
+            }
+            
+            createFullGrid() {
+                const gridElement = document.getElementById('mechaGridFull');
+                gridElement.innerHTML = '';
+                
+                // Calculate the bounding box of all active cells (base + expanded)
+                let minX = this.activeStartX;
+                let maxX = this.activeStartX + this.baseActiveWidth - 1;
+                let minY = this.activeStartY;
+                let maxY = this.activeStartY + this.baseActiveHeight - 1;
+                
+                // Include expanded cells in bounding box
+                for (const cellKey of this.expandedCells) {
+                    const [x, y] = cellKey.split(',').map(Number);
+                    minX = Math.min(minX, x);
+                    maxX = Math.max(maxX, x);
+                    minY = Math.min(minY, y);
+                    maxY = Math.max(maxY, y);
+                }
+                
+                // If in upgrade mode, extend to show expansion options
+                if (this.upgradeMode) {
+                    minX = Math.max(0, minX - 1);
+                    maxX = Math.min(this.maxGridSize - 1, maxX + 1);
+                    minY = Math.max(0, minY - 1);
+                    maxY = Math.min(this.maxGridSize - 1, maxY + 1);
+                }
+                
+                const gridWidth = maxX - minX + 1;
+                const gridHeight = maxY - minY + 1;
+                
+                // Set CSS grid template to match display area
+                gridElement.style.gridTemplateColumns = `repeat(${gridWidth}, var(--grid-cell))`;
+                gridElement.style.gridTemplateRows = `repeat(${gridHeight}, var(--grid-cell))`;
+                
+                // Create cells for the display area
+                for (let y = minY; y <= maxY; y++) {
+                    for (let x = minX; x <= maxX; x++) {
+                        const cell = document.createElement('div');
+                        cell.dataset.x = x;
+                        cell.dataset.y = y;
+                        
+                        if (this.isCellActive(x, y)) {
+                            cell.className = 'grid-cell active';
+                            cell.addEventListener('click', () => this.onCellClick(x, y));
+                        } else if (this.upgradeMode && this.isCellExpandable(x, y)) {
+                            cell.className = 'grid-cell expansion';
+                            cell.addEventListener('click', () => this.expandSingleCell(x, y));
+                        } else {
+                            cell.className = 'grid-cell inactive';
+                        }
+                        
+                        gridElement.appendChild(cell);
+                    }
+                }
+            }
+
+
+
+            isCellActive(x, y) {
+                // Check base active area
+                const inBaseArea = x >= this.activeStartX && 
+                                  x < this.activeStartX + this.baseActiveWidth &&
+                                  y >= this.activeStartY && 
+                                  y < this.activeStartY + this.baseActiveHeight;
+                
+                // Check expanded cells
+                const isExpanded = this.expandedCells.has(`${x},${y}`);
+                
+                return inBaseArea || isExpanded;
+            }
+
+            isCellExpandable(x, y) {
+                // Don't expand if already active or out of bounds
+                if (this.isCellActive(x, y) || x < 0 || x >= this.maxGridSize || y < 0 || y >= this.maxGridSize) {
+                    return false;
+                }
+                
+                // Check if adjacent to any active cell (base area or expanded)
+                const directions = [[-1,0], [1,0], [0,-1], [0,1], [-1,-1], [-1,1], [1,-1], [1,1]];
+                
+                for (const [dx, dy] of directions) {
+                    const adjX = x + dx;
+                    const adjY = y + dy;
+                    
+                    if (this.isCellActive(adjX, adjY)) {
+                return true;
+                    }
+                }
+                
+                return false;
+            }
+            
+            onCellClick(x, y) {
+                // Only allow interactions in active area
+                if (!this.isCellActive(x, y)) {
+                    return;
+                }
+                
+                if (this.activePiece) {
+                    // Placing piece from library
+                    this.placePiece(this.activePiece, x, y);
+                } else if (this.selectedPiece && !this.fullGrid[y][x]) {
+                    // Moving selected piece to empty cell
+                    this.movePieceToPosition(this.selectedPiece, x, y);
+                } else if (this.fullGrid[y][x]) {
+                    // Selecting piece on grid
+                    this.selectPiece(x, y);
+                } else {
+                    // Clicking empty space - clear selection
+                    this.clearSelection();
+                }
+            }
+            
+            placePiece(piece, x, y) {
+                if (this.canPlacePiece(piece, x, y)) {
+                    // Remove from current position if already placed
+                    if (piece.placed) {
+                        this.removePiece(piece.id);
+                    }
+                    
+                    // Place piece
+                    piece.shape.forEach(([dx, dy]) => {
+                        const nx = x + dx;
+                        const ny = y + dy;
+                        if (this.isCellActive(nx, ny)) {
+                            this.fullGrid[ny][nx] = {
+                                pieceId: piece.id,
+                                isAnchor: dx === 0 && dy === 0
+                            };
+                        }
+                    });
+                    
+                    piece.x = x;
+                    piece.y = y;
+                    piece.placed = true;
+                    
+                    this.clearActivePiece();
+                    this.updateDisplay();
+                    this.updateStats();
+                }
+            }
+            
+            canPlacePiece(piece, x, y) {
+                                for (const [dx, dy] of piece.shape) {
+                    const nx = x + dx;
+                    const ny = y + dy;
+                    if (!this.isCellActive(nx, ny)) return false;
+                    
+                    const cellOccupant = this.fullGrid[ny][nx];
+                    // Allow placement if cell is empty OR occupied by the same piece (for moving)
+                    if (cellOccupant && cellOccupant.pieceId !== piece.id) {
+                    return false;
+                }
+                }
+                return true;
+            }
+            
+            removePiece(pieceId) {
+                for (let y = 0; y < this.maxGridSize; y++) {
+                    for (let x = 0; x < this.maxGridSize; x++) {
+                        if (this.fullGrid[y][x] && this.fullGrid[y][x].pieceId === pieceId) {
+                            this.fullGrid[y][x] = null;
+                        }
+                    }
+                }
+                this.pieces[pieceId].placed = false;
+            }
+            
+            movePieceToPosition(pieceId, newX, newY) {
+                const piece = this.pieces[pieceId];
+                if (!piece || !piece.placed) return;
+                
+                // Check if we can place at new position
+                if (this.canPlacePiece(piece, newX, newY)) {
+                    // Remove from current position
+                    this.removePiece(pieceId);
+                    
+                    // Place at new position
+                    piece.shape.forEach(([dx, dy]) => {
+                        const nx = newX + dx;
+                        const ny = newY + dy;
+                        if (this.isCellActive(nx, ny)) {
+                            this.fullGrid[ny][nx] = {
+                                pieceId: pieceId,
+                                isAnchor: dx === 0 && dy === 0
+                            };
+                        }
+                    });
+                    
+                    piece.x = newX;
+                    piece.y = newY;
+                    piece.placed = true;
+                    
+                    this.clearSelection();
+                    this.updateDisplay();
+                    this.updateStats();
+                }
+            }
+            
+            selectPiece(x, y) {
+                const cell = this.fullGrid[y][x];
+                    if (cell) {
+                    this.selectedPiece = cell.pieceId;
+                    this.clearActivePiece(); // Clear library selection
+                    this.showDropZones(); // Show where piece can move
+                    this.updateDisplay();
+                }
+            }
+            
+            clearSelection() {
+                this.selectedPiece = null;
+                this.hideDropZones();
+                this.updateDisplay();
+            }
+            
+            setActivePiece(piece) {
+                this.activePiece = piece;
+                this.clearSelection();
+                this.updatePieceLibrary();
+                this.showDropZones();
+            }
+            
+            clearActivePiece() {
+                this.activePiece = null;
+                this.updatePieceLibrary();
+                this.hideDropZones();
+            }
+            
+            showDropZones() {
+                if (!this.activePiece && !this.selectedPiece) return;
+                
+                const pieceToPlace = this.activePiece || this.pieces[this.selectedPiece];
+                
+                document.querySelectorAll('.grid-cell.active').forEach(cell => {
+                const x = parseInt(cell.dataset.x);
+                const y = parseInt(cell.dataset.y);
+                    
+                    // Only show valid drop zones, not invalid ones
+                    if (this.canPlacePiece(pieceToPlace, x, y)) {
+                        cell.classList.add('drop-zone');
+                    }
+                });
+            }
+            
+            hideDropZones() {
+                document.querySelectorAll('.grid-cell').forEach(cell => {
+                    cell.classList.remove('drop-zone', 'invalid');
+                });
+            }
+            
+                        rotatePiece(pieceId) {
+                const piece = this.pieces[pieceId];
+                if (!piece) return;
+                
+                // Rotate shape 90 degrees clockwise
+                piece.shape = piece.shape.map(([x, y]) => [-y, x]);
+                
+                // If placed, try smart rotation
+                if (piece.placed) {
+                    const validPosition = this.findValidRotationPosition(piece, piece.x, piece.y);
+                    
+                    if (validPosition) {
+                        this.removePiece(pieceId);
+                        this.placePiece(piece, validPosition.x, validPosition.y);
+                            } else {
+                        // Only revert if absolutely no valid position found
+                        piece.shape = piece.shape.map(([x, y]) => [y, -x]);
+                        console.log(`Cannot rotate ${piece.name} - no valid position found`);
+                    }
+                }
+                
+                this.updateDisplay();
+            }
+
+            findValidRotationPosition(piece, originalX, originalY) {
+                // Try current position first
+                if (this.canPlacePiece(piece, originalX, originalY)) {
+                    return { x: originalX, y: originalY };
+                }
+                
+                // Try nearby positions in expanding rings (radius 1, then 2)
+                for (let radius = 1; radius <= 2; radius++) {
+                    for (let dx = -radius; dx <= radius; dx++) {
+                        for (let dy = -radius; dy <= radius; dy++) {
+                            // Skip positions not on the current ring
+                            if (Math.abs(dx) !== radius && Math.abs(dy) !== radius) continue;
+                            
+                            const testX = originalX + dx;
+                            const testY = originalY + dy;
+                            
+                            // Stay within active grid bounds
+                            if (!this.isCellActive(testX, testY)) continue;
+                            
+                            if (this.canPlacePiece(piece, testX, testY)) {
+                                console.log(`Smart rotation: moved ${piece.name} from (${originalX},${originalY}) to (${testX},${testY})`);
+                                return { x: testX, y: testY };
+                            }
+                        }
+                    }
+                }
+                
+                return null; // No valid position found
+            }
+
+            createHpBar() {
+                const hpBar = document.getElementById('hpBar');
+                hpBar.innerHTML = '';
+                
+                // Create 20 cells for HP bar (representing percentage)
+                for (let i = 0; i < 20; i++) {
+                    const cell = document.createElement('div');
+                    cell.className = 'hp-cell';
+                    cell.dataset.index = i;
+                    hpBar.appendChild(cell);
+                }
+            }
+
+            updateHpBar() {
+                // Temporarily disabled to prevent JavaScript errors
+                return;
+                
+                // const hpBar = document.getElementById('hpBar');
+                // if (!hpBar) return; // Exit if element doesn't exist
+                // 
+                // const cells = hpBar.querySelectorAll('.hp-cell');
+                // const hpPercentage = this.maxHp > 0 ? (this.currentHp / this.maxHp) : 0;
+                // const filledCells = Math.ceil(hpPercentage * 20);
+                // 
+                // cells.forEach((cell, index) => {
+                //     cell.className = 'hp-cell';
+                //     if (index < filledCells) {
+                //         cell.classList.add('filled');
+                //     }
+                // });
+                // 
+                // // Update HP display with null checks
+                // const currentHpEl = document.getElementById('currentHp');
+                // const maxHpEl = document.getElementById('maxHp');
+                // const tuneUpCostEl = document.getElementById('tuneUpCost');
+                // 
+                // if (currentHpEl) currentHpEl.textContent = this.currentHp;
+                // if (maxHpEl) maxHpEl.textContent = this.maxHp;
+                // if (tuneUpCostEl) tuneUpCostEl.textContent = this.hpCostMultiplier;
+                // 
+                // // Enable/disable tune up buttons based on whether healing is needed
+                // const tuneUpFullBtn = document.getElementById('tuneUpFullBtn');
+                // const tuneUpCustomBtn = document.getElementById('tuneUpCustomBtn');
+                // const needsHeal = this.currentHp < this.maxHp;
+                // 
+                // if (tuneUpFullBtn && tuneUpFullBtn.disabled !== undefined) {
+                //     tuneUpFullBtn.disabled = !needsHeal;
+                // }
+                // if (tuneUpCustomBtn && tuneUpCustomBtn.disabled !== undefined) {
+                //     tuneUpCustomBtn.disabled = !needsHeal;
+                // }
+            }
+
+            setupTuneUp() {
+                const tuneUpFullBtn = document.getElementById('tuneUpFullBtn');
+                const tuneUpCustomBtn = document.getElementById('tuneUpCustomBtn');
+                const customInputGroup = document.getElementById('customInputGroup');
+                const confirmationSection = document.getElementById('confirmationSection');
+                const confirmBtn = document.getElementById('confirmBtn');
+                const cancelBtn = document.getElementById('cancelBtn');
+                const upgradeGridBtn = document.getElementById('upgradeGridBtn');
+                
+                // FULL tune up button
+                tuneUpFullBtn.addEventListener('click', () => {
+                    if (this.currentHp >= this.maxHp) {
+                        alert('Your mecha is already at full health!');
+                        return;
+                    }
+                    
+                    const hpNeeded = this.maxHp - this.currentHp;
+                    const fullCost = Math.ceil(hpNeeded * this.hpCostMultiplier);
+                    
+                    if (this.zoltans < fullCost) {
+                        alert(`Not enough Zoltans! You have ${this.zoltans}Z but need ${fullCost}Z for full heal.`);
+                        return;
+                    }
+                    
+                    this.showConfirmation('FULL', hpNeeded, fullCost);
+                });
+                
+                // Custom tune up button
+                tuneUpCustomBtn.addEventListener('click', () => {
+                    if (this.currentHp >= this.maxHp) {
+                        alert('Your mecha is already at full health!');
+                        return;
+                    }
+                    
+                    customInputGroup.style.display = 'block';
+                    setTimeout(() => {
+                        const tuneUpAmount = document.getElementById('tuneUpAmount');
+                        tuneUpAmount.focus();
+                        
+                        // Add enter key listener for custom amount
+                        tuneUpAmount.addEventListener('keypress', (e) => {
+                            if (e.key === 'Enter') {
+                                this.processCustomTuneUp();
+                            }
+                        });
+                    }, 100);
+                });
+                
+                // Confirmation buttons
+                confirmBtn.addEventListener('click', () => {
+                    if (this.pendingTuneUp) {
+                        this.executeTuneUp(this.pendingTuneUp);
+                    }
+                });
+                
+                cancelBtn.addEventListener('click', () => {
+                    this.hideConfirmation();
+                });
+                
+                // Upgrade grid button
+                upgradeGridBtn.addEventListener('click', () => {
+                    this.toggleUpgradeMode();
+                });
+            }
+
+            processCustomTuneUp() {
+                const tuneUpAmount = document.getElementById('tuneUpAmount');
+                const healAmount = parseInt(tuneUpAmount.value) || 0;
+                
+                if (healAmount <= 0) {
+                    alert('Please enter a valid amount of Zoltans to spend on healing.');
+                    return;
+                }
+                
+                if (this.zoltans < healAmount) {
+                    alert(`Not enough Zoltans! You have ${this.zoltans}Z but need ${healAmount}Z.`);
+                    return;
+                }
+                
+                const hpCanRestore = Math.floor(healAmount / this.hpCostMultiplier);
+                const hpNeeded = this.maxHp - this.currentHp;
+                const hpToRestore = Math.min(hpCanRestore, hpNeeded);
+                const actualCost = Math.ceil(hpToRestore * this.hpCostMultiplier);
+                
+                this.showConfirmation('CUSTOM', hpToRestore, actualCost);
+                tuneUpAmount.value = '';
+            }
+
+            showConfirmation(type, hpToRestore, cost) {
+                const confirmationText = document.getElementById('confirmationText');
+                const confirmationSection = document.getElementById('confirmationSection');
+                const customInputGroup = document.getElementById('customInputGroup');
+                
+                confirmationText.textContent = `${type} HEAL: Restore ${hpToRestore} HP for ${cost}Z?`;
+                
+                this.pendingTuneUp = { type, hpToRestore, cost };
+                
+                customInputGroup.style.display = 'none';
+                confirmationSection.style.display = 'block';
+            }
+
+            hideConfirmation() {
+                const confirmationSection = document.getElementById('confirmationSection');
+                const customInputGroup = document.getElementById('customInputGroup');
+                
+                confirmationSection.style.display = 'none';
+                customInputGroup.style.display = 'none';
+                this.pendingTuneUp = null;
+            }
+
+            executeTuneUp(tuneUp) {
+                this.zoltans -= tuneUp.cost;
+                this.currentHp += tuneUp.hpToRestore;
+                
+                console.log(`${tuneUp.type} Tune Up: Spent ${tuneUp.cost}Z to restore ${tuneUp.hpToRestore} HP`);
+                this.updateStats();
+                this.hideConfirmation();
+                
+                alert(`${tuneUp.type} Tune Up complete!\nRestored ${tuneUp.hpToRestore} HP for ${tuneUp.cost}Z`);
+            }
+
+            toggleUpgradeMode() {
+                const upgradeGridBtn = document.getElementById('upgradeGridBtn');
+                const gridContainer = document.getElementById('fullGridContainer');
+                
+                this.upgradeMode = !this.upgradeMode;
+                
+                if (this.upgradeMode) {
+                    gridContainer.classList.add('upgrade-mode');
+                    upgradeGridBtn.classList.add('active');
+                    upgradeGridBtn.textContent = 'Exit Upgrade Mode';
+                    this.showExpansionCells();
+                            } else {
+                    gridContainer.classList.remove('upgrade-mode');
+                    upgradeGridBtn.classList.remove('active');
+                    upgradeGridBtn.innerHTML = `Upgrade Grid (<span id="upgradePointsBtn">${this.upgradePoints}</span> points)`;
+                    this.hideExpansionCells();
+                }
+            }
+
+            showExpansionCells() {
+                if (this.upgradePoints <= 0) return;
+                
+                // Recreate grid with expansion cells visible
+                this.createFullGrid();
+            }
+
+            hideExpansionCells() {
+                // Just recreate the grid without expansion cells
+                this.createFullGrid();
+            }
+
+            expandSingleCell(x, y) {
+                if (this.upgradePoints <= 0 || !this.isCellExpandable(x, y)) {
+                    return;
+                }
+                
+                // Add single cell to expanded cells set
+                this.expandedCells.add(`${x},${y}`);
+                this.upgradePoints--;
+                
+                // Update display
+                this.createFullGrid();
+                this.updateDisplay();
+                this.updateStats();
+                this.updateGridStatistics();
+                
+                if (this.upgradeMode) {
+                    this.showExpansionCells();
+                }
+                
+                console.log(`Grid expanded by 1 cell at (${x},${y}). Total expanded: ${this.expandedCells.size}`);
+            }
+
+
+
+            getEmptySlots() {
+                let emptyCount = 0;
+                
+                // Count empty cells in base active area
+                for (let y = this.activeStartY; y < this.activeStartY + this.baseActiveHeight; y++) {
+                    for (let x = this.activeStartX; x < this.activeStartX + this.baseActiveWidth; x++) {
+                        if (!this.fullGrid[y][x]) emptyCount++;
+                    }
+                }
+                
+                // Count empty expanded cells
+                for (const cellKey of this.expandedCells) {
+                    const [x, y] = cellKey.split(',').map(Number);
+                    if (!this.fullGrid[y][x]) emptyCount++;
+                }
+                
+                return emptyCount;
+            }
+
+            getUsedSlots() {
+                return this.getTotalActiveSlots() - this.getEmptySlots();
+            }
+
+            getTotalActiveSlots() {
+                // Base area + expanded cells
+                return (this.baseActiveWidth * this.baseActiveHeight) + this.expandedCells.size;
+            }
+            
+            updateDisplay() {
+                // Clear all piece-related classes from cells but keep active/inactive
+                document.querySelectorAll('.grid-cell').forEach(cell => {
+                    const x = parseInt(cell.dataset.x);
+                    const y = parseInt(cell.dataset.y);
+                    
+                    // Reset classes but keep active/inactive/expansion state
+                    cell.classList.remove('piece', 'anchor', 'selected', 'drop-zone');
+                    cell.classList.remove('stat-hp', 'stat-attack', 'stat-defense', 'stat-speed');
+                    cell.textContent = '';
+                    
+                    // Restore basic state
+                    if (this.isCellActive(x, y)) {
+                        cell.classList.add('active');
+                    } else {
+                        cell.classList.add('inactive');
+                    }
+                });
+                
+                // Render pieces
+                for (let y = 0; y < this.maxGridSize; y++) {
+                    for (let x = 0; x < this.maxGridSize; x++) {
+                        const cell = this.fullGrid[y][x];
+                    if (cell) {
+                            const piece = this.pieces[cell.pieceId];
+                            const gridCell = document.querySelector(`[data-x="${x}"][data-y="${y}"]`);
+                            
+                            if (gridCell) {
+                                gridCell.classList.add('piece');
+                                gridCell.classList.add(`stat-${this.getStatType(piece)}`);
+                                
+                                if (cell.isAnchor) {
+                                    gridCell.classList.add('anchor');
+                                    gridCell.textContent = '+';
+                                }
+                                
+                                // Highlight all cells of selected piece
+                                if (cell.pieceId === this.selectedPiece) {
+                                    gridCell.classList.add('selected');
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            
+            getStatType(piece) {
+                    const stats = piece.stats;
+                const maxStat = Math.max(stats.hp, stats.attack, stats.defense, stats.speed);
+                    if (stats.hp === maxStat) return 'hp';
+                    if (stats.attack === maxStat) return 'attack';
+                    if (stats.defense === maxStat) return 'defense';
+                return 'speed';
+            }
+            
+            updateStats() {
+                const totals = { hp: 0, attack: 0, defense: 0, speed: 0 };
+                let placedCount = 0;
+                
+                Object.values(this.pieces).forEach(piece => {
+                    if (piece.placed) {
+                        totals.hp += piece.stats.hp;
+                        totals.attack += piece.stats.attack;
+                        totals.defense += piece.stats.defense;
+                        totals.speed += piece.stats.speed;
+                        placedCount++;
+                    }
+                });
+                
+                // Update max HP and current HP if needed
+                this.maxHp = totals.hp;
+                if (this.currentHp === 0 || this.currentHp > this.maxHp) {
+                    this.currentHp = this.maxHp; // Start with full HP or cap if over
+                }
+                
+                // Update stats with null checks
+                const hpStat = document.getElementById('hpStat');
+                const attackStat = document.getElementById('attackStat');
+                const defenseStat = document.getElementById('defenseStat');
+                const speedStat = document.getElementById('speedStat');
+                const pieceCount = document.getElementById('pieceCount');
+                const zoltansStat = document.getElementById('zoltansStat');
+                
+                if (hpStat) hpStat.textContent = totals.hp;
+                if (attackStat) attackStat.textContent = totals.attack;
+                if (defenseStat) defenseStat.textContent = totals.defense;
+                if (speedStat) speedStat.textContent = totals.speed;
+                if (pieceCount) pieceCount.textContent = placedCount;
+                if (zoltansStat) zoltansStat.textContent = this.zoltans;
+                
+                // Header grid info removed - using grid statistics section only
+                
+                this.updateHpBar();
+                this.updateLaunchStatus();
+                this.updateGridStatistics();
+            }
+
+            updateGridStatistics() {
+                const totalActiveCells = this.getTotalActiveSlots();
+                const usedCells = this.getUsedSlots();
+                const availableCells = this.getEmptySlots();
+                const fillRate = totalActiveCells > 0 ? ((usedCells / totalActiveCells) * 100).toFixed(1) : 0;
+                const installedUpgrades = this.expandedCells.size; // Each expanded cell is an upgrade
+                
+                // Update grid statistics with null checks
+                const totalCellsEl = document.getElementById('totalCells');
+                const installedUpgradesEl = document.getElementById('installedUpgrades');
+                const availableUpgradesEl = document.getElementById('availableUpgrades');
+                const fillRateEl = document.getElementById('fillRate');
+                
+                if (totalCellsEl) totalCellsEl.textContent = totalActiveCells;
+                if (installedUpgradesEl) installedUpgradesEl.textContent = `${installedUpgrades} upgrades`;
+                if (availableUpgradesEl) availableUpgradesEl.textContent = `${availableCells} cells`;
+                if (fillRateEl) fillRateEl.textContent = `${fillRate}%`;
+                
+                // Update upgrade points display
+                const upgradePointsBtn = document.getElementById('upgradePointsBtn');
+                if (upgradePointsBtn) {
+                    upgradePointsBtn.textContent = this.upgradePoints;
+                }
+            }
+            
+            loadSamplePieces() {
+                const samplePieces = [
+                    {
+                        id: 'piece1',
+                        name: 'HP Booster',
+                        pattern: '+ 2 3\n4 5 .\n6 . .',
+                        stats: { hp: 150, attack: 30, defense: 20, speed: 10 }
+                    },
+                    {
+                        id: 'piece2',
+                        name: 'Attack Core',
+                        pattern: '+ 2\n3 4',
+                        stats: { hp: 80, attack: 120, defense: 15, speed: 25 }
+                    },
+                    {
+                        id: 'piece3',
+                        name: 'Defense Wall',
+                        pattern: '1 + 3\n4 5 6',
+                        stats: { hp: 100, attack: 20, defense: 100, speed: 5 }
+                    }
+                ];
+                
+                samplePieces.forEach(pieceData => {
+                    this.pieces[pieceData.id] = {
+                        ...pieceData,
+                        shape: parsePattern(pieceData.pattern),
+                        placed: false
+                    };
+                });
+                
+                this.updatePieceLibrary();
+            }
+
+            setupFilters() {
+                const statTypeFilter = document.getElementById('statTypeFilter');
+                const hpRangeFilter = document.getElementById('hpRangeFilter');
+                const blockCountFilter = document.getElementById('blockCountFilter');
+                const resetFiltersBtn = document.getElementById('resetFiltersBtn');
+                
+                const hpRangeDisplay = document.getElementById('hpRangeDisplay');
+                const blockCountDisplay = document.getElementById('blockCountDisplay');
+                
+                // Stat type filter
+                statTypeFilter.addEventListener('change', () => {
+                    this.filters.statType = statTypeFilter.value;
+                    this.updatePieceLibrary();
+                });
+                
+                // HP range filter
+                hpRangeFilter.addEventListener('input', () => {
+                    this.filters.maxHp = parseInt(hpRangeFilter.value);
+                    hpRangeDisplay.textContent = this.filters.maxHp;
+                    this.updatePieceLibrary();
+                });
+                
+                // Block count filter  
+                blockCountFilter.addEventListener('input', () => {
+                    this.filters.maxBlockCount = parseInt(blockCountFilter.value);
+                    blockCountDisplay.textContent = this.filters.maxBlockCount;
+                    this.updatePieceLibrary();
+                });
+                
+                // Reset filters
+                resetFiltersBtn.addEventListener('click', () => {
+                    this.filters = { statType: 'all', maxHp: 500, maxBlockCount: 10 };
+                    statTypeFilter.value = 'all';
+                    hpRangeFilter.value = 500;
+                    blockCountFilter.value = 10;
+                    hpRangeDisplay.textContent = '500';
+                    blockCountDisplay.textContent = '10';
+                    this.updatePieceLibrary();
+                });
+            }
+
+            filterPieces(pieces) {
+                return pieces.filter(piece => {
+                    // Stat type filter
+                    if (this.filters.statType !== 'all') {
+                        const dominantStat = this.getStatType(piece);
+                        if (dominantStat !== this.filters.statType) return false;
+                    }
+                    
+                    // HP range filter
+                    if (piece.stats.hp > this.filters.maxHp) return false;
+                    
+                    // Block count filter
+                    if (piece.shape.length > this.filters.maxBlockCount) return false;
+                    
+                    return true;
+                });
+            }
+            
+            updatePieceLibrary() {
+                const library = document.getElementById('pieceLibrary');
+                library.innerHTML = '';
+                
+                const allPieces = Object.values(this.pieces);
+                const filteredPieces = this.filterPieces(allPieces);
+                
+                filteredPieces.forEach(piece => {
+                    const element = this.createPieceElement(piece);
+                    library.appendChild(element);
+                });
+
+                // Also update floating library if active (floating library shows all pieces, no filters)
+                this.updateFloatingLibrary();
+            }
+            
+            createPieceElement(piece, isFloating = false) {
+                const element = document.createElement('div');
+                element.className = 'piece-item';
+                
+                if (this.activePiece === piece) {
+                    element.classList.add('selected');
+                }
+                
+                element.innerHTML = `
+                    <div class="piece-name">${piece.name}</div>
+                    <div class="piece-stats">HP:${piece.stats.hp} ATK:${piece.stats.attack} DEF:${piece.stats.defense} SPD:${piece.stats.speed}</div>
+                `;
+                
+                const preview = this.createPiecePreview(piece, isFloating);
+                element.appendChild(preview);
+                
+                element.addEventListener('click', () => {
+                    if (this.activePiece === piece) {
+                        this.clearActivePiece();
+                    } else {
+                        this.setActivePiece(piece);
+                    }
+                });
+                
+                return element;
+            }
+            
+            createPiecePreview(piece, isFloating = false) {
+                const preview = document.createElement('div');
+                preview.className = 'piece-preview';
+                
+                const shape = piece.shape || piece.pattern; // Handle both formats
+                
+                if (!shape || !Array.isArray(shape)) {
+                    console.warn('Invalid shape data:', shape);
+                    return preview;
+                }
+                
+                // Find the bounding box of the shape
+                const minX = Math.min(...shape.map(([x, y]) => x));
+                const maxX = Math.max(...shape.map(([x, y]) => x));
+                const minY = Math.min(...shape.map(([x, y]) => y));
+                const maxY = Math.max(...shape.map(([x, y]) => y));
+                
+                const width = maxX - minX + 1;
+                const height = maxY - minY + 1;
+                
+                const grid = document.createElement('div');
+                grid.className = 'piece-grid';
+                grid.style.gridTemplateColumns = `repeat(${width}, 1fr)`;
+                grid.style.gridTemplateRows = `repeat(${height}, 1fr)`;
+                
+                // Smaller cells for floating library
+                if (isFloating) {
+                    grid.style.transform = 'scale(0.7)';
+                    grid.style.transformOrigin = 'center';
+                }
+                
+                // Create a 2D array to represent the shape
+                const shapeGrid = Array(height).fill().map(() => Array(width).fill(false));
+                
+                // Mark occupied positions
+                shape.forEach(([dx, dy]) => {
+                    const x = dx - minX;
+                    const y = dy - minY;
+                    if (x >= 0 && x < width && y >= 0 && y < height) {
+                        shapeGrid[y][x] = true;
+                    }
+                });
+                
+                // Create cells
+                for (let y = 0; y < height; y++) {
+                    for (let x = 0; x < width; x++) {
+                        const cell = document.createElement('div');
+                        cell.className = 'piece-cell';
+                        
+                        if (shapeGrid[y][x]) {
+                            cell.classList.add('filled');
+                            // Apply stat color based on piece's primary stat
+                            const statType = this.getStatType(piece);
+                            cell.classList.add(`stat-${statType}`);
+                            
+                            // Mark the anchor point (0,0 relative to shape)
+                            const originalX = x + minX;
+                            const originalY = y + minY;
+                            if (originalX === 0 && originalY === 0) {
+                                cell.textContent = '+';
+                            }
+                        }
+                        
+                        grid.appendChild(cell);
+                    }
+                }
+                
+                preview.appendChild(grid);
+                return preview;
+            }
+            
+            setupControls() {
+                document.getElementById('rotateBtn').addEventListener('click', () => {
+                    if (this.selectedPiece) {
+                        this.rotatePiece(this.selectedPiece);
+                    }
+                });
+                
+                document.getElementById('removeBtn').addEventListener('click', () => {
+                    if (this.selectedPiece) {
+                        this.removePiece(this.selectedPiece);
+                        this.clearSelection();
+                        this.updateDisplay();
+                        this.updateStats();
+                    }
+                });
+                
+                document.getElementById('clearBtn').addEventListener('click', () => {
+                    Object.keys(this.pieces).forEach(id => {
+                        this.removePiece(id);
+                    });
+                    this.clearSelection();
+                    this.clearActivePiece();
+                    this.updateDisplay();
+                    this.updateStats();
+                });
+                
+                // Keyboard shortcuts
+                document.addEventListener('keydown', (e) => {
+                    if (e.key === 'r' || e.key === 'R') {
+                        if (this.selectedPiece) {
+                            this.rotatePiece(this.selectedPiece);
+                        }
+                    } else if (e.key === 'Delete' || e.key === 'Backspace') {
+                        if (this.selectedPiece) {
+                            this.removePiece(this.selectedPiece);
+                            this.clearSelection();
+                            this.updateDisplay();
+                            this.updateStats();
+                        }
+                    } else if (e.key === 'Escape') {
+                        this.clearActivePiece();
+                        this.clearSelection();
+                    }
+                });
+
+                // Launch button
+                const launchBtn = document.getElementById('launchBtn');
+                launchBtn.addEventListener('click', () => {
+                    this.attemptLaunch();
+                });
+            }
+
+            canLaunch() {
+                // Must have current HP > 0 to launch
+                return this.currentHp > 0;
+            }
+
+            updateLaunchStatus() {
+                const launchBtn = document.getElementById('launchBtn');
+                const tuneUpFullBtn = document.getElementById('tuneUpFullBtn');
+                const tuneUpCustomBtn = document.getElementById('tuneUpCustomBtn');
+                
+                if (this.canLaunch()) {
+                    launchBtn.disabled = false;
+                } else {
+                    launchBtn.disabled = true;
+                }
+                
+                // Update tune-up button states
+                const needsHeal = this.currentHp < this.maxHp;
+                if (tuneUpFullBtn) tuneUpFullBtn.disabled = !needsHeal;
+                if (tuneUpCustomBtn) tuneUpCustomBtn.disabled = !needsHeal;
+            }
+
+            attemptLaunch() {
+                if (!this.canLaunch()) {
+                    alert('Cannot launch with 0 HP! Use Tune Up to restore health first.');
+                    return;
+                }
+                
+                // Hide launch button and show sequence
+                document.getElementById('launchBtn').style.display = 'none';
+                document.getElementById('launchSequence').style.display = 'block';
+                
+                this.startLaunchSequence();
+            }
+
+            startLaunchSequence() {
+                const loadingDots = document.getElementById('loadingDots');
+                const systemCheck = document.getElementById('systemCheck');
+                const engageBtn = document.getElementById('engageBtn');
+                
+                // Animate loading dots
+                let dotCount = 0;
+                const loadingInterval = setInterval(() => {
+                    dotCount++;
+                    loadingDots.textContent = '.'.repeat(dotCount % 12);
+                }, 150);
+                
+                // After 3 seconds, show system ready
+                setTimeout(() => {
+                    clearInterval(loadingInterval);
+                    loadingDots.textContent = ' COMPLETE';
+                    systemCheck.style.display = 'block';
+                    
+                    // After another 1 second, show engage button
+                    setTimeout(() => {
+                        engageBtn.style.display = 'block';
+                        
+                        // Add engage button listener
+                        engageBtn.addEventListener('click', () => {
+                            this.finalLaunch();
+                        });
+                    }, 1000);
+                }, 3000);
+            }
+
+            finalLaunch() {
+                console.log(`MECHA LAUNCHED! HP: ${this.currentHp}/${this.maxHp}, ATK: ${document.getElementById('attackStat').textContent}, DEF: ${document.getElementById('defenseStat').textContent}, SPD: ${document.getElementById('speedStat').textContent}`);
+                
+                // Here we would submit to backend/battle system
+                alert(`MECHA DEPLOYED TO COMBAT!\n\nFinal Stats:\nHP: ${this.currentHp}/${this.maxHp}\nATK: ${document.getElementById('attackStat').textContent}\nDEF: ${document.getElementById('defenseStat').textContent}\nSPD: ${document.getElementById('speedStat').textContent}\n\nBattle sequence initiated!`);
+                
+                // Reset launch UI
+                document.getElementById('launchSequence').style.display = 'none';
+                document.getElementById('launchBtn').style.display = 'block';
+                document.getElementById('systemCheck').style.display = 'none';
+                document.getElementById('engageBtn').style.display = 'none';
+            }
+
+            setupFloatingLibrary() {
+                const toggleBtn = document.getElementById('libraryToggleBtn');
+                const floatingLibrary = document.getElementById('floatingLibrary');
+                const header = document.getElementById('floatingLibraryHeader');
+                const pieceLibrary = document.querySelector('.piece-library');
+
+                // Toggle floating library
+                toggleBtn.addEventListener('click', () => {
+                    this.toggleFloatingLibrary();
+                });
+
+                // Close floating library - set up once and don't change
+                this.setupFloatingLibraryCloseButton();
+
+                // Make floating library draggable - ensure it's properly set up
+                setTimeout(() => {
+                    this.makeDraggable(floatingLibrary, header);
+                }, 100);
+            }
+
+            toggleFloatingLibrary() {
+                const toggleBtn = document.getElementById('libraryToggleBtn');
+                const floatingLibrary = document.getElementById('floatingLibrary');
+                const pieceLibrary = document.querySelector('.piece-library');
+                
+                this.floatingLibraryActive = !this.floatingLibraryActive;
+                
+                if (this.floatingLibraryActive) {
+                    floatingLibrary.classList.add('active');
+                    pieceLibrary.classList.add('floating-active');
+                    toggleBtn.textContent = 'Dock Library';
+                    this.updateFloatingLibrary();
+                    } else {
+                    floatingLibrary.classList.remove('active');
+                    pieceLibrary.classList.remove('floating-active');
+                    toggleBtn.textContent = 'Float Library';
+                }
+            }
+
+            setupFloatingLibraryCloseButton() {
+                const closeBtn = document.getElementById('floatingLibraryClose');
+                
+                // Remove any existing listeners and add fresh one
+                closeBtn.replaceWith(closeBtn.cloneNode(true));
+                const newCloseBtn = document.getElementById('floatingLibraryClose');
+                
+                newCloseBtn.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    console.log('Close button clicked!');
+                    this.closeFloatingLibrary();
+                });
+                
+                // Also add touch event for mobile
+                newCloseBtn.addEventListener('touchend', (e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    console.log('Close button touched!');
+                    this.closeFloatingLibrary();
+                });
+            }
+
+            closeFloatingLibrary() {
+                console.log('Closing floating library...');
+                const toggleBtn = document.getElementById('libraryToggleBtn');
+                const floatingLibrary = document.getElementById('floatingLibrary');
+                const pieceLibrary = document.querySelector('.piece-library');
+                
+                this.floatingLibraryActive = false;
+                floatingLibrary.classList.remove('active');
+                pieceLibrary.classList.remove('floating-active');
+                toggleBtn.textContent = 'Float Library';
+                this.updatePieceLibrary();
+                console.log('Floating library closed!');
+            }
+
+            makeDraggable(element, handle) {
+                let isDragging = false;
+                let startX, startY, initialX, initialY;
+
+                // Remove any existing listeners first
+                handle.removeEventListener('mousedown', this.startDragHandler);
+                handle.removeEventListener('touchstart', this.startDragHandler);
+
+                this.startDragHandler = (e) => {
+                    isDragging = true;
+                    
+                    const clientX = e.type === 'mousedown' ? e.clientX : e.touches[0].clientX;
+                    const clientY = e.type === 'mousedown' ? e.clientY : e.touches[0].clientY;
+                    
+                    startX = clientX;
+                    startY = clientY;
+                    
+                    const rect = element.getBoundingClientRect();
+                    initialX = rect.left;
+                    initialY = rect.top;
+
+                    const dragHandler = (e) => {
+                        if (!isDragging) return;
+                        
+                        const clientX = e.type === 'mousemove' ? e.clientX : e.touches[0].clientX;
+                        const clientY = e.type === 'mousemove' ? e.clientY : e.touches[0].clientY;
+                        
+                        const deltaX = clientX - startX;
+                        const deltaY = clientY - startY;
+                        
+                        const newX = Math.max(0, Math.min(window.innerWidth - element.offsetWidth, initialX + deltaX));
+                        const newY = Math.max(0, Math.min(window.innerHeight - element.offsetHeight, initialY + deltaY));
+                        
+                        element.style.left = newX + 'px';
+                        element.style.top = newY + 'px';
+                        element.style.right = 'auto';
+                        
+                        e.preventDefault();
+                    };
+
+                    const stopDragHandler = () => {
+                        isDragging = false;
+                        document.removeEventListener('mousemove', dragHandler);
+                        document.removeEventListener('touchmove', dragHandler);
+                        document.removeEventListener('mouseup', stopDragHandler);
+                        document.removeEventListener('touchend', stopDragHandler);
+                    };
+
+                    document.addEventListener('mousemove', dragHandler);
+                    document.addEventListener('touchmove', dragHandler);
+                    document.addEventListener('mouseup', stopDragHandler);
+                    document.addEventListener('touchend', stopDragHandler);
+                    
+                    e.preventDefault();
+                };
+
+                handle.addEventListener('mousedown', this.startDragHandler);
+                handle.addEventListener('touchstart', this.startDragHandler);
+            }
+
+            updateFloatingLibrary() {
+                if (!this.floatingLibraryActive) return;
+                
+                const floatingContent = document.getElementById('floatingLibraryContent');
+            }
+
+            // ===== FLOATING COMBAT LOG SYSTEM =====
+            
+            toggleCombatLog() {
+                const combatLogBtn = document.getElementById('combatLogBtn');
+                const floatingCombatLog = document.getElementById('floatingCombatLog');
+                
+                if (floatingCombatLog.classList.contains('active')) {
+                    floatingCombatLog.classList.remove('active');
+                    combatLogBtn.textContent = 'Combat Log';
+                } else {
+                    floatingCombatLog.classList.add('active');
+                    combatLogBtn.textContent = 'Hide Log';
+                    this.loadCombatLog();
+                    this.setupCombatLogDrag();
+                }
+            }
+
+            async loadCombatLog() {
+                try {
+                    const response = await fetch('/api/player/combat/status');
+                    if (!response.ok) {
+                        throw new Error(`HTTP ${response.status}`);
+                    }
+                    
+                    const combatData = await response.json();
+                    this.displayCombatLog(combatData.combat_log || []);
+                } catch (error) {
+                    console.error('Failed to load combat log:', error);
+                    this.displayCombatLog([]);
+                }
+            }
+
+            displayCombatLog(logEntries) {
+                const combatLogContent = document.getElementById('floatingCombatLogContent');
+                combatLogContent.innerHTML = '';
+
+                if (logEntries.length === 0) {
+                    combatLogContent.innerHTML = '<p>No combat activity recorded.</p>';
+                    return;
+                }
+
+                logEntries.forEach(entry => {
+                    const entryElement = document.createElement('div');
+                    entryElement.className = 'combat-log-entry';
+                    
+                    // Determine entry type for styling
+                    if (entry.includes('attacks')) {
+                        entryElement.classList.add('attack');
+                    } else if (entry.includes('damage')) {
+                        entryElement.classList.add('damage');
+                    } else if (entry.includes('destroyed')) {
+                        entryElement.classList.add('destroyed');
+                    } else if (entry.includes('downed')) {
+                        entryElement.classList.add('downed');
+                    }
+                    
+                    entryElement.innerHTML = `
+                        <div class="combat-log-timestamp">${new Date().toLocaleTimeString()}</div>
+                        <div class="combat-log-message">${entry}</div>
+                    `;
+                    
+                    combatLogContent.appendChild(entryElement);
+                });
+
+                // Scroll to bottom to show latest entries
+                combatLogContent.scrollTop = combatLogContent.scrollHeight;
+            }
+
+            setupCombatLogDrag() {
+                const combatLog = document.getElementById('floatingCombatLog');
+                const header = document.getElementById('floatingCombatLogHeader');
+                const closeBtn = document.getElementById('floatingCombatLogClose');
+                
+                // Setup close button
+                closeBtn.addEventListener('click', () => {
+                    combatLog.classList.remove('active');
+                    document.getElementById('combatLogBtn').textContent = 'Combat Log';
+                });
+                
+                // Make draggable using existing method
+                this.makeDraggable(combatLog, header);
+            }
+
+            setupCombatLog() {
+                const combatLogBtn = document.getElementById('combatLogBtn');
+                if (combatLogBtn) {
+                    combatLogBtn.addEventListener('click', () => this.toggleCombatLog());
+                }
+            }
+
+            updateFloatingLibrary() {
+                if (!this.floatingLibraryActive) return;
+                
+                const floatingContent = document.getElementById('floatingLibraryContent');
+                floatingContent.innerHTML = '';
+                
+                Object.values(this.pieces).forEach(piece => {
+                    const element = this.createPieceElement(piece, true); // true = floating version
+                    floatingContent.appendChild(element);
+                });
+            }
+
+            // ===== FIRST TIME SETUP SYSTEM =====
+
+            startFirstTimeSetup() {
+                console.log('Starting first-time setup...');
+                document.getElementById('firstTimeSetup').style.display = 'flex';
+                
+                // Add escape key listener for debugging
+                document.addEventListener('keydown', (e) => {
+                    if (e.ctrlKey && e.shiftKey && e.key === 'R') {
+                        console.log('Manual reset triggered!');
+                        this.resetFirstTimeSetup();
+                    }
+                });
+                
+                // Show skip button after 10 seconds
+                setTimeout(() => {
+                    const skipButton = document.querySelector('.setup-debug button');
+                    if (skipButton) {
+                        skipButton.style.display = 'block';
+                        skipButton.textContent = 'SKIP SETUP (Stuck?)';
+                        skipButton.style.background = '#ff4444';
+                        skipButton.style.animation = 'pulse 2s infinite';
+                    }
+                }, 10000);
+                
+                // Auto-bypass if setup takes too long (30 seconds)
+                setTimeout(() => {
+                    if (document.getElementById('firstTimeSetup').style.display === 'flex') {
+                        console.log('Setup timeout detected, auto-bypassing...');
+                        sessionStorage.setItem('setupStuck', 'true');
+                        location.reload();
+                    }
+                }, 30000);
+                
+                this.setupSequence = [
+                    { text: "There is a record of a dream...", class: "prompt", delay: 1000 },
+                    { text: "", class: "", delay: 500 },
+                    { text: "Input Operator name to proceed.", class: "prompt", delay: 500 },
+                    { 
+                        type: "input", 
+                        placeholder: "Enter Operator Name",
+                        buttonText: "PROCEED",
+                        onSubmit: (value) => this.setOperatorName(value)
+                    }
+                ];
+                
+                this.currentStep = 0;
+                this.runSetupSequence();
+            }
+
+            runSetupSequence() {
+                const content = document.getElementById('setupContent');
+                const step = this.setupSequence[this.currentStep];
+                
+                if (!step) return;
+                
+                if (step.type === "input") {
+                    this.showSetupInput(step);
+                } else {
+                    this.typeText(step.text, step.class, () => {
+                        setTimeout(() => {
+                            this.currentStep++;
+                            this.runSetupSequence();
+                        }, step.delay || 1000);
+                    });
+                }
+            }
+
+            typeText(text, className = "", callback) {
+                const content = document.getElementById('setupContent');
+                const line = document.createElement('div');
+                line.className = `setup-line ${className}`;
+                content.appendChild(line);
+                
+                if (text === "") {
+                    line.innerHTML = "&nbsp;";
+                    line.style.opacity = 1;
+                    // Auto scroll for empty lines too
+                    setTimeout(() => {
+                        content.scrollTop = content.scrollHeight;
+                    }, 100);
+                    if (callback) callback();
+                    return;
+                }
+                
+                let index = 0;
+                const typeInterval = setInterval(() => {
+                    line.textContent = text.substring(0, index + 1) + (index < text.length - 1 ? '█' : '');
+                    line.style.opacity = 1;
+                    
+                    // Auto scroll during typing
+                    content.scrollTop = content.scrollHeight;
+                    
+                    index++;
+                    
+                    if (index > text.length) {
+                        clearInterval(typeInterval);
+                        line.textContent = text;
+                        // Final scroll to bottom
+                        content.scrollTop = content.scrollHeight;
+                        if (callback) callback();
+                    }
+                }, 50);
+            }
+
+            showSetupInput(step) {
+                const content = document.getElementById('setupContent');
+                
+                const inputGroup = document.createElement('div');
+                inputGroup.className = 'setup-input-group';
+                
+                if (step.placeholder) {
+                    // Input with text field
+                    const input = document.createElement('input');
+                    input.type = 'text';
+                    input.className = 'setup-input';
+                    input.placeholder = step.placeholder;
+                    input.maxLength = 20;
+                    
+                    const button = document.createElement('button');
+                    button.className = 'setup-button';
+                    button.textContent = step.buttonText;
+                    button.disabled = true;
+                    
+                    input.addEventListener('input', () => {
+                        button.disabled = input.value.trim().length === 0;
+                    });
+                    
+                    input.addEventListener('keypress', (e) => {
+                        if (e.key === 'Enter' && !button.disabled) {
+                            button.click();
+                        }
+                    });
+                    
+                    button.addEventListener('click', () => {
+                        const value = input.value.trim();
+                        if (value) {
+                            // Hide the input group after submission
+                            inputGroup.style.display = 'none';
+                            step.onSubmit(value);
+                        }
+                    });
+                    
+                    inputGroup.appendChild(input);
+                    inputGroup.appendChild(button);
+                    
+                    // Focus the input
+                    setTimeout(() => input.focus(), 100);
+                } else {
+                    // Just button (for ENGAGE)
+                    const button = document.createElement('button');
+                    button.className = 'setup-button';
+                    button.textContent = step.buttonText;
+                    
+                    button.addEventListener('click', () => {
+                        // Hide the button after click
+                        inputGroup.style.display = 'none';
+                        step.onSubmit();
+                    });
+                    
+                    inputGroup.appendChild(button);
+                }
+                
+                content.appendChild(inputGroup);
+                
+                // Auto scroll to bottom
+                setTimeout(() => {
+                    content.scrollTop = content.scrollHeight;
+                }, 100);
+            }
+
+            setOperatorName(name) {
+                this.operatorName = name;
+                localStorage.setItem('operatorName', name);
+                
+                // Continue with welcome sequence
+                this.continueWelcomeSequence();
+            }
+
+            continueWelcomeSequence() {
+                this.setupSequence = [
+                    { text: "", class: "", delay: 500 },
+                    { text: `Welcome ${this.operatorName}.`, class: "prompt", delay: 1000 },
+                    { text: "", class: "", delay: 500 },
+                    { text: "Rident Basmont Heavy Industries presents:", class: "company", delay: 1500 },
+                    { text: "", class: "", delay: 500 },
+                    { text: "DREAM MECHA", class: "title", delay: 2000 },
+                    { text: "", class: "", delay: 500 },
+                    { text: "See in your mind's eye- the tower that dreams. Look upon one of 8 elemental", class: "", delay: 100 },
+                    { text: "fortresses of the machine god Xaryxis- sing praise to the tower glistening with", class: "", delay: 100 },
+                    { text: "sleeping radiant energy, whose sparks turn into whispers and echoes, clouds-", class: "", delay: 100 },
+                    { text: "picked up and exploded into the great void, released into memory- all things,", class: "", delay: 100 },
+                    { text: "passing back and forth by the sun's will.", class: "", delay: 1500 },
+                    { text: "", class: "", delay: 500 },
+                    { text: "RBHI New Pilot Manual:", class: "manual", delay: 1000 },
+                    { text: "", class: "", delay: 300 },
+                    { text: "Your Mecha is created in the dreamspace. Outfit your Mecha with parts from", class: "", delay: 100 },
+                    { text: "the parts library. For Mobile users, pop out the library for quick reference.", class: "", delay: 100 },
+                    { text: "Use the Filters to narrow your search.", class: "", delay: 1000 },
+                    { text: "", class: "", delay: 300 },
+                    { text: "Rident Basmont Heavy Industries has provided each new pilot 10,000Z (Zoltans)", class: "", delay: 100 },
+                    { text: "which is the currency of this current dreamspace. Use it to buy new parts,", class: "", delay: 100 },
+                    { text: "or repair your Mecha. You may list up to 3 parts from your library that", class: "", delay: 100 },
+                    { text: "you'd like to sell to other pilots. RBHI Shop will update on each", class: "", delay: 100 },
+                    { text: "earthcycle 6:00AM UST.", class: "", delay: 1000 },
+                    { text: "", class: "", delay: 300 },
+                    { text: "Work together with other pilots. Defend the tower.", class: "prompt", delay: 1500 },
+                    { 
+                        type: "input", 
+                        placeholder: null, // No text input, just button
+                        buttonText: "ENGAGE",
+                        onSubmit: () => this.proceedToMechaSetup()
+                    }
+                ];
+                
+                this.currentStep = 0;
+                this.runSetupSequence();
+            }
+
+            proceedToMechaSetup() {
+                // Clear the setup content
+                document.getElementById('setupContent').innerHTML = '';
+                
+                // Show mecha naming
+                this.setupSequence = [
+                    { text: "NEURAL LINK ESTABLISHED", class: "prompt", delay: 1000 },
+                    { text: "", class: "", delay: 500 },
+                    { text: "NAME YOUR DREAM MECHA", class: "title", delay: 500 },
+                    { 
+                        type: "input", 
+                        placeholder: "Enter Mecha Name",
+                        buttonText: "INITIALIZE",
+                        onSubmit: (value) => this.setMechaName(value)
+                    }
+                ];
+                
+                this.currentStep = 0;
+                this.runSetupSequence();
+            }
+
+            setMechaName(name) {
+                this.mechaName = name;
+                localStorage.setItem('mechaName', name);
+                
+                // Finalize setup
+                this.finalizeSetup();
+            }
+
+            finalizeSetup() {
+                // Clear the setup content
+                document.getElementById('setupContent').innerHTML = '';
+                
+                this.typeText("INITIALIZATION COMPLETE", "prompt", () => {
+                    setTimeout(() => {
+                        this.typeText(`Welcome to the dreamspace, ${this.operatorName}.`, "", () => {
+                            setTimeout(() => {
+                                this.typeText(`Your ${this.mechaName} awaits your command.`, "", () => {
+                                    setTimeout(() => {
+                                        // Hide setup overlay and initialize main UI
+                                        document.getElementById('firstTimeSetup').style.display = 'none';
+                                        this.initializeMainUI();
+                                    }, 2000);
+                                });
+                            }, 1000);
+                        });
+                    }, 1000);
+                });
+            }
+
+            // ===== NAME EDITING SYSTEM =====
+
+            setupNameEditing() {
+                const editOperatorBtn = document.getElementById('editOperatorBtn');
+                const editMechaBtn = document.getElementById('editMechaBtn');
+                
+                editOperatorBtn.addEventListener('click', () => {
+                    this.openNameEditModal('operator', this.operatorName);
+                });
+                
+                editMechaBtn.addEventListener('click', () => {
+                    this.openNameEditModal('mecha', this.mechaName);
+                });
+                
+                // Setup modal event listeners
+                document.getElementById('saveNameBtn').addEventListener('click', () => {
+                    this.saveNameEdit();
+                });
+                
+                document.getElementById('cancelNameBtn').addEventListener('click', () => {
+                    this.closeNameEditModal();
+                });
+                
+                // Close modal on background click
+                document.getElementById('editNameModal').addEventListener('click', (e) => {
+                    if (e.target.id === 'editNameModal') {
+                        this.closeNameEditModal();
+                    }
+                });
+            }
+
+            openNameEditModal(type, currentName) {
+                this.editingNameType = type;
+                const modal = document.getElementById('editNameModal');
+                const title = document.getElementById('editNameTitle');
+                const input = document.getElementById('editNameInput');
+                
+                title.textContent = type === 'operator' ? 'Edit Operator Name' : 'Edit Mecha Name';
+                input.value = currentName;
+                input.placeholder = type === 'operator' ? 'Enter Operator Name' : 'Enter Mecha Name';
+                
+                modal.classList.add('active');
+                setTimeout(() => input.focus(), 100);
+                
+                // Add enter key listener
+                input.addEventListener('keypress', (e) => {
+                    if (e.key === 'Enter') {
+                        this.saveNameEdit();
+                    }
+                });
+            }
+
+            closeNameEditModal() {
+                document.getElementById('editNameModal').classList.remove('active');
+                this.editingNameType = null;
+            }
+
+            saveNameEdit() {
+                const input = document.getElementById('editNameInput');
+                const newName = input.value.trim();
+                
+                if (!newName) {
+                    alert('Name cannot be empty!');
+                    return;
+                }
+                
+                if (this.editingNameType === 'operator') {
+                    this.operatorName = newName;
+                    localStorage.setItem('operatorName', newName);
+                } else if (this.editingNameType === 'mecha') {
+                    this.mechaName = newName;
+                    localStorage.setItem('mechaName', newName);
+                }
+                
+                this.updateHeaderNames();
+                this.closeNameEditModal();
+            }
+
+            updateHeaderNames() {
+                document.getElementById('operatorName').textContent = this.operatorName || 'Unknown';
+                document.getElementById('mechaName').textContent = this.mechaName || 'Unnamed';
+            }
+
+            // ===== DEVELOPMENT HELPERS =====
+
+            resetFirstTimeSetup() {
+                localStorage.removeItem('operatorName');
+                localStorage.removeItem('mechaName');
+                console.log('First-time setup reset! Reload the page to see the setup sequence.');
+                alert('First-time setup reset! Reload the page to see the setup sequence.');
+            }
+
+            skipSetup() {
+                // Set default names and skip to main UI
+                this.operatorName = 'Operator';
+                this.mechaName = 'Dream Mecha';
+                localStorage.setItem('operatorName', this.operatorName);
+                localStorage.setItem('mechaName', this.mechaName);
+                
+                // Hide setup and initialize main UI
+                document.getElementById('firstTimeSetup').style.display = 'none';
+                this.initializeMainUI();
+                
+                console.log('Setup skipped! Using default names.');
+            }
+
+            // Authentication Methods
+            setupAuthentication() {
+                this.checkAuthStatus();
+                this.setupAuthButtons();
+            }
+
+            async checkAuthStatus() {
+                try {
+                    const response = await fetch('/api/auth/status');
+                    const data = await response.json();
+                    
+                    if (data.authenticated) {
+                        this.authenticated = true;
+                        this.currentUserId = data.user_id;
+                        this.currentUsername = data.username;
+                        this.updateAuthUI();
+                    } else {
+                        this.authenticated = false;
+                        this.currentUserId = null;
+                        this.currentUsername = null;
+                        this.updateAuthUI();
+                    }
+                } catch (error) {
+                    console.error('Auth status check failed:', error);
+                    this.authenticated = false;
+                    this.updateAuthUI();
+                }
+            }
+
+            setupAuthButtons() {
+                const loginBtn = document.getElementById('loginBtn');
+                const logoutBtn = document.getElementById('logoutBtn');
+                
+                loginBtn.addEventListener('click', () => {
+                    window.location.href = '/login';
+                });
+                
+                logoutBtn.addEventListener('click', () => {
+                    window.location.href = '/logout';
+                });
+            }
+
+            updateAuthUI() {
+                const authUsername = document.getElementById('authUsername');
+                const loginBtn = document.getElementById('loginBtn');
+                const logoutBtn = document.getElementById('logoutBtn');
+                
+                if (this.authenticated) {
+                    authUsername.textContent = `Discord: ${this.currentUsername}`;
+                    loginBtn.style.display = 'none';
+                    logoutBtn.style.display = 'inline-block';
+                    // Load shop items when authenticated
+                    this.loadShopItems();
+                } else {
+                    authUsername.textContent = 'Not authenticated';
+                    loginBtn.style.display = 'inline-block';
+                    logoutBtn.style.display = 'none';
+                }
+            }
+
+            // ===== SHOP SYSTEM =====
+            
+            async loadShopItems() {
+                try {
+                    const response = await fetch('/api/player/shop');
+                    if (!response.ok) {
+                        throw new Error(`HTTP ${response.status}`);
+                    }
+                    
+                    const shopData = await response.json();
+                    this.displayShopItems(shopData.items || []);
+                } catch (error) {
+                    console.error('Failed to load shop items:', error);
+                    this.displayShopItems([]);
+                }
+            }
+
+            displayShopItems(items) {
+                const shopContainer = document.getElementById('shopItems');
+                shopContainer.innerHTML = '';
+
+                if (items.length === 0) {
+                    shopContainer.innerHTML = '<p>No items available in shop today.</p>';
+                    return;
+                }
+
+                items.forEach(item => {
+                    const itemElement = document.createElement('div');
+                    itemElement.className = 'shop-item';
+                    
+                    // Parse the piece shape from pattern
+                    const shape = this.parseShopPieceShape(item.pattern || item.shape);
+                    
+                    itemElement.innerHTML = `
+                        <div class="piece-preview">
+                            ${this.renderPiecePreview(shape)}
+                        </div>
+                        <h4>${item.name || 'Void Fragment'}</h4>
+                        <div class="stats">
+                            ${this.renderPieceStats(item.stats)}
+                        </div>
+                        <div class="price">${item.price} Z</div>
+                        <button class="btn" onclick="window.mechaGrid.purchaseShopItem('${item.piece_id}')">
+                            Purchase
+                        </button>
+                    `;
+                    
+                    shopContainer.appendChild(itemElement);
+                });
+            }
+
+            parseShopPieceShape(pattern) {
+                if (Array.isArray(pattern)) {
+                    return pattern;
+                }
+                
+                // Parse blockmaker pattern format
+                const lines = pattern.trim().split('\n');
+                const coords = [];
+                let anchorX = 0, anchorY = 0;
+                
+                // Find anchor point (+)
+                lines.forEach((line, y) => {
+                    const cells = line.trim().split(/\s+/);
+                    cells.forEach((cell, x) => {
+                        if (cell === '+') {
+                            anchorX = x;
+                            anchorY = y;
+                        }
+                    });
+                });
+                
+                // Get all filled cells relative to anchor
+                lines.forEach((line, y) => {
+                    const cells = line.trim().split(/\s+/);
+                    cells.forEach((cell, x) => {
+                        if (cell && cell !== '.' && cell !== '0') {
+                            const relX = x - anchorX;
+                            const relY = y - anchorY;
+                            coords.push([relX, relY]);
+                        }
+                    });
+                });
+                
+                return coords.length > 0 ? coords : [[0, 0]];
+            }
+
+            renderPiecePreview(shape) {
+                const size = 4;
+                let html = '<div class="piece-preview-grid">';
+                
+                for (let y = 0; y < size; y++) {
+                    for (let x = 0; x < size; x++) {
+                        const isActive = shape.some(([dx, dy]) => dx === x && dy === y);
+                        html += `<div class="preview-cell ${isActive ? 'active' : ''}"></div>`;
+                    }
+                }
+                
+                html += '</div>';
+                return html;
+            }
+
+            renderPieceStats(stats) {
+                if (!stats) return '';
+                
+                const statNames = {
+                    'hp': 'HP',
+                    'attack': 'ATK', 
+                    'defense': 'DEF',
+                    'speed': 'SPD'
+                };
+                
+                return Object.entries(stats)
+                    .filter(([key, value]) => value > 0)
+                    .map(([key, value]) => `<span class="stat">${statNames[key] || key}: ${value}</span>`)
+                    .join('');
+            }
+
+            async purchaseShopItem(pieceId) {
+                try {
+                    const response = await fetch('/api/player/shop/buy', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            piece_id: pieceId
+                        })
+                    });
+                    
+                    if (!response.ok) {
+                        const error = await response.json();
+                        alert(`Purchase failed: ${error.error || 'Unknown error'}`);
+                        return;
+                    }
+                    
+                    const result = await response.json();
+                    alert(`Successfully purchased ${result.piece_name}!`);
+                    
+                    // Refresh shop items
+                    this.loadShopItems();
+                    
+                    // Update player zoltans
+                    if (result.player_zoltans !== undefined) {
+                        this.zoltans = result.player_zoltans;
+                        this.updateStats();
+                    }
+                    
+                } catch (error) {
+                    console.error('Purchase failed:', error);
+                    alert('Purchase failed. Please try again.');
+                }
+            }
+        }
+        
+        // Initialize when page loads
+        document.addEventListener('DOMContentLoaded', () => {
+            console.log('>>> DREAM MECHA NEURAL INTERFACE INITIALIZED <<<');
+            console.log('>>> Press CTRL+SHIFT+R to reset first-time setup (for testing)');
+            console.log('>>> Blockmaker integration: FIXED - now uses real algorithms');
+            
+            // Global error handler for setup issues - DISABLED to prevent infinite refresh
+            // window.addEventListener('error', (e) => {
+            //     if (e.message.includes('textContent') || e.message.includes('null')) {
+            //         console.log('UI Error detected, attempting setup bypass...');
+            //         sessionStorage.setItem('setupStuck', 'true');
+            //         setTimeout(() => location.reload(), 1000);
+            //     }
+            // });
+            
+            window.mechaGrid = new MechaGrid();
+            
+            // Development shortcut to reset first-time setup
+            document.addEventListener('keydown', (e) => {
+                if (e.ctrlKey && e.shiftKey && e.key === 'R') {
+                    e.preventDefault();
+                    window.mechaGrid.resetFirstTimeSetup();
+                }
+            });
+            
+            // Initialize splitter functionality
+            const splitter = document.getElementById('mainSplitter');
+            if (splitter) {
+                let isResizing = false;
+                
+                splitter.addEventListener('mousedown', (e) => {
+                    isResizing = true;
+                    splitter.classList.add('active');
+                    document.body.style.cursor = 'col-resize';
+                });
+                
+                document.addEventListener('mousemove', (e) => {
+                    if (!isResizing) return;
+                    
+                    const statsRow = document.querySelector('.stats-controls-row');
+                    const stats = document.querySelector('.stats');
+                    const controls = document.querySelector('.controls-section');
+                    
+                    if (statsRow && stats && controls) {
+                        const rect = statsRow.getBoundingClientRect();
+                        const newWidth = e.clientX - rect.left;
+                        const totalWidth = rect.width;
+                        
+                        if (newWidth > 100 && newWidth < totalWidth - 100) {
+                            const percentage = (newWidth / totalWidth) * 100;
+                            stats.style.flex = `0 0 ${percentage}%`;
+                            controls.style.flex = `0 0 ${100 - percentage}%`;
+                        }
+                    }
+                });
+                
+                document.addEventListener('mouseup', () => {
+                    isResizing = false;
+                    splitter.classList.remove('active');
+                    document.body.style.cursor = '';
+                });
+            }
+        });
+
+        // Layout Manager System
+        class LayoutManager {
+            constructor() {
+                this.isLayoutMode = false;
+                this.draggedElement = null;
+                this.resizeElement = null;
+                this.selectedContainers = new Set();
+                this.layoutData = {};
+                
+                this.init();
+            }
+            
+            init() {
+                this.setupLayoutControls();
+                this.setupCornerBoxes();
+                this.loadLayout();
+            }
+            
+            setupLayoutControls() {
+                const layoutModeBtn = document.getElementById('layoutModeBtn');
+                const selectContainersBtn = document.getElementById('selectContainersBtn');
+                const resetLayoutBtn = document.getElementById('resetLayoutBtn');
+                const saveLayoutBtn = document.getElementById('saveLayoutBtn');
+                const exitLayoutModeBtn = document.getElementById('exitLayoutModeBtn');
+                const containerSelector = document.getElementById('containerSelector');
+                
+                layoutModeBtn.addEventListener('click', () => this.enterLayoutMode());
+                selectContainersBtn.addEventListener('click', () => this.toggleContainerSelector());
+                resetLayoutBtn.addEventListener('click', () => this.resetLayout());
+                saveLayoutBtn.addEventListener('click', () => this.saveLayout());
+                exitLayoutModeBtn.addEventListener('click', () => this.exitLayoutMode());
+                
+                // Setup container selector buttons
+                const selectorButtons = containerSelector.querySelectorAll('button');
+                selectorButtons.forEach(button => {
+                    button.addEventListener('click', () => this.toggleContainerSelection(button));
+                });
+            }
+            
+            setupCornerBoxes() {
+                const containers = document.querySelectorAll('.layout-container');
+                
+                containers.forEach(container => {
+                    const cornerBoxes = container.querySelectorAll('.corner-box');
+                    
+                    cornerBoxes.forEach(box => {
+                        box.addEventListener('mousedown', (e) => {
+                            if (!this.isLayoutMode || !this.selectedContainers.has(container.id)) return;
+                            e.preventDefault();
+                            this.startResize(container, box, e);
+                        });
+                    });
+                    
+                    container.addEventListener('mousedown', (e) => {
+                        if (!this.isLayoutMode || !this.selectedContainers.has(container.id)) return;
+                        if (e.target.classList.contains('corner-box')) return;
+                        e.preventDefault();
+                        this.startDrag(container, e);
+                    });
+                });
+            }
+            
+            enterLayoutMode() {
+                this.isLayoutMode = true;
+                document.getElementById('layoutMode').style.display = 'block';
+                
+                // Add draggable class to all containers
+                document.querySelectorAll('.layout-container').forEach(container => {
+                    container.classList.add('draggable');
+                });
+            }
+            
+            exitLayoutMode() {
+                this.isLayoutMode = false;
+                document.getElementById('layoutMode').style.display = 'none';
+                document.getElementById('containerSelector').style.display = 'none';
+                
+                // Hide corner boxes and clear selections
+                document.querySelectorAll('.corner-box').forEach(box => {
+                    box.style.display = 'none';
+                });
+                
+                document.querySelectorAll('.layout-container').forEach(container => {
+                    container.classList.remove('draggable', 'selected');
+                });
+                
+                this.selectedContainers.clear();
+                
+                // Stop any active drag/resize
+                this.stopDrag();
+                this.stopResize();
+            }
+
+            toggleContainerSelector() {
+                const selector = document.getElementById('containerSelector');
+                selector.style.display = selector.style.display === 'none' ? 'flex' : 'none';
+            }
+
+            toggleContainerSelection(button) {
+                const containerId = button.dataset.container + 'LayoutContainer';
+                const container = document.getElementById(containerId);
+                
+                if (!container) {
+                    console.warn('Container not found:', containerId);
+                    return;
+                }
+                
+                if (this.selectedContainers.has(containerId)) {
+                    this.selectedContainers.delete(containerId);
+                    container.classList.remove('selected');
+                    button.classList.remove('selected');
+                } else {
+                    this.selectedContainers.add(containerId);
+                    container.classList.add('selected');
+                    button.classList.add('selected');
+                }
+            }
+            
+            startDrag(container, e) {
+                this.draggedElement = container;
+                this.dragOffset = {
+                    x: e.clientX - container.offsetLeft,
+                    y: e.clientY - container.offsetTop
+                };
+                
+                container.style.position = 'absolute';
+                container.style.zIndex = '1000';
+                
+                document.addEventListener('mousemove', this.handleDragMove.bind(this));
+                document.addEventListener('mouseup', this.stopDrag.bind(this));
+            }
+            
+            handleDragMove(e) {
+                if (!this.draggedElement) return;
+                
+                const x = e.clientX - this.dragOffset.x;
+                const y = e.clientY - this.dragOffset.y;
+                
+                this.draggedElement.style.left = x + 'px';
+                this.draggedElement.style.top = y + 'px';
+            }
+            
+            stopDrag() {
+                if (this.draggedElement) {
+                    this.draggedElement.style.zIndex = '';
+                    this.draggedElement = null;
+                    document.removeEventListener('mousemove', this.handleDragMove);
+                    document.removeEventListener('mouseup', this.stopDrag);
+                }
+            }
+            
+            startResize(container, cornerBox, e) {
+                this.resizeElement = container;
+                this.resizeCorner = cornerBox.dataset.resize;
+                this.resizeStart = {
+                    x: e.clientX,
+                    y: e.clientY,
+                    width: container.offsetWidth,
+                    height: container.offsetHeight,
+                    left: container.offsetLeft,
+                    top: container.offsetTop
+                };
+                
+                container.style.position = 'absolute';
+                container.style.zIndex = '1000';
+                
+                document.addEventListener('mousemove', this.handleResizeMove.bind(this));
+                document.addEventListener('mouseup', this.stopResize.bind(this));
+            }
+            
+            handleResizeMove(e) {
+                if (!this.resizeElement) return;
+                
+                const deltaX = e.clientX - this.resizeStart.x;
+                const deltaY = e.clientY - this.resizeStart.y;
+                
+                let newWidth = this.resizeStart.width;
+                let newHeight = this.resizeStart.height;
+                let newLeft = this.resizeStart.left;
+                let newTop = this.resizeStart.top;
+                
+                switch (this.resizeCorner) {
+                    case 'se':
+                        newWidth += deltaX;
+                        newHeight += deltaY;
+                        break;
+                    case 'sw':
+                        newWidth -= deltaX;
+                        newHeight += deltaY;
+                        newLeft += deltaX;
+                        break;
+                    case 'ne':
+                        newWidth += deltaX;
+                        newHeight -= deltaY;
+                        newTop += deltaY;
+                        break;
+                    case 'nw':
+                        newWidth -= deltaX;
+                        newHeight -= deltaY;
+                        newLeft += deltaX;
+                        newTop += deltaY;
+                        break;
+                }
+                
+                // Minimum size constraints
+                newWidth = Math.max(200, newWidth);
+                newHeight = Math.max(150, newHeight);
+                
+                this.resizeElement.style.width = newWidth + 'px';
+                this.resizeElement.style.height = newHeight + 'px';
+                this.resizeElement.style.left = newLeft + 'px';
+                this.resizeElement.style.top = newTop + 'px';
+            }
+            
+            stopResize() {
+                if (this.resizeElement) {
+                    this.resizeElement.style.zIndex = '';
+                    this.resizeElement = null;
+                    document.removeEventListener('mousemove', this.handleResizeMove);
+                    document.removeEventListener('mouseup', this.stopResize);
+                }
+            }
+            
+            saveLayout() {
+                this.layoutData = {};
+                document.querySelectorAll('.layout-container').forEach(container => {
+                    const rect = container.getBoundingClientRect();
+                    this.layoutData[container.id] = {
+                        left: rect.left,
+                        top: rect.top,
+                        width: rect.width,
+                        height: rect.height
+                    };
+                });
+                
+                localStorage.setItem('dream_mecha_layout', JSON.stringify(this.layoutData));
+                alert('Layout saved!');
+            }
+            
+            loadLayout() {
+                const saved = localStorage.getItem('dream_mecha_layout');
+                if (saved) {
+                    this.layoutData = JSON.parse(saved);
+                    this.applyLayout();
+                }
+            }
+            
+            applyLayout() {
+                Object.entries(this.layoutData).forEach(([containerId, layout]) => {
+                    const container = document.getElementById(containerId);
+                    if (container) {
+                        container.style.position = 'absolute';
+                        container.style.left = layout.left + 'px';
+                        container.style.top = layout.top + 'px';
+                        container.style.width = layout.width + 'px';
+                        container.style.height = layout.height + 'px';
+                    }
+                });
+            }
+            
+            resetLayout() {
+                if (confirm('Reset layout to default?')) {
+                    localStorage.removeItem('dream_mecha_layout');
+                    location.reload();
+                }
+            }
+        }
+        
+        // Initialize layout manager
+        document.addEventListener('DOMContentLoaded', () => {
+            window.layoutManager = new LayoutManager();
+        });
+    </script>
+</body>
+</html> 

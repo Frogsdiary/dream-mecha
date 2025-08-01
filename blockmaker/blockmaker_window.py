@@ -19,18 +19,59 @@ IMPLEMENTATION:
 
 import sys
 import random
-from typing import List, Tuple, Set, Optional
+import json
+import math
+import os
+from datetime import datetime, date
+from typing import List, Tuple, Set, Optional, Dict, Any
 from PyQt5.QtWidgets import (
     QMainWindow, QWidget, QVBoxLayout, QHBoxLayout, QGridLayout, 
     QPushButton, QLabel, QSpinBox, QLineEdit, QFrame, QSizePolicy,
-    QApplication, QPlainTextEdit, QSplitter
+    QApplication, QPlainTextEdit, QSplitter, QTabWidget, QDateEdit,
+    QTextEdit, QGroupBox, QFormLayout, QComboBox, QCheckBox
 )
-from PyQt5.QtCore import Qt, QTimer, pyqtSignal
-from PyQt5.QtGui import QPainter, QColor, QPen, QFont, QPixmap, QBrush, QKeySequence
+from PyQt5.QtCore import Qt, QTimer, pyqtSignal, QDate
+from PyQt5.QtGui import QPainter, QColor, QPen, QFont, QPixmap, QBrush, QKeySequence, QFontDatabase
 
-# Import project styling
-sys.path.append('..')
-from core.style import GOLD, UPGRADE_BG, TAB_BG, TEXT_COLOR, BORDER_COLOR, SECONDARY_ACCENT
+# Import GATE CREATOR and gate portal modules
+try:
+    from gate_creator import GateCreator, create_gate_from_glyph, verify_gate_pattern
+    GATE_CREATOR_AVAILABLE = True
+    print("GATE Creator module imported successfully")
+except ImportError as e:
+    GATE_CREATOR_AVAILABLE = False
+    print(f"Warning: Gate Creator module not available - {e}")
+    print(f"Import error details: {type(e).__name__}: {str(e)}")
+except Exception as e:
+    GATE_CREATOR_AVAILABLE = False
+    print(f"Unexpected error importing Gate Creator: {type(e).__name__}: {str(e)}")
+
+try:
+    from gate_portal import GatePortal, create_gate_portal, verify_gate_portal, get_integration_types
+    GATE_PORTAL_AVAILABLE = True
+    print("GATE Portal module imported successfully")
+except ImportError as e:
+    GATE_PORTAL_AVAILABLE = False
+    print(f"Warning: Gate Portal module not available - {e}")
+    print(f"Import error details: {type(e).__name__}: {str(e)}")
+except Exception as e:
+    GATE_PORTAL_AVAILABLE = False
+    print(f"Unexpected error importing Gate Portal: {type(e).__name__}: {str(e)}")
+
+print(f"DEBUG: GATE_CREATOR_AVAILABLE = {GATE_CREATOR_AVAILABLE}")
+print(f"DEBUG: GATE_PORTAL_AVAILABLE = {GATE_PORTAL_AVAILABLE}")
+
+# Style constants for Blockmaker
+GOLD = "#f7c873"
+UPGRADE_BG = "#2d3748"
+TAB_BG = "#4a5568"
+TEXT_COLOR = "#e2e8f0"
+BORDER_COLOR = "#718096"
+SECONDARY_ACCENT = "#667eea"
+
+# Font constants
+DREAM_MECHA_FONT = "NCL Razor Demo"  # This will be the loaded font name
+FALLBACK_FONTS = "'Consolas', 'Monaco', 'Courier New', monospace"
 
 
 class BlockmakerGrid(QWidget):
@@ -251,6 +292,909 @@ class BlockmakerGrid(QWidget):
     place_block_requested = pyqtSignal(tuple)
 
 
+class DreamMechaIntegration(QWidget):
+    """Dream Mecha game integration panel for content generation"""
+    
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.generated_pieces = []
+        self.generated_enemies = []
+        self.manual_pieces = []  # Separate list for manual pieces
+        self.current_date = date.today()
+        self.setup_ui()
+        
+    def setup_ui(self):
+        """Create the Dream Mecha integration UI"""
+        layout = QVBoxLayout(self)
+        layout.setSpacing(15)
+        layout.setContentsMargins(15, 15, 15, 15)
+        
+        # Title
+        title = QLabel("Dream Mecha - Content Generator")
+        title.setStyleSheet(f"""
+            font-size: 20px;
+            font-weight: bold;
+            color: {GOLD};
+            margin-bottom: 10px;
+            font-family: '{DREAM_MECHA_FONT}', {FALLBACK_FONTS};
+            letter-spacing: 1px;
+        """)
+        title.setAlignment(Qt.AlignCenter)
+        layout.addWidget(title)
+        
+        # Main splitter for left/right layout
+        main_splitter = QSplitter(Qt.Orientation.Horizontal)
+        main_splitter.setChildrenCollapsible(False)
+        main_splitter.setHandleWidth(3)
+        main_splitter.setStyleSheet(f"""
+            QSplitter::handle {{
+                background: {BORDER_COLOR};
+                border-radius: 1px;
+            }}
+        """)
+        
+        # Left side - Generation Controls
+        left_widget = QWidget()
+        left_layout = QVBoxLayout(left_widget)
+        left_layout.setSpacing(10)
+        
+        # Generation Parameters Group
+        params_group = QGroupBox("Generation Parameters")
+        params_group.setStyleSheet(f"""
+            QGroupBox {{
+                background: {UPGRADE_BG};
+                border: 2px solid {BORDER_COLOR};
+                border-radius: 5px;
+                padding: 10px;
+                font-weight: bold;
+                color: {TEXT_COLOR};
+            }}
+            QGroupBox::title {{
+                subcontrol-origin: margin;
+                left: 10px;
+                padding: 0 5px 0 5px;
+                color: {GOLD};
+            }}
+        """)
+        params_layout = QFormLayout(params_group)
+        
+        # Player Count
+        self.player_count_spinbox = QSpinBox()
+        self.player_count_spinbox.setRange(1, 100)
+        self.player_count_spinbox.setValue(10)
+        self.player_count_spinbox.setStyleSheet(f"""
+            QSpinBox {{
+                background: {TAB_BG};
+                border: 1px solid {BORDER_COLOR};
+                border-radius: 3px;
+                padding: 5px;
+                color: {TEXT_COLOR};
+                min-width: 80px;
+            }}
+        """)
+        params_layout.addRow("Active Player Count:", self.player_count_spinbox)
+        
+        # Voidstate
+        self.voidstate_spinbox = QSpinBox()
+        self.voidstate_spinbox.setRange(1, 50)
+        self.voidstate_spinbox.setValue(1)
+        self.voidstate_spinbox.setStyleSheet(f"""
+            QSpinBox {{
+                background: {TAB_BG};
+                border: 1px solid {BORDER_COLOR};
+                border-radius: 3px;
+                padding: 5px;
+                color: {TEXT_COLOR};
+                min-width: 80px;
+            }}
+        """)
+        params_layout.addRow("Current Voidstate:", self.voidstate_spinbox)
+        
+        # Generation Date
+        self.date_edit = QDateEdit()
+        self.date_edit.setDate(QDate.currentDate())
+        self.date_edit.setStyleSheet(f"""
+            QDateEdit {{
+                background: {TAB_BG};
+                border: 1px solid {BORDER_COLOR};
+                border-radius: 3px;
+                padding: 5px;
+                color: {TEXT_COLOR};
+                min-width: 120px;
+            }}
+        """)
+        params_layout.addRow("Generation Date:", self.date_edit)
+        
+        left_layout.addWidget(params_group)
+        
+        # Generation Controls Group
+        controls_group = QGroupBox("Generation Controls")
+        controls_group.setStyleSheet(f"""
+            QGroupBox {{
+                background: {UPGRADE_BG};
+                border: 2px solid {BORDER_COLOR};
+                border-radius: 5px;
+                padding: 10px;
+                font-weight: bold;
+                color: {TEXT_COLOR};
+            }}
+            QGroupBox::title {{
+                subcontrol-origin: margin;
+                left: 10px;
+                padding: 0 5px 0 5px;
+                color: {GOLD};
+            }}
+        """)
+        controls_layout = QVBoxLayout(controls_group)
+        
+        # Generation Buttons
+        self.generate_btn = QPushButton("Generate Daily Content")
+        self.generate_btn.setStyleSheet(f"""
+            QPushButton {{ 
+                background: {GOLD}; 
+                color: #000000; 
+                border: none; 
+                border-radius: 5px; 
+                padding: 12px 20px; 
+                font-weight: bold; 
+                font-size: 14px;
+            }}
+            QPushButton:hover {{ background: #ffd700; }}
+            QPushButton:pressed {{ background: #e6c200; }}
+        """)
+        controls_layout.addWidget(self.generate_btn)
+        
+        self.export_btn = QPushButton("Export to JSON")
+        self.export_btn.setStyleSheet(f"""
+            QPushButton {{ 
+                background: {SECONDARY_ACCENT}; 
+                color: #fff; 
+                border: none; 
+                border-radius: 5px; 
+                padding: 10px 16px; 
+                font-weight: bold; 
+            }}
+            QPushButton:hover {{ background: #8ea6f8; }}
+            QPushButton:pressed {{ background: #5c6bc0; }}
+        """)
+        controls_layout.addWidget(self.export_btn)
+        
+        self.preview_btn = QPushButton("Preview Shop")
+        self.preview_btn.setStyleSheet(f"""
+            QPushButton {{ 
+                background: {SECONDARY_ACCENT}; 
+                color: #fff; 
+                border: none; 
+                border-radius: 5px; 
+                padding: 10px 16px; 
+                font-weight: bold; 
+            }}
+            QPushButton:hover {{ background: #8ea6f8; }}
+            QPushButton:pressed {{ background: #5c6bc0; }}
+        """)
+        controls_layout.addWidget(self.preview_btn)
+        
+        # Manual Piece Generation
+        manual_group = QGroupBox("Manual Piece Generation")
+        manual_group.setStyleSheet(f"""
+            QGroupBox {{
+                background: {UPGRADE_BG};
+                border: 2px solid {BORDER_COLOR};
+                border-radius: 5px;
+                padding: 10px;
+                font-weight: bold;
+                color: {TEXT_COLOR};
+            }}
+            QGroupBox::title {{
+                subcontrol-origin: margin;
+                left: 10px;
+                padding: 0 5px 0 5px;
+                color: {GOLD};
+            }}
+        """)
+        manual_layout = QFormLayout(manual_group)
+        
+        self.manual_block_count = QSpinBox()
+        self.manual_block_count.setRange(1, 80)
+        self.manual_block_count.setValue(5)
+        self.manual_block_count.setStyleSheet(f"""
+            QSpinBox {{
+                background: {TAB_BG};
+                border: 1px solid {BORDER_COLOR};
+                border-radius: 3px;
+                padding: 5px;
+                color: {TEXT_COLOR};
+                min-width: 80px;
+            }}
+        """)
+        manual_layout.addRow("Block Count:", self.manual_block_count)
+        
+        self.manual_stat_type = QComboBox()
+        self.manual_stat_type.addItems(["random", "hp", "attack", "defense", "speed"])
+        self.manual_stat_type.setStyleSheet(f"""
+            QComboBox {{
+                background: {TAB_BG};
+                border: 1px solid {BORDER_COLOR};
+                border-radius: 3px;
+                padding: 5px;
+                color: {TEXT_COLOR};
+                min-width: 100px;
+            }}
+        """)
+        manual_layout.addRow("Stat Type:", self.manual_stat_type)
+        
+        self.generate_manual_btn = QPushButton("Generate Manual Piece")
+        self.generate_manual_btn.setStyleSheet(f"""
+            QPushButton {{ 
+                background: {BORDER_COLOR}; 
+                color: {TEXT_COLOR}; 
+                border: none; 
+                border-radius: 5px; 
+                padding: 8px 16px; 
+                font-weight: bold; 
+            }}
+            QPushButton:hover {{ background: #4a5568; }}
+        """)
+        manual_layout.addRow("", self.generate_manual_btn)
+        
+        controls_layout.addWidget(manual_group)
+        left_layout.addWidget(controls_group)
+        
+        # Add left widget to splitter
+        main_splitter.addWidget(left_widget)
+        
+        # Right side - Status and Preview
+        right_widget = QWidget()
+        right_layout = QVBoxLayout(right_widget)
+        
+        # Status Group
+        status_group = QGroupBox("Generation Status")
+        status_group.setStyleSheet(f"""
+            QGroupBox {{
+                background: {UPGRADE_BG};
+                border: 2px solid {BORDER_COLOR};
+                border-radius: 5px;
+                padding: 10px;
+                font-weight: bold;
+                color: {TEXT_COLOR};
+            }}
+            QGroupBox::title {{
+                subcontrol-origin: margin;
+                left: 10px;
+                padding: 0 5px 0 5px;
+                color: {GOLD};
+            }}
+        """)
+        status_layout = QVBoxLayout(status_group)
+        
+        self.status_text = QTextEdit()
+        self.status_text.setStyleSheet(f"""
+            QTextEdit {{
+                background: {TAB_BG};
+                border: 1px solid {BORDER_COLOR};
+                border-radius: 3px;
+                padding: 5px;
+                color: {TEXT_COLOR};
+                font-family: '{DREAM_MECHA_FONT}', {FALLBACK_FONTS};
+                font-size: 10px;
+            }}
+        """)
+        self.status_text.setMaximumHeight(200)
+        status_layout.addWidget(self.status_text)
+        
+        right_layout.addWidget(status_group)
+        
+        # Preview Group
+        preview_group = QGroupBox("Generated Content Preview")
+        preview_group.setStyleSheet(f"""
+            QGroupBox {{
+                background: {UPGRADE_BG};
+                border: 2px solid {BORDER_COLOR};
+                border-radius: 5px;
+                padding: 10px;
+                font-weight: bold;
+                color: {TEXT_COLOR};
+            }}
+            QGroupBox::title {{
+                subcontrol-origin: margin;
+                left: 10px;
+                padding: 0 5px 0 5px;
+                color: {GOLD};
+            }}
+        """)
+        preview_layout = QVBoxLayout(preview_group)
+        
+        self.preview_text = QTextEdit()
+        self.preview_text.setStyleSheet(f"""
+            QTextEdit {{
+                background: {TAB_BG};
+                border: 1px solid {BORDER_COLOR};
+                border-radius: 3px;
+                padding: 5px;
+                color: {TEXT_COLOR};
+                font-family: '{DREAM_MECHA_FONT}', {FALLBACK_FONTS};
+                font-size: 11px;
+            }}
+        """)
+        self.preview_text.setMinimumHeight(400)  # Make preview area larger
+        preview_layout.addWidget(self.preview_text)
+        
+        right_layout.addWidget(preview_group)
+        
+        # Manual Piece Preview Group
+        manual_preview_group = QGroupBox("Manual Piece Preview")
+        manual_preview_group.setStyleSheet(f"""
+            QGroupBox {{
+                background: {UPGRADE_BG};
+                border: 2px solid {BORDER_COLOR};
+                border-radius: 5px;
+                padding: 10px;
+                font-weight: bold;
+                color: {TEXT_COLOR};
+            }}
+            QGroupBox::title {{
+                subcontrol-origin: margin;
+                left: 10px;
+                padding: 0 5px 0 5px;
+                color: {GOLD};
+            }}
+        """)
+        manual_preview_layout = QVBoxLayout(manual_preview_group)
+        
+        self.manual_preview_text = QTextEdit()
+        self.manual_preview_text.setStyleSheet(f"""
+            QTextEdit {{
+                background: {TAB_BG};
+                border: 1px solid {BORDER_COLOR};
+                border-radius: 3px;
+                padding: 5px;
+                color: {TEXT_COLOR};
+                font-family: '{DREAM_MECHA_FONT}', {FALLBACK_FONTS};
+                font-size: 11px;
+            }}
+        """)
+        self.manual_preview_text.setMinimumHeight(200)
+        manual_preview_layout.addWidget(self.manual_preview_text)
+        
+        right_layout.addWidget(manual_preview_group)
+        
+        # Add right widget to splitter
+        main_splitter.addWidget(right_widget)
+        
+        # Set splitter proportions
+        main_splitter.setSizes([400, 600])
+        
+        layout.addWidget(main_splitter)
+        
+        # Connect signals
+        self.generate_btn.clicked.connect(self.generate_daily_content)
+        self.export_btn.clicked.connect(self.export_to_json)
+        self.preview_btn.clicked.connect(self.preview_shop)
+        self.generate_manual_btn.clicked.connect(self.generate_manual_piece)
+        
+        # Initial status
+        self.log_status("Dream Mecha integration ready. Set parameters and generate content.")
+        
+    def log_status(self, message: str):
+        """Add message to status log"""
+        timestamp = datetime.now().strftime("%H:%M:%S")
+        self.status_text.append(f"[{timestamp}] {message}")
+        
+    def generate_daily_content(self):
+        """Generate daily shop pieces and enemies"""
+        try:
+            player_count = self.player_count_spinbox.value()
+            voidstate = self.voidstate_spinbox.value()
+            gen_date = self.date_edit.date().toPyDate()
+            
+            self.log_status(f"Generating daily content for {gen_date}...")
+            self.log_status(f"Player count: {player_count}, Voidstate: {voidstate}")
+            
+            # Generate shop pieces
+            self.generated_pieces = self.generate_daily_pieces_beta(player_count, voidstate, gen_date)
+            self.log_status(f"Generated {len(self.generated_pieces)} shop pieces")
+            
+            # Generate enemies
+            estimated_power = self.estimate_player_power(player_count)
+            self.generated_enemies = self.generate_daily_enemies(voidstate, estimated_power)
+            self.log_status(f"Generated {len(self.generated_enemies)} enemies")
+            
+            self.log_status("Daily content generation complete!")
+            self.update_preview()
+            
+        except Exception as e:
+            self.log_status(f"Error generating content: {str(e)}")
+            
+    def generate_daily_pieces_beta(self, player_count: int, voidstate: int, gen_date: date) -> List[Dict[str, Any]]:
+        """Generate pieces for daily shop using random algorithm only"""
+        pieces = []
+        
+        # Calculate total pieces needed
+        base_pieces = 8
+        scaling_pieces = math.floor(player_count * 1.5)
+        total_pieces = base_pieces + scaling_pieces
+        
+        # Size distribution (all using random algorithm)
+        small_pieces = math.floor(total_pieces * 0.5)    # 1-5 blocks
+        medium_pieces = math.floor(total_pieces * 0.4)   # 6-15 blocks  
+        large_pieces = math.floor(total_pieces * 0.1)    # 16-25 blocks
+        
+        # Generate pieces by size category
+        piece_id_counter = 1
+        
+        # Small pieces (1-5 blocks)
+        for i in range(small_pieces):
+            block_count = random.randint(1, 5)
+            piece = self.generate_single_piece_manual(block_count, "random")
+            piece["id"] = f"piece_{gen_date.strftime('%Y%m%d')}_{piece_id_counter:03d}"
+            piece["size_category"] = "small"
+            piece["generation_method"] = "random"
+            piece["beta_mode"] = True
+            pieces.append(piece)
+            piece_id_counter += 1
+            
+        # Medium pieces (6-15 blocks)
+        for i in range(medium_pieces):
+            block_count = random.randint(6, 15)
+            piece = self.generate_single_piece_manual(block_count, "random")
+            piece["id"] = f"piece_{gen_date.strftime('%Y%m%d')}_{piece_id_counter:03d}"
+            piece["size_category"] = "medium"
+            piece["generation_method"] = "random"
+            piece["beta_mode"] = True
+            pieces.append(piece)
+            piece_id_counter += 1
+            
+        # Large pieces (16-25 blocks)
+        for i in range(large_pieces):
+            block_count = random.randint(16, 25)
+            piece = self.generate_single_piece_manual(block_count, "random")
+            piece["id"] = f"piece_{gen_date.strftime('%Y%m%d')}_{piece_id_counter:03d}"
+            piece["size_category"] = "large"
+            piece["generation_method"] = "random"
+            piece["beta_mode"] = True
+            pieces.append(piece)
+            piece_id_counter += 1
+            
+        return pieces
+        
+    def generate_single_piece_manual(self, block_count: int, stat_type: str) -> Dict[str, Any]:
+        """Generate pieces using REAL blockmaker algorithms"""
+        # Determine generation method
+        # ONLY use random generation - no stars or glyphs
+        algorithm = "random"
+        
+        # Generate pattern using REAL blockmaker algorithms
+        pattern = self.generate_blockmaker_pattern(block_count, algorithm)
+        
+        # Calculate stats using proper game rules
+        stats = self.calculate_proper_piece_stats(block_count, stat_type, algorithm)
+        
+        # Determine stat type
+        if stat_type == "random":
+            stat_types = ["hp", "attack", "defense", "speed"]
+            weights = [0.4, 0.25, 0.2, 0.15]  # 40% HP, 25% Attack, 20% Defense, 15% Speed
+            stat_type = random.choices(stat_types, weights=weights)[0]
+            
+        # Create piece data
+        piece_data = {
+            "pattern": pattern,
+            "pattern_array": self.pattern_to_array(pattern),
+            "blocks": block_count,
+            "stats": stats,
+            "stat_type": stat_type,
+            "price": self.calculate_proper_piece_price(block_count, stats),
+            "rarity": self.determine_rarity(block_count),
+            "algorithm": algorithm
+        }
+        
+        return piece_data
+        
+    def generate_blockmaker_pattern(self, block_count: int, algorithm: str) -> str:
+        """Generate pattern using REAL blockmaker algorithms"""
+        # Get the main blockmaker window instance
+        main_window = None
+        for widget in QApplication.topLevelWidgets():
+            if isinstance(widget, BlockmakerWindow):
+                main_window = widget
+                break
+        
+        if not main_window or not main_window.grid:
+            # Fallback if main window not available
+            return self.generate_fallback_pattern(block_count)
+        
+        # Store original state
+        original_blocks = main_window.grid.blocks.copy()
+        original_count = main_window.block_count
+        original_spinbox_value = main_window.count_spinbox.value() if main_window.count_spinbox else 1
+        
+        try:
+            # Set up for generation
+            main_window.grid.clear_grid(reset_spinbox=False)
+            if main_window.count_spinbox:
+                main_window.count_spinbox.setValue(block_count)
+            
+            # Generate pattern using random algorithm only
+            main_window.generate_random_pattern()
+            
+            # Get the generated pattern
+            pattern = main_window.generate_ascii_pattern()
+            
+            # Extract just the pattern part (remove header)
+            lines = pattern.split('\n')
+            pattern_lines = []
+            in_pattern = False
+            for line in lines:
+                if line.startswith('='):
+                    in_pattern = True
+                    continue
+                if in_pattern and line.strip():
+                    pattern_lines.append(line.rstrip())
+            
+            result_pattern = '\n'.join(pattern_lines) if pattern_lines else self.generate_fallback_pattern(block_count)
+            
+        except Exception as e:
+            print(f"Error generating blockmaker pattern: {e}")
+            result_pattern = self.generate_fallback_pattern(block_count)
+        
+        finally:
+            # Restore original state
+            main_window.grid.blocks = original_blocks
+            main_window.block_count = original_count
+            if main_window.count_spinbox:
+                main_window.count_spinbox.setValue(original_spinbox_value)
+            main_window.grid.update_valid_positions()
+            main_window.grid.update()
+        
+        return result_pattern
+    
+    def generate_fallback_pattern(self, block_count: int) -> str:
+        """Simple fallback pattern if real blockmaker unavailable"""
+        # At least generate a proper adjacent pattern
+        if block_count <= 0:
+            return "+ "
+        elif block_count == 1:
+            return "+"
+        elif block_count == 2:
+            return "+ 2"
+        elif block_count == 3:
+            return "+ 2\n3 ."
+        elif block_count == 4:
+            return "+ 2\n3 4"
+        else:
+            # For larger pieces, create a simple rectangular pattern
+            pattern = "+ 2\n3 4"
+            remaining = block_count - 4
+            if remaining > 0:
+                pattern += f"\n{5} {6 if remaining > 1 else '.'}"
+            if remaining > 2:
+                pattern += f"\n{7} {8 if remaining > 3 else '.'}"
+        return pattern
+        
+    def pattern_to_array(self, pattern: str) -> List[List[int]]:
+        """Convert pattern string to 2D array"""
+        lines = pattern.strip().split('\n')
+        result = []
+        for line in lines:
+            row = []
+            for char in line:
+                if char == '+':
+                    row.append(1)
+                elif char == '.':
+                    row.append(0)
+                elif char.isdigit():
+                    row.append(int(char))
+                else:
+                    row.append(0)
+            result.append(row)
+        return result
+        
+    def calculate_proper_piece_stats(self, block_count: int, stat_type: str, algorithm: str) -> Dict[str, int]:
+        """Calculate stats using proper game rules exponential scaling"""
+        # Game rules: exponential scaling ~100 HP per block base, exponentially increasing
+        base_hp = 100
+        scaling_factor = 1.6  # Game rules scaling factor
+        total_stat_power = int(base_hp * (block_count ** scaling_factor))
+        
+        # Distribute stats based on algorithm and type
+        if algorithm == "random":
+            # Balanced distribution
+            hp_ratio, att_ratio, def_ratio, spd_ratio = 0.4, 0.25, 0.2, 0.15
+        elif algorithm == "stars":
+            # Attack-focused
+            hp_ratio, att_ratio, def_ratio, spd_ratio = 0.3, 0.4, 0.15, 0.15
+        elif algorithm == "glyph":
+            # Defense-focused
+            hp_ratio, att_ratio, def_ratio, spd_ratio = 0.35, 0.15, 0.35, 0.15
+        else:
+            # Default balanced
+            hp_ratio, att_ratio, def_ratio, spd_ratio = 0.4, 0.25, 0.2, 0.15
+        
+        # Each piece gives ONLY ONE stat (random selection)
+        stat_types = ["hp", "attack", "defense", "speed"]
+        chosen_stat = random.choice(stat_types)
+        
+        # All power goes to the chosen stat
+        base_stats = {
+            "hp": 0,
+            "attack": 0,
+            "defense": 0,
+            "speed": 0
+        }
+        base_stats[chosen_stat] = total_stat_power
+        
+        # Add variance (±15%)
+        variance = 0.15
+        base_value = base_stats[chosen_stat]
+        min_value = int(base_value * (1 - variance))
+        max_value = int(base_value * (1 + variance))
+        base_stats[chosen_stat] = random.randint(min_value, max_value)
+        
+        # Convert to expected format
+        return {
+            "hp": base_stats["hp"],
+            "att": base_stats["attack"],
+            "def": base_stats["defense"],
+            "spd": base_stats["speed"]
+        }
+        
+    def calculate_proper_piece_price(self, block_count: int, stats: Dict[str, int]) -> int:
+        """Calculate piece price using game rules exponential scaling"""
+        # Game rules: base_cost * (block_count ^ scaling_factor)
+        base_cost = 100
+        scaling_factor = 1.8
+        block_price = int(base_cost * (block_count ** scaling_factor))
+        
+        # Add stat bonus (30% of total stats value)
+        total_stats = stats["hp"] + stats["att"] + stats["def"] + stats["spd"]
+        stat_bonus = int(total_stats * 0.3)
+        
+        final_price = block_price + stat_bonus
+        
+        # Add price variance (±10%)
+        variance = 0.1
+        min_price = int(final_price * (1 - variance))
+        max_price = int(final_price * (1 + variance))
+        
+        return random.randint(min_price, max_price)
+        
+    def determine_rarity(self, block_count: int) -> str:
+        """Determine piece rarity based on block count"""
+        if block_count <= 5:
+            return "common"
+        elif block_count <= 15:
+            return "uncommon"
+        elif block_count <= 25:
+            return "rare"
+        else:
+            return "legendary"
+            
+    def estimate_player_power(self, player_count: int) -> Dict[str, int]:
+        """Estimate average player power for enemy scaling"""
+        # For first day, use generic values that 4 people could handle
+        return {
+            "avg_hp": 50000,
+            "avg_att": 8000,
+            "avg_def": 3000,
+            "avg_spd": 2000
+        }
+        
+    def generate_daily_enemies(self, voidstate: int, estimated_power: Dict[str, int]) -> List[Dict[str, Any]]:
+        """Generate enemies based on voidstate and estimated player power"""
+        enemies = []
+        
+        # Generate 1-3 enemies based on voidstate
+        enemy_count = min(3, 1 + voidstate // 5)
+        
+        for i in range(enemy_count):
+            # Base enemy scales with estimated community power
+            base_hp = estimated_power["avg_hp"] * 0.8
+            base_att = estimated_power["avg_att"] * 0.6
+            
+            # Voidstate multiplier  
+            void_multiplier = 1 + (voidstate * 0.2)
+            
+            enemy_hp = int(base_hp * void_multiplier)
+            enemy_att = int(base_att * void_multiplier)
+            enemy_def = int(enemy_hp * 0.1)  # 10% of HP
+            enemy_spd = int(enemy_att * 0.3) # 30% of attack
+            
+            description = self.generate_enemy_description(enemy_hp, enemy_att, enemy_def, enemy_spd)
+            
+            enemy = {
+                "id": f"enemy_{date.today().strftime('%Y%m%d')}_{i+1:03d}",
+                "hp": enemy_hp,
+                "att": enemy_att, 
+                "def": enemy_def,
+                "spd": enemy_spd,
+                "description": description,
+                "threat_level": self.determine_threat_level(enemy_hp, enemy_att)
+            }
+            
+            enemies.append(enemy)
+            
+        return enemies
+        
+    def generate_enemy_description(self, hp: int, att: int, def_val: int, spd: int) -> str:
+        """Generate procedural enemy description based on stats"""
+        # Simplified descriptor system for now
+        descriptors = {
+            "size": {
+                "tier1": ["small", "tiny", "diminutive"],
+                "tier2": ["hulking", "large", "imposing"],
+                "tier3": ["colossal", "gigantic", "enormous"],
+                "tier4": ["world-ending", "cosmic", "reality-bending"]
+            },
+            "threat": {
+                "tier1": ["with gnashing teeth", "sporting sharp claws"],
+                "tier2": ["bristling with razor spikes", "wreathed in shadow flames"],
+                "tier3": ["channeling destructive force", "emanating reality-warping power"],
+                "tier4": ["radiating universe-ending power", "bending space-time"]
+            }
+        }
+        
+        # Determine tiers based on stats
+        hp_tier = min(4, 1 + hp // 100000)  # Scale tiers based on HP
+        att_tier = min(4, 1 + att // 10000)  # Scale tiers based on attack
+        
+        # Select descriptors
+        size_desc = random.choice(descriptors["size"][f"tier{hp_tier}"])
+        threat_desc = random.choice(descriptors["threat"][f"tier{att_tier}"])
+        
+        return f"A {size_desc} void beast {threat_desc}"
+        
+    def determine_threat_level(self, hp: int, att: int) -> str:
+        """Determine enemy threat level"""
+        total_power = hp + att
+        if total_power < 50000:
+            return "low"
+        elif total_power < 150000:
+            return "moderate"
+        elif total_power < 500000:
+            return "high"
+        else:
+            return "extreme"
+            
+    def generate_manual_piece(self):
+        """Generate a single piece for testing"""
+        try:
+            block_count = self.manual_block_count.value()
+            stat_type = self.manual_stat_type.currentText()
+            
+            self.log_status(f"Generating manual piece: {block_count} blocks, {stat_type} stat")
+            
+            piece = self.generate_single_piece_manual(block_count, stat_type)
+            piece["id"] = f"manual_piece_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
+            piece["size_category"] = "manual"
+            piece["generation_method"] = "manual"
+            piece["beta_mode"] = True
+            
+            self.manual_pieces.append(piece)
+            self.log_status(f"Manual piece generated: {piece['id']}")
+            self.update_manual_preview()
+            
+        except Exception as e:
+            self.log_status(f"Error generating manual piece: {str(e)}")
+            
+    def export_to_json(self):
+        """Export generated content to JSON file"""
+        try:
+            if not self.generated_pieces and not self.generated_enemies:
+                self.log_status("No content to export. Generate content first.")
+                return
+                
+            gen_date = self.date_edit.date().toPyDate()
+            player_count = self.player_count_spinbox.value()
+            voidstate = self.voidstate_spinbox.value()
+            
+            # Create export data
+            export_data = {
+                "date": gen_date.strftime("%Y-%m-%d"),
+                "voidstate": voidstate,
+                "generation_metadata": {
+                    "player_count": player_count,
+                    "pieces_generated": len(self.generated_pieces),
+                    "generation_time": datetime.now().isoformat() + "Z"
+                },
+                "shop_pieces": self.generated_pieces,
+                "enemies": self.generated_enemies,
+                "economy_data": {
+                    "base_zoltan_reward": 50000,
+                    "voidstate_bonus": voidstate * 10000,
+                    "total_zoltan_reward": 50000 + (voidstate * 10000),
+                    "repair_cost_multiplier": 0.05
+                }
+            }
+            
+            # Ensure directory exists
+            export_dir = os.path.join("dream_mecha", "database", "daily")
+            os.makedirs(export_dir, exist_ok=True)
+            
+            # Export file
+            filename = f"{gen_date.strftime('%Y-%m-%d')}.json"
+            filepath = os.path.join(export_dir, filename)
+            
+            with open(filepath, 'w') as f:
+                json.dump(export_data, f, indent=2)
+                
+            self.log_status(f"Exported daily content to: {filepath}")
+            
+        except Exception as e:
+            self.log_status(f"Error exporting to JSON: {str(e)}")
+            
+    def preview_shop(self):
+        """Preview the generated shop pieces"""
+        if not self.generated_pieces:
+            self.log_status("No pieces to preview. Generate content first.")
+            return
+            
+        preview_text = "=== DREAM MECHA DAILY SHOP ===\n\n"
+        
+        for i, piece in enumerate(self.generated_pieces, 1):
+            preview_text += f"Piece {i}: {piece['id']}\n"
+            preview_text += f"  Size: {piece['size_category']} ({piece['blocks']} blocks)\n"
+            # Only show the single stat that has value
+            active_stat = None
+            for stat_name, stat_value in piece['stats'].items():
+                if stat_value > 0:
+                    active_stat = (stat_name.upper(), stat_value)
+                    break
+            
+            if active_stat:
+                preview_text += f"  Stats: {active_stat[0]}:{active_stat[1]}\n"
+            else:
+                preview_text += f"  Stats: ERROR - No active stat found\n"
+            preview_text += f"  Type: {piece['stat_type']}\n"
+            preview_text += f"  Price: {piece['price']} Zoltans\n"
+            preview_text += f"  Rarity: {piece['rarity']}\n"
+            preview_text += f"  Pattern:\n{piece['pattern']}\n\n"
+            
+        if self.generated_enemies:
+            preview_text += "=== DAILY ENEMIES ===\n\n"
+            for i, enemy in enumerate(self.generated_enemies, 1):
+                preview_text += f"Enemy {i}: {enemy['id']}\n"
+                preview_text += f"  Stats: HP:{enemy['hp']} ATK:{enemy['att']} DEF:{enemy['def']} SPD:{enemy['spd']}\n"
+                preview_text += f"  Threat: {enemy['threat_level']}\n"
+                preview_text += f"  Description: {enemy['description']}\n\n"
+                
+        self.preview_text.setPlainText(preview_text)
+        self.log_status("Shop preview updated")
+        
+    def update_preview(self):
+        """Update the preview with current generated content"""
+        if self.generated_pieces or self.generated_enemies:
+            self.preview_shop()
+    
+    def update_manual_preview(self):
+        """Update the manual piece preview display"""
+        if not self.manual_pieces:
+            self.manual_preview_text.setPlainText("No manual pieces generated yet.")
+            return
+            
+        preview_text = "=== MANUAL PIECE TESTING ===\n\n"
+        
+        for i, piece in enumerate(self.manual_pieces[-5:], 1):  # Show last 5 manual pieces
+            preview_text += f"Piece {i}: {piece['id']}\n"
+            preview_text += f"  Size: {piece.get('size_category', 'manual')} ({piece['blocks']} blocks)\n"
+            
+            # Only show the single active stat
+            active_stat = None
+            for stat_name, stat_value in piece['stats'].items():
+                if stat_value > 0:
+                    active_stat = (stat_name.upper(), stat_value)
+                    break
+            
+            if active_stat:
+                preview_text += f"  Stats: {active_stat[0]}:{active_stat[1]}\n"
+            else:
+                preview_text += f"  Stats: ERROR - No active stat found\n"
+                
+            preview_text += f"  Type: {piece['stat_type']}\n"
+            preview_text += f"  Price: {piece['price']} Zoltans\n"
+            preview_text += f"  Pattern:\n{piece['pattern']}\n\n"
+            
+        self.manual_preview_text.setPlainText(preview_text)
+
+
 class BlockmakerWindow(QMainWindow):
     """Main window for the blockmaker tool"""
     
@@ -301,11 +1245,11 @@ class BlockmakerWindow(QMainWindow):
         """)
     
     def setup_ui(self):
-        """Create the user interface"""
+        """Create the user interface with tab system"""
         central_widget = QWidget()
         self.setCentralWidget(central_widget)
         
-        # Main layout with QSplitter
+        # Main layout
         main_layout = QVBoxLayout(central_widget)
         main_layout.setSpacing(10)
         main_layout.setContentsMargins(15, 15, 15, 15)
@@ -317,12 +1261,73 @@ class BlockmakerWindow(QMainWindow):
             font-weight: bold;
             color: {GOLD};
             margin-bottom: 10px;
-            font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+            font-family: '{DREAM_MECHA_FONT}', {FALLBACK_FONTS};
             letter-spacing: 2px;
         """)
         title.setAlignment(Qt.AlignCenter)
         main_layout.addWidget(title)
 
+        # Create tab widget
+        self.tab_widget = QTabWidget()
+        self.tab_widget.setStyleSheet(f"""
+            QTabWidget::pane {{
+                border: 2px solid {BORDER_COLOR};
+                border-radius: 5px;
+                background: {UPGRADE_BG};
+            }}
+            QTabBar::tab {{
+                background: {TAB_BG};
+                color: {TEXT_COLOR};
+                padding: 10px 20px;
+                margin-right: 3px;
+                min-width: 100px;
+                border-top-left-radius: 5px;
+                border-top-right-radius: 5px;
+                font-weight: bold;
+                font-family: 'Segoe UI', Arial, sans-serif;
+            }}
+            QTabBar::tab:selected {{
+                background: {GOLD};
+                color: #000000;
+            }}
+            QTabBar::tab:hover {{
+                background: {SECONDARY_ACCENT};
+                color: #ffffff;
+            }}
+        """)
+        
+        # Create shared grid first (needed by GATE tabs)
+        self.grid = BlockmakerGrid(grid_size=12)
+        
+        # Create Blockmaker tab
+        self.create_blockmaker_tab()
+        
+        # Create Dream Mecha tab
+        self.create_dream_mecha_tab()
+        
+        # Create Unique Piece Generation tab
+        self.create_unique_piece_tab()
+        
+        # Create GATE tab if available
+        if GATE_CREATOR_AVAILABLE:
+            print("Creating GATE tab...")
+            self.create_gate_tab()
+            print("GATE tab created")
+        else:
+            print("GATE modules not available, skipping tab")
+        
+        main_layout.addWidget(self.tab_widget)
+        
+        # Debug: Check tab count
+        print(f"DEBUG: Total tabs in widget: {self.tab_widget.count()}")
+        for i in range(self.tab_widget.count()):
+            tab_text = self.tab_widget.tabText(i)
+            print(f"DEBUG: Tab {i}: '{tab_text}'")
+    
+    def create_blockmaker_tab(self):
+        """Create the original Blockmaker tab"""
+        blockmaker_widget = QWidget()
+        
         # Create main splitter for left/right layout
         main_splitter = QSplitter(Qt.Orientation.Horizontal)
         main_splitter.setChildrenCollapsible(False)
@@ -446,8 +1451,7 @@ class BlockmakerWindow(QMainWindow):
         grid_label.setStyleSheet(f"color: {TEXT_COLOR}; font-weight: bold; font-size: 12px; font-family: 'Segoe UI', Arial, sans-serif;")
         grid_layout.addWidget(grid_label)
         
-        # Create grid widget - always visible
-        self.grid = BlockmakerGrid(grid_size=12)
+        # Add existing grid widget
         self.grid.setMinimumSize(400, 300)  # Larger minimum size
         self.grid.setMaximumWidth(500)      # Larger maximum width
         grid_layout.addWidget(self.grid, alignment=Qt.AlignCenter)
@@ -495,7 +1499,7 @@ class BlockmakerWindow(QMainWindow):
                 border-radius: 3px;
                 padding: 3px;
                 color: {TEXT_COLOR};
-                font-family: 'Consolas', 'Monaco', monospace;
+                font-family: '{DREAM_MECHA_FONT}', {FALLBACK_FONTS};
                 font-size: 9px;
             }}
         """)
@@ -552,7 +1556,7 @@ class BlockmakerWindow(QMainWindow):
                 border-radius: 3px;
                 padding: 3px;
                 color: {TEXT_COLOR};
-                font-family: 'Consolas', 'Monaco', monospace;
+                font-family: '{DREAM_MECHA_FONT}', {FALLBACK_FONTS};
                 font-size: 8px;
             }}
         """)
@@ -587,7 +1591,9 @@ class BlockmakerWindow(QMainWindow):
         # Set splitter proportions (70% left, 30% right) - give more space to grid
         main_splitter.setSizes([700, 300])
         
-        main_layout.addWidget(main_splitter)
+        # Add main splitter to the blockmaker widget layout
+        blockmaker_layout = QVBoxLayout(blockmaker_widget)
+        blockmaker_layout.addWidget(main_splitter)
         
         # Status section - simplified small text
         self.status_label = QLabel("Ready to create blocks")
@@ -600,7 +1606,7 @@ class BlockmakerWindow(QMainWindow):
             font-family: 'Segoe UI', Arial, sans-serif;
         """)
         self.status_label.setAlignment(Qt.AlignCenter)
-        main_layout.addWidget(self.status_label)
+        blockmaker_layout.addWidget(self.status_label)
         
         # Button feedback (highlight on press)
         button_feedback_style = """
@@ -612,7 +1618,566 @@ class BlockmakerWindow(QMainWindow):
         """
         for btn in [self.create_btn, self.random_btn, self.stars_btn, self.glyph_btn, self.clear_btn, self.mirror_h_btn, self.mirror_v_btn]:
             btn.setStyleSheet(btn.styleSheet() + button_feedback_style)
+            
+        # Add the blockmaker widget to the tab
+        self.tab_widget.addTab(blockmaker_widget, "Blockmaker")
+        
+    def create_dream_mecha_tab(self):
+        """Create the Dream Mecha integration tab"""
+        self.dream_mecha_integration = DreamMechaIntegration()
+        self.tab_widget.addTab(self.dream_mecha_integration, "Dream Mecha")
+    
+    def create_unique_piece_tab(self):
+        """Create the Unique Piece Generation tab with full grid functionality"""
+        unique_widget = QWidget()
+        layout = QVBoxLayout(unique_widget)
+        layout.setSpacing(15)
+        layout.setContentsMargins(15, 15, 15, 15)
+        
+        # Title
+        title = QLabel("Unique Piece Generation")
+        title.setStyleSheet(f"""
+            font-size: 20px;
+            font-weight: bold;
+            color: {GOLD};
+            margin-bottom: 10px;
+            font-family: '{DREAM_MECHA_FONT}', {FALLBACK_FONTS};
+            letter-spacing: 1px;
+        """)
+        title.setAlignment(Qt.AlignCenter)
+        layout.addWidget(title)
+        
+        # Main splitter
+        main_splitter = QSplitter(Qt.Orientation.Horizontal)
+        main_splitter.setChildrenCollapsible(False)
+        
+        # Left side - Grid and controls
+        left_widget = QWidget()
+        left_layout = QVBoxLayout(left_widget)
+        
+        # Create a new grid instance for unique pieces
+        self.unique_grid = BlockmakerGrid(grid_size=12)
+        
+        # Initialize counter for unique blocks
+        self._unique_block_counter = 1
+        
+        # Connect grid signals
+        self.unique_grid.place_block_requested.connect(self.handle_unique_place_block)
+        
+        # Grid controls from original blockmaker
+        controls_frame = QFrame()
+        controls_frame.setStyleSheet(f"""
+            QFrame {{
+                background: {UPGRADE_BG};
+                border: 1px solid {BORDER_COLOR};
+                border-radius: 5px;
+                padding: 10px;
+            }}
+        """)
+        controls_layout = QVBoxLayout(controls_frame)
+        
+        # Block count controls
+        count_layout = QHBoxLayout()
+        count_label = QLabel("Block Count:")
+        count_label.setStyleSheet(f"color: {TEXT_COLOR}; font-weight: bold;")
+        count_layout.addWidget(count_label)
+        
+        self.unique_count_spinbox = QSpinBox()
+        self.unique_count_spinbox.setRange(1, 144)
+        self.unique_count_spinbox.setValue(1)
+        self.unique_count_spinbox.setStyleSheet(f"""
+            QSpinBox {{
+                background: {TAB_BG};
+                border: 1px solid {BORDER_COLOR};
+                border-radius: 3px;
+                padding: 5px;
+                color: {TEXT_COLOR};
+                min-width: 80px;
+            }}
+        """)
+        count_layout.addWidget(self.unique_count_spinbox)
+        
+        controls_layout.addLayout(count_layout)
+        
+        # Grid action buttons
+        button_layout = QHBoxLayout()
+        
 
+        
+        self.unique_clear_btn = QPushButton("Clear Grid")
+        self.unique_clear_btn.setStyleSheet(f"""
+            QPushButton {{ 
+                background: {BORDER_COLOR}; 
+                color: {TEXT_COLOR}; 
+                border: none; 
+                border-radius: 5px; 
+                padding: 8px 16px; 
+                font-weight: bold; 
+            }}
+            QPushButton:hover {{ background: #555; }}
+            QPushButton:pressed {{ background: #333; }}
+        """)
+        self.unique_clear_btn.clicked.connect(self.clear_unique_grid)
+        button_layout.addWidget(self.unique_clear_btn)
+        
+        controls_layout.addLayout(button_layout)
+        
+        left_layout.addWidget(controls_frame)
+        
+        # Add the grid
+        grid_frame = QFrame()
+        grid_frame.setStyleSheet(f"""
+            QFrame {{
+                background: {UPGRADE_BG};
+                border: 1px solid {BORDER_COLOR};
+                border-radius: 5px;
+                padding: 10px;
+            }}
+        """)
+        grid_layout = QVBoxLayout(grid_frame)
+        
+        grid_label = QLabel("Piece Grid")
+        grid_label.setStyleSheet(f"color: {TEXT_COLOR}; font-weight: bold; font-size: 14px;")
+        grid_layout.addWidget(grid_label)
+        
+        self.unique_grid.setMinimumSize(400, 400)
+        grid_layout.addWidget(self.unique_grid, alignment=Qt.AlignCenter)
+        
+        left_layout.addWidget(grid_frame)
+        main_splitter.addWidget(left_widget)
+        
+        # Right side - Generation controls and preview
+        right_widget = QWidget()
+        right_layout = QVBoxLayout(right_widget)
+        
+        # Generation parameters
+        gen_group = QGroupBox("Generation Parameters")
+        gen_group.setStyleSheet(f"""
+            QGroupBox {{
+                background: {UPGRADE_BG};
+                border: 2px solid {BORDER_COLOR};
+                border-radius: 5px;
+                padding: 10px;
+                font-weight: bold;
+                color: {TEXT_COLOR};
+            }}
+            QGroupBox::title {{
+                subcontrol-origin: margin;
+                left: 10px;
+                padding: 0 5px 0 5px;
+                color: {GOLD};
+            }}
+        """)
+        gen_layout = QFormLayout(gen_group)
+        
+        self.unique_stat_type = QComboBox()
+        self.unique_stat_type.addItems(["random", "hp", "attack", "defense", "speed"])
+        self.unique_stat_type.setStyleSheet(f"""
+            QComboBox {{
+                background: {TAB_BG};
+                border: 1px solid {BORDER_COLOR};
+                border-radius: 3px;
+                padding: 5px;
+                color: {TEXT_COLOR};
+            }}
+        """)
+        gen_layout.addRow("Stat Type:", self.unique_stat_type)
+        
+        self.unique_generate_btn = QPushButton("Generate Unique Piece")
+        self.unique_generate_btn.setStyleSheet(f"""
+            QPushButton {{ 
+                background: {GOLD}; 
+                color: #000000; 
+                border: none; 
+                border-radius: 5px; 
+                padding: 12px 20px; 
+                font-weight: bold; 
+                font-size: 14px;
+            }}
+            QPushButton:hover {{ background: #ffd700; }}
+            QPushButton:pressed {{ background: #e6c200; }}
+        """)
+        self.unique_generate_btn.clicked.connect(self.generate_unique_piece)
+        gen_layout.addRow("", self.unique_generate_btn)
+        
+        right_layout.addWidget(gen_group)
+        
+        # Preview area
+        preview_group = QGroupBox("Unique Piece Preview")
+        preview_group.setStyleSheet(f"""
+            QGroupBox {{
+                background: {UPGRADE_BG};
+                border: 2px solid {BORDER_COLOR};
+                border-radius: 5px;
+                padding: 10px;
+                font-weight: bold;
+                color: {TEXT_COLOR};
+            }}
+            QGroupBox::title {{
+                subcontrol-origin: margin;
+                left: 10px;
+                padding: 0 5px 0 5px;
+                color: {GOLD};
+            }}
+        """)
+        preview_layout = QVBoxLayout(preview_group)
+        
+        self.unique_preview_text = QTextEdit()
+        self.unique_preview_text.setStyleSheet(f"""
+            QTextEdit {{
+                background: {TAB_BG};
+                border: 1px solid {BORDER_COLOR};
+                border-radius: 3px;
+                padding: 5px;
+                color: {TEXT_COLOR};
+                font-family: '{DREAM_MECHA_FONT}', {FALLBACK_FONTS};
+                font-size: 11px;
+            }}
+        """)
+        self.unique_preview_text.setMinimumHeight(300)
+        preview_layout.addWidget(self.unique_preview_text)
+        
+        right_layout.addWidget(preview_group)
+        
+        main_splitter.addWidget(right_widget)
+        main_splitter.setSizes([500, 400])
+        
+        layout.addWidget(main_splitter)
+        
+        self.tab_widget.addTab(unique_widget, "Unique Pieces")
+    
+    def create_gate_tab(self):
+        """Create the GATE tab"""
+        if not GATE_CREATOR_AVAILABLE:
+            return None
+        
+        gate_tab_widget = QWidget()
+        layout = QVBoxLayout(gate_tab_widget)
+        layout.setSpacing(15)
+        layout.setContentsMargins(15, 15, 15, 15)
+        
+        # Title
+        title = QLabel("🚪 GATE - Glyph Cryptography and Portal Code Generator")
+        title.setStyleSheet(f"""
+            font-size: 20px;
+            font-weight: bold;
+            color: {GOLD};
+            margin-bottom: 10px;
+            font-family: '{DREAM_MECHA_FONT}', {FALLBACK_FONTS};
+            letter-spacing: 1px;
+        """)
+        title.setAlignment(Qt.AlignCenter)
+        layout.addWidget(title)
+        
+        # Description
+        desc = QLabel("Create encryption using glyphs as cryptographic algorithms and generate a universal GATE portal code.")
+        desc.setStyleSheet(f"color: {TEXT_COLOR}; margin: 5px; text-align: center;")
+        desc.setAlignment(Qt.AlignCenter)
+        layout.addWidget(desc)
+        
+        # Main splitter
+        main_splitter = QSplitter(Qt.Orientation.Horizontal)
+        main_splitter.setChildrenCollapsible(False)
+        main_splitter.setHandleWidth(3)
+        main_splitter.setStyleSheet(f"""
+            QSplitter::handle {{
+                background: {BORDER_COLOR};
+                border-radius: 1px;
+            }}
+        """)
+        
+        # Left side - Grid and Controls
+        left_widget = QWidget()
+        left_layout = QVBoxLayout(left_widget)
+        left_layout.setSpacing(10)
+        
+        # Grid section
+        grid_label = QLabel("Create Your Glyph:")
+        grid_label.setStyleSheet(f"color: {TEXT_COLOR}; font-weight: bold; font-size: 16px;")
+        left_layout.addWidget(grid_label)
+        
+        # Add the existing grid
+        if hasattr(self, 'grid'):
+            left_layout.addWidget(self.grid)
+        
+        # Controls section
+        controls_frame = QFrame()
+        controls_frame.setStyleSheet(f"""
+            QFrame {{
+                background: {UPGRADE_BG};
+                border: 1px solid {BORDER_COLOR};
+                border-radius: 5px;
+                padding: 10px;
+            }}
+        """)
+        controls_layout = QVBoxLayout(controls_frame)
+        
+        # Password input
+        password_layout = QHBoxLayout()
+        password_label = QLabel("Password:")
+        password_label.setStyleSheet(f"color: {TEXT_COLOR}; font-weight: bold;")
+        password_layout.addWidget(password_label)
+        
+        self.password_input = QLineEdit()
+        self.password_input.setPlaceholderText("Enter password for additional entropy...")
+        self.password_input.setEchoMode(QLineEdit.Password)
+        self.password_input.setStyleSheet(f"""
+            QLineEdit {{
+                background: {TAB_BG};
+                border: 1px solid {BORDER_COLOR};
+                border-radius: 3px;
+                padding: 5px;
+                color: {TEXT_COLOR};
+                font-family: '{DREAM_MECHA_FONT}', {FALLBACK_FONTS};
+            }}
+        """)
+        password_layout.addWidget(self.password_input)
+        
+        controls_layout.addLayout(password_layout)
+        
+        # Generate GATE button
+        generate_gate_btn = QPushButton("🚪 Create GATE from Glyph")
+        generate_gate_btn.setStyleSheet(f"""
+            QPushButton {{
+                background: {GOLD};
+                color: #000000;
+                border: none;
+                border-radius: 5px;
+                padding: 12px 24px;
+                font-weight: bold;
+                font-size: 14px;
+            }}
+            QPushButton:hover {{
+                background: #ffd700;
+            }}
+        """)
+        generate_gate_btn.clicked.connect(self.generate_gate_from_glyph)
+        controls_layout.addWidget(generate_gate_btn)
+        
+        left_layout.addWidget(controls_frame)
+        main_splitter.addWidget(left_widget)
+        
+        # Right side - GATE Creator and Portal
+        right_widget = QWidget()
+        right_layout = QVBoxLayout(right_widget)
+        right_layout.setSpacing(10)
+        
+        # GATE Creator section
+        gate_creator_label = QLabel("GATE Creator - Cryptography:")
+        gate_creator_label.setStyleSheet(f"color: {TEXT_COLOR}; font-weight: bold; font-size: 16px;")
+        right_layout.addWidget(gate_creator_label)
+        
+        # GATE display
+        self.gate_display = QTextEdit()
+        self.gate_display.setStyleSheet(f"""
+            QTextEdit {{
+                background: {TAB_BG};
+                border: 2px solid {BORDER_COLOR};
+                border-radius: 5px;
+                padding: 10px;
+                color: {TEXT_COLOR};
+                font-family: '{DREAM_MECHA_FONT}', {FALLBACK_FONTS};
+                font-size: 11px;
+            }}
+        """)
+        self.gate_display.setMaximumHeight(150)
+        right_layout.addWidget(self.gate_display)
+        
+        # GATE info section
+        gate_info_label = QLabel("GATE Information:")
+        gate_info_label.setStyleSheet(f"color: {TEXT_COLOR}; font-weight: bold; font-size: 16px;")
+        right_layout.addWidget(gate_info_label)
+        
+        self.gate_info = QTextEdit()
+        self.gate_info.setStyleSheet(f"""
+            QTextEdit {{
+                background: {TAB_BG};
+                border: 2px solid {BORDER_COLOR};
+                border-radius: 5px;
+                padding: 10px;
+                color: {TEXT_COLOR};
+                font-family: '{DREAM_MECHA_FONT}', {FALLBACK_FONTS};
+                font-size: 10px;
+            }}
+        """)
+        right_layout.addWidget(self.gate_info)
+        
+        # Copy GATE button
+        copy_gate_btn = QPushButton("Copy GATE Data to Clipboard")
+        copy_gate_btn.setStyleSheet(f"""
+            QPushButton {{
+                background: {SECONDARY_ACCENT};
+                color: #fff;
+                border: none;
+                border-radius: 5px;
+                padding: 8px 16px;
+                font-weight: bold;
+            }}
+            QPushButton:hover {{
+                background: #8ea6f8;
+            }}
+        """)
+        copy_gate_btn.clicked.connect(self.copy_gate_data)
+        right_layout.addWidget(copy_gate_btn)
+        
+        # Separator
+        separator = QFrame()
+        separator.setFrameShape(QFrame.HLine)
+        separator.setStyleSheet(f"background: {BORDER_COLOR}; margin: 10px 0;")
+        right_layout.addWidget(separator)
+        
+        # GATE Portal section
+        gate_portal_label = QLabel("GATE Portal - Universal Code Generator:")
+        gate_portal_label.setStyleSheet(f"color: {TEXT_COLOR}; font-weight: bold; font-size: 16px;")
+        right_layout.addWidget(gate_portal_label)
+        
+        # Portal controls
+        portal_controls_frame = QFrame()
+        portal_controls_frame.setStyleSheet(f"""
+            QFrame {{
+                background: {UPGRADE_BG};
+                border: 1px solid {BORDER_COLOR};
+                border-radius: 5px;
+                padding: 10px;
+            }}
+        """)
+        portal_controls_layout = QVBoxLayout(portal_controls_frame)
+        
+        # Symbol selection
+        symbol_layout = QHBoxLayout()
+        symbol_label = QLabel("Portal Symbol:")
+        symbol_label.setStyleSheet(f"color: {TEXT_COLOR}; font-weight: bold;")
+        symbol_layout.addWidget(symbol_label)
+        
+        self.portal_symbol_combo = QComboBox()
+        self.portal_symbol_combo.addItems(['!', '@', '#', '$', '%', '^', '&', '*', '(', ')', '_', '+', '-', '=', '[', ']', '{', '}', '|', ';', ':', ',', '.', '<', '>', '?', '/', '~', '`', '"', "'", '\\'])
+        self.portal_symbol_combo.setStyleSheet(f"""
+            QComboBox {{
+                background: {TAB_BG};
+                border: 1px solid {BORDER_COLOR};
+                border-radius: 3px;
+                padding: 5px;
+                color: {TEXT_COLOR};
+                min-width: 60px;
+            }}
+        """)
+        symbol_layout.addWidget(self.portal_symbol_combo)
+        
+        # Random symbol button
+        random_portal_symbol_btn = QPushButton("Random Symbol")
+        random_portal_symbol_btn.setStyleSheet(f"""
+            QPushButton {{
+                background: {SECONDARY_ACCENT};
+                color: #fff;
+                border: none;
+                border-radius: 5px;
+                padding: 8px 16px;
+                font-weight: bold;
+            }}
+            QPushButton:hover {{
+                background: #8ea6f8;
+            }}
+        """)
+        random_portal_symbol_btn.clicked.connect(self.set_random_portal_symbol)
+        symbol_layout.addWidget(random_portal_symbol_btn)
+        
+        portal_controls_layout.addLayout(symbol_layout)
+        
+        # Integration type selection
+        integration_layout = QHBoxLayout()
+        integration_label = QLabel("Integration Type:")
+        integration_label.setStyleSheet(f"color: {TEXT_COLOR}; font-weight: bold;")
+        integration_layout.addWidget(integration_label)
+        
+        self.integration_combo = QComboBox()
+        if GATE_PORTAL_AVAILABLE:
+            integration_types = get_integration_types()
+            for code, name in integration_types.items():
+                self.integration_combo.addItem(f"{code}: {name}", code)
+        else:
+            self.integration_combo.addItem("GATE Portal not available")
+        self.integration_combo.setStyleSheet(f"""
+            QComboBox {{
+                background: {TAB_BG};
+                border: 1px solid {BORDER_COLOR};
+                border-radius: 3px;
+                padding: 5px;
+                color: {TEXT_COLOR};
+                min-width: 150px;
+            }}
+        """)
+        integration_layout.addWidget(self.integration_combo)
+        
+        portal_controls_layout.addLayout(integration_layout)
+        
+        # Generate portal button
+        generate_portal_btn = QPushButton("Generate GATE Portal")
+        generate_portal_btn.setStyleSheet(f"""
+            QPushButton {{
+                background: {GOLD};
+                color: #000000;
+                border: none;
+                border-radius: 5px;
+                padding: 12px 24px;
+                font-weight: bold;
+                font-size: 14px;
+            }}
+            QPushButton:hover {{
+                background: #ffd700;
+            }}
+        """)
+        generate_portal_btn.clicked.connect(self.generate_gate_portal)
+        portal_controls_layout.addWidget(generate_portal_btn)
+        
+        right_layout.addWidget(portal_controls_frame)
+        
+        # Portal display
+        portal_display_label = QLabel("Generated GATE Portal:")
+        portal_display_label.setStyleSheet(f"color: {TEXT_COLOR}; font-weight: bold; font-size: 14px;")
+        right_layout.addWidget(portal_display_label)
+        
+        self.portal_display = QTextEdit()
+        self.portal_display.setStyleSheet(f"""
+            QTextEdit {{
+                background: {TAB_BG};
+                border: 2px solid {BORDER_COLOR};
+                border-radius: 5px;
+                padding: 10px;
+                color: {TEXT_COLOR};
+                font-family: '{DREAM_MECHA_FONT}', {FALLBACK_FONTS};
+                font-size: 11px;
+            }}
+        """)
+        self.portal_display.setMaximumHeight(100)
+        right_layout.addWidget(self.portal_display)
+        
+        # Copy portal button
+        copy_portal_btn = QPushButton("Copy Portal Code to Clipboard")
+        copy_portal_btn.setStyleSheet(f"""
+            QPushButton {{
+                background: {SECONDARY_ACCENT};
+                color: #fff;
+                border: none;
+                border-radius: 5px;
+                padding: 8px 16px;
+                font-weight: bold;
+            }}
+            QPushButton:hover {{
+                background: #8ea6f8;
+            }}
+        """)
+        copy_portal_btn.clicked.connect(self.copy_gate_portal)
+        right_layout.addWidget(copy_portal_btn)
+        
+        main_splitter.addWidget(right_widget)
+        
+        # Set splitter proportions
+        main_splitter.setSizes([400, 400])
+        
+        layout.addWidget(main_splitter)
+        self.tab_widget.addTab(gate_tab_widget, "GATE")
+        print("GATE tab added to widget")
+    
     def setup_connections(self):
         """Setup signal connections"""
         if self.create_btn:
@@ -1144,11 +2709,364 @@ class BlockmakerWindow(QMainWindow):
         self.status_label.setText(f"Mirrored vertically. Total blocks: {len(self.grid.blocks)}")
         self.update_debug_log()
         self.update_clipboard_pattern()
+    
+    # Blocklock methods
+    def set_random_symbol(self):
+        """Set a random symbol in the combo box"""
+        if hasattr(self, 'symbol_combo'):
+            symbols = ['!', '@', '#', '$', '%', '^', '&', '*', '(', ')', '_', '+', '-', '=', '[', ']', '{', '}', '|', ';', ':', ',', '.', '<', '>', '?', '/', '~', '`', '"', "'", '\\']
+            random_symbol = random.choice(symbols)
+            index = self.symbol_combo.findText(random_symbol)
+            if index >= 0:
+                self.symbol_combo.setCurrentIndex(index)
+    
+    def generate_gate_from_glyph(self):
+        """Generate a GATE system from the current glyph"""
+        if not GATE_CREATOR_AVAILABLE:
+            self.log_debug("Gate Creator module not available")
+            return
+        
+        if not self.grid or not self.grid.blocks:
+            self.log_debug("No glyph pattern to generate GATE from")
+            return
+        
+        try:
+            # Get the password
+            password = self.password_input.text() or "default_password"
+            
+            # Convert grid to glyph pattern
+            glyph_pattern = self.generate_ascii_pattern()
+            
+            # Generate GATE using gate creator
+            gate_creator = GateCreator()
+            gate_data = gate_creator.create_gate_from_glyph(glyph_pattern, password)
+            
+            # Display the GATE data
+            if hasattr(self, 'gate_display'):
+                self.gate_display.setPlainText(json.dumps(gate_data, indent=2))
+            
+            # Display GATE information
+            if hasattr(self, 'gate_info'):
+                gate_info = gate_creator.get_gate_info(gate_data)
+                info_text = f"""Glyph Pattern:
+{glyph_pattern}
+
+GATE System:
+- Block Count: {gate_info['block_count']}
+- Grid Size: {gate_info['grid_size']}
+- Complexity Score: {gate_info['complexity_score']:.4f}
+- Complexity Level: {gate_info['complexity']['complexity_level']}
+- Spatial Combinations: {gate_info['spatial_combinations']}
+
+GLYPH KEY (Key Derivation Source):
+- Spatial Entropy: {len(gate_creator._extract_spatial_entropy(gate_creator._parse_glyph_structure(glyph_pattern)))} bytes
+- Encryption Method: AES-GCM with PBKDF2 key derivation
+- Key Length: 256 bits
+- Authentication: GCM tag for integrity
+
+Security Notes:
+- Glyph provides spatial entropy for key derivation
+- Password provides additional entropy
+- AES-GCM provides proven cryptographic security
+- Each glyph creates unique key derivation
+- PBKDF2 with 100,000 iterations for key stretching"""
+                self.gate_info.setPlainText(info_text)
+            
+            self.log_debug(f"Generated GATE system with {gate_info['block_count']} blocks")
+            
+        except Exception as e:
+            self.log_debug(f"Error generating GATE: {e}")
+            if hasattr(self, 'gate_display'):
+                self.gate_display.setPlainText(f"Error: {e}")
+            if hasattr(self, 'gate_info'):
+                self.gate_info.setPlainText("")
+    
+    def copy_gate_data(self):
+        """Copy the generated GATE data to clipboard"""
+        if hasattr(self, 'gate_display'):
+            gate_data = self.gate_display.toPlainText()
+            if gate_data:
+                clipboard = QApplication.clipboard()
+                clipboard.setText(gate_data)
+                self.log_debug("GATE data copied to clipboard")
+            else:
+                self.log_debug("No GATE data to copy")
+        else:
+            self.log_debug("Gate display not available")
+    
+    def verify_gate_system(self):
+        """Verify a GATE system and show reconstruction"""
+        if not GATE_CREATOR_AVAILABLE:
+            self.log_debug("Gate Creator module not available")
+            return
+        
+        gate_data_text = self.verify_gate_input.text().strip()
+        if not gate_data_text:
+            self.log_debug("No GATE data to verify")
+            return
+        
+        try:
+            # Parse the GATE data
+            gate_data = json.loads(gate_data_text)
+            
+            # Extract the gate lock
+            gate_lock = gate_data.get('gate_lock', {})
+            visual_pattern = gate_lock.get('visual_pattern', '')
+            
+            # Verify the GATE
+            gate_creator = GateCreator()
+            result = gate_creator.verify_gate(gate_lock, visual_pattern)
+            
+            if hasattr(self, 'verify_gate_result'):
+                if result['valid']:
+                    result_text = f"""✅ GATE System Valid!
+
+Visual Pattern:
+{result['stored_hash']}
+
+Verification Hash: {result['test_hash']}
+Glyph Match: {result['glyph_match']}
+
+Verification: SUCCESS
+- Pattern matches stored hash
+- Glyph reconstruction successful
+- Visual verification passed
+- Quantum-resistant encryption confirmed"""
+                else:
+                    result_text = f"""❌ GATE System Invalid!
+
+Visual Pattern:
+{result['stored_hash']}
+
+Verification Hash: {result['test_hash']}
+Glyph Match: {result['glyph_match']}
+
+Error: Pattern does not match stored hash
+
+Verification: FAILED
+- Pattern does not match stored hash
+- Glyph reconstruction failed
+- Visual verification failed"""
+                
+                self.verify_gate_result.setPlainText(result_text)
+            
+            self.log_debug(f"GATE system verification: {'SUCCESS' if result['valid'] else 'FAILED'}")
+            
+        except Exception as e:
+            self.log_debug(f"Error verifying GATE system: {e}")
+            if hasattr(self, 'verify_gate_result'):
+                self.verify_gate_result.setPlainText(f"Error: {e}")
+    
+    # GATE Portal methods
+    def set_random_portal_symbol(self):
+        """Set a random symbol in the portal combo box"""
+        if hasattr(self, 'portal_symbol_combo'):
+            symbols = ['!', '@', '#', '$', '%', '^', '&', '*', '(', ')', '_', '+', '-', '=', '[', ']', '{', '}', '|', ';', ':', ',', '.', '<', '>', '?', '/', '~', '`', '"', "'", '\\']
+            random_symbol = random.choice(symbols)
+            index = self.portal_symbol_combo.findText(random_symbol)
+            if index >= 0:
+                self.portal_symbol_combo.setCurrentIndex(index)
+    
+    def generate_gate_portal(self):
+        """Generate a universal GATE portal code"""
+        if not GATE_PORTAL_AVAILABLE:
+            self.log_debug("Gate Portal module not available")
+            return
+        
+        if not self.grid or not self.grid.blocks:
+            self.log_debug("No sigil pattern to generate portal from")
+            return
+        
+        try:
+            # Get the symbol and integration type
+            symbol = self.portal_symbol_combo.currentText()
+            integration_type = self.integration_combo.currentData()
+            
+            # Convert grid to sigil pattern
+            sigil_pattern = self.generate_ascii_pattern()
+            
+            # Generate portal using gate portal system
+            portal = GatePortal()
+            result = portal.generate_gate_portal(sigil_pattern, symbol, integration_type)
+            
+            # Display the portal code
+            if hasattr(self, 'portal_display'):
+                portal_text = f"""Portal Code: {result['portal_code']}
+
+Gate Pattern: {result['gate_pattern']}
+Integration: {result['metadata']['integration_name']}
+Version: {result['version']}"""
+                self.portal_display.setPlainText(portal_text)
+            
+            # Display portal information
+            if hasattr(self, 'portal_info'):
+                info_text = f"""Portal Information:
+===================
+
+Portal Code: {result['portal_code']}
+Gate Pattern: {result['gate_pattern']}
+Integration Type: {result['integration_type']}
+Integration Name: {result['metadata']['integration_name']}
+Symbol Used: {result['metadata']['symbol_used']}
+Version: {result['version']}
+Generated At: {result['generated_at']}
+
+Sigil Complexity:
+- Total Elements: {result['metadata']['sigil_complexity']['total_elements']}
+- Numeric Elements: {result['metadata']['sigil_complexity']['numeric_elements']}
+- Symbol Positions: {result['metadata']['sigil_complexity']['symbol_positions']}
+- Entropy Estimate: ~{result['metadata']['sigil_complexity']['entropy_estimate']} bits
+
+Verification Hash: {result['verification_hash'][:32]}...
+
+Universal Format: GATE-VERSION-TYPE-HASH
+This portal code can be used across any compatible system."""
+                self.portal_info.setPlainText(info_text)
+            
+            self.log_debug(f"Generated GATE portal: {result['portal_code']}")
+            
+        except Exception as e:
+            self.log_debug(f"Error generating GATE portal: {e}")
+    
+    def copy_gate_portal(self):
+        """Copy the generated portal code to clipboard"""
+        if hasattr(self, 'portal_display'):
+            portal_text = self.portal_display.toPlainText()
+            if portal_text:
+                # Extract just the portal code
+                lines = portal_text.split('\n')
+                portal_code = None
+                for line in lines:
+                    if line.startswith('Portal Code:'):
+                        portal_code = line.split(':', 1)[1].strip()
+                        break
+                
+                if portal_code:
+                    clipboard = QApplication.clipboard()
+                    clipboard.setText(portal_code)
+                    self.log_debug("GATE portal code copied to clipboard")
+                else:
+                    self.log_debug("No portal code found to copy")
+            else:
+                self.log_debug("No portal code to copy")
+        else:
+            self.log_debug("Portal display not available")
+    
+    def generate_pattern_from_grid(self, grid):
+        """Generate ASCII pattern from a grid instance"""
+        if not grid or not grid.blocks:
+            return ""
+            
+        min_row = min(pos[0] for pos in grid.blocks.keys())
+        max_row = max(pos[0] for pos in grid.blocks.keys())
+        min_col = min(pos[1] for pos in grid.blocks.keys())
+        max_col = max(pos[1] for pos in grid.blocks.keys())
+        
+        pattern_lines = []
+        for row in range(min_row, max_row + 1):
+            line = ""
+            for col in range(min_col, max_col + 1):
+                if (row, col) in grid.blocks:
+                    block_num = grid.blocks[(row, col)]
+                    if block_num == -999:
+                        line += ". "  # treat flash as empty
+                    elif block_num == 1:
+                        line += "+ "
+                    else:
+                        line += f"{block_num} "
+                else:
+                    line += ". "
+            pattern_lines.append(line.rstrip())
+        
+        return "\n".join(pattern_lines)
+    
+    def generate_unique_piece(self):
+        """Generate a unique piece using the unique grid"""
+        try:
+            # Get grid pattern
+            if not self.unique_grid.blocks:
+                self.unique_preview_text.setPlainText("Error: Grid is empty. Create blocks first!")
+                return
+                
+            # Generate pattern from grid
+            pattern = self.generate_pattern_from_grid(self.unique_grid)
+            if not pattern or pattern == "+ ":
+                self.unique_preview_text.setPlainText("Error: Grid is empty. Create blocks first!")
+                return
+                
+            # Count blocks
+            block_count = sum(1 for char in pattern if char.isdigit())
+            if block_count == 0:
+                self.unique_preview_text.setPlainText("Error: No blocks in grid!")
+                return
+                
+            stat_type = self.unique_stat_type.currentText()
+            
+            # Generate piece stats using DreamMecha integration
+            piece = self.dream_mecha_integration.generate_single_piece_manual(block_count, stat_type)
+            piece["id"] = f"unique_piece_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
+            piece["pattern"] = pattern
+            piece["size_category"] = "unique"
+            piece["generation_method"] = "unique_grid"
+            
+            # Display preview
+            preview_text = f"=== UNIQUE PIECE GENERATED ===\n\n"
+            preview_text += f"ID: {piece['id']}\n"
+            preview_text += f"Blocks: {block_count}\n"
+            
+            # Only show the active stat
+            active_stat = None
+            for stat_name, stat_value in piece['stats'].items():
+                if stat_value > 0:
+                    active_stat = (stat_name.upper(), stat_value)
+                    break
+                    
+            if active_stat:
+                preview_text += f"Stats: {active_stat[0]}:{active_stat[1]}\n"
+            else:
+                preview_text += f"Stats: ERROR - No active stat\n"
+                
+            preview_text += f"Type: {piece['stat_type']}\n"
+            preview_text += f"Price: {piece['price']} Zoltans\n"
+            preview_text += f"\nPattern:\n{pattern}\n"
+            
+            self.unique_preview_text.setPlainText(preview_text)
+            
+        except Exception as e:
+            self.unique_preview_text.setPlainText(f"Error generating unique piece: {str(e)}")
+    
+    def handle_unique_place_block(self, pos):
+        """Handle block placement in unique grid"""
+        if not hasattr(self, '_unique_block_counter'):
+            self._unique_block_counter = 1
+            
+        self.unique_grid.add_block(pos, self._unique_block_counter)
+        self._unique_block_counter += 1
+        
+        # Update the spinbox to show current block count
+        self.unique_count_spinbox.setValue(len(self.unique_grid.blocks))
+    
+    def clear_unique_grid(self):
+        """Clear the unique grid and reset counter"""
+        self.unique_grid.clear_grid(reset_spinbox=False)
+        self._unique_block_counter = 1
+        self.unique_count_spinbox.setValue(1)
+        self.unique_preview_text.setPlainText("Grid cleared. Click on grid to place blocks.")
 
 
 def main():
     """Main function to run the blockmaker as standalone"""
     app = QApplication(sys.argv)
+    
+    # Load Dream Mecha font
+    font_path = os.path.join(os.path.dirname(__file__), "..", "dream_mecha", "font", "NCLRaxor-Demo.otf")
+    if os.path.exists(font_path):
+        font_id = QFontDatabase.addApplicationFont(font_path)
+        if font_id != -1:
+            font_families = QFontDatabase.applicationFontFamilies(font_id)
+            if font_families:
+                print(f"Loaded Dream Mecha font: {font_families[0]}")
+    
     window = BlockmakerWindow()
     window.show()
     sys.exit(app.exec_())

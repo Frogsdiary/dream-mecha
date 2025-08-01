@@ -166,28 +166,18 @@ class PieceGenerator:
         # Calculate total power
         total_power = int(base_multiplier * voidstate_bonus)
         
-        # Distribute power across stats based on shape characteristics
-        shape_factor = self._calculate_shape_factor(shape)
+        # Each piece gives ONLY ONE stat (random selection)
+        stat_types = ['hp', 'attack', 'defense', 'speed']
+        chosen_stat = random.choice(stat_types)
         
-        # Stat distribution
-        hp_ratio = 0.4 + (shape_factor * 0.2)
-        attack_ratio = 0.3 + (shape_factor * 0.1)
-        defense_ratio = 0.2 + (shape_factor * 0.1)
-        speed_ratio = 0.1 + (shape_factor * 0.1)
-        
-        # Normalize ratios
-        total_ratio = hp_ratio + attack_ratio + defense_ratio + speed_ratio
-        hp_ratio /= total_ratio
-        attack_ratio /= total_ratio
-        defense_ratio /= total_ratio
-        speed_ratio /= total_ratio
-        
+        # All power goes to the chosen stat
         stats = {
-            'hp': int(total_power * hp_ratio),
-            'attack': int(total_power * attack_ratio),
-            'defense': int(total_power * defense_ratio),
-            'speed': int(total_power * speed_ratio)
+            'hp': 0,
+            'attack': 0,
+            'defense': 0,
+            'speed': 0
         }
+        stats[chosen_stat] = total_power
         
         return stats
     
@@ -245,16 +235,26 @@ class PieceGenerator:
     
     def _generate_fallback_piece(self, blocks: int) -> Dict[str, Any]:
         """Generate simple fallback piece"""
+        # Choose one stat randomly
+        stat_types = ['hp', 'attack', 'defense', 'speed']
+        chosen_stat = random.choice(stat_types)
+        
+        # Calculate power
+        total_power = blocks * 100
+        
+        stats = {
+            'hp': 0,
+            'attack': 0,
+            'defense': 0,
+            'speed': 0
+        }
+        stats[chosen_stat] = total_power
+        
         return {
             'piece_id': f"fallback_{random.randint(1000, 9999)}",
             'name': f"Basic Fragment {blocks}",
             'shape': [[True] * blocks],
-            'stats': {
-                'hp': blocks * 100,
-                'attack': blocks * 10,
-                'defense': blocks * 5,
-                'speed': blocks * 5
-            },
+            'stats': stats,
             'piece_type': 'stat',
             'block_count': blocks,
             'voidstate_level': 0

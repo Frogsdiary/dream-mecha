@@ -1,0 +1,389 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container">
+    <!-- Header Section -->
+    <div class="header">
+        <h1>Dream Mecha</h1>
+        <p>Neural Interface v0.3.1</p>
+        <div class="pilot-info">
+            <div class="pilot-names">
+                <span class="operator-name">Operator: <strong id="operatorName">Unknown</strong></span>
+                <button id="editOperatorBtn" class="edit-name-btn">Edit</button>
+            </div>
+            <div class="pilot-names">
+                <span class="mecha-name">Mecha: <strong id="mechaName">Unnamed</strong></span>
+                <button id="editMechaBtn" class="edit-name-btn">Edit</button>
+            </div>
+        </div>
+        
+        <!-- Authentication Section -->
+        <div class="auth-section">
+            <div class="auth-status">
+                <span id="authUsername">Not authenticated</span>
+                <button id="loginBtn" class="auth-btn">Login with Discord</button>
+                <button id="logoutBtn" class="auth-btn" style="display: none;">Logout</button>
+                <button id="layoutModeBtn" class="auth-btn" style="margin-left: var(--dot-4);">Layout Mode</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Layout Controls -->
+    <div id="layoutControls" class="layout-controls" style="position: fixed; bottom: var(--dot-4); left: var(--dot-4); z-index: 2000; display: none;">
+        <button id="saveLayoutBtn">Save Layout</button>
+        <button id="resetLayoutBtn">Reset Layout</button>
+        <button id="exitLayoutModeBtn">Exit Layout Mode</button>
+    </div>
+
+    <!-- Container Selector -->
+    <div id="containerSelector" class="container-selector" style="position: fixed; top: var(--dot-4); left: var(--dot-4); z-index: 2000; display: none;">
+        <button data-container="stats">Mecha Stats</button>
+        <button data-container="controls">Controls</button>
+        <button data-container="grid">Grid</button>
+        <button data-container="fortress">Fortress</button>
+        <button data-container="library">Piece Library</button>
+        <button data-container="shop">Shop</button>
+    </div>
+
+    <!-- Layout Mode Info removed - using new system -->
+
+    <!-- Main Content -->
+    <div class="main-content">
+        <!-- Stats and Controls Row -->
+        <div class="stats-controls-row">
+            <!-- Stats Section -->
+            <div class="stats layout-manageable" data-container-id="stats">
+                <div class="boundary-bottom-left"></div>
+                <div class="boundary-bottom-right"></div>
+                <h3>Mecha Statistics</h3>
+                <div class="stat-item">
+                    <span class="stat-label">HP:</span>
+                    <span class="stat-value" id="hpStat">0</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-label">Attack:</span>
+                    <span class="stat-value" id="attackStat">0</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-label">Defense:</span>
+                    <span class="stat-value" id="defenseStat">0</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-label">Speed:</span>
+                    <span class="stat-value" id="speedStat">0</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-label">Pieces:</span>
+                    <span class="stat-value" id="pieceCount">0</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-label">Zoltans:</span>
+                    <span class="stat-value" id="zoltansStat">10000</span>
+                </div>
+                
+                <!-- HP Bar -->
+                <div class="hp-stat-item">
+                    <div class="hp-display">
+                        <span class="stat-label">Current HP:</span>
+                        <span class="stat-value" id="currentHp">0</span>
+                    </div>
+                    <div class="hp-bar" id="hpBar"></div>
+                </div>
+            </div>
+
+            <!-- Controls Section -->
+            <div class="controls-section layout-manageable" data-container-id="controls">
+                <div class="boundary-bottom-left"></div>
+                <div class="boundary-bottom-right"></div>
+                <!-- Tune Up Section -->
+                <div class="tune-up-section">
+                    <h4>Tune Up</h4>
+                    <div class="tune-up-controls">
+                        <div class="tune-up-buttons">
+                            <button id="tuneUpFullBtn" class="btn tune-up-btn">Full Heal</button>
+                            <button id="tuneUpCustomBtn" class="btn tune-up-btn">Custom</button>
+                        </div>
+                        
+                        <div id="customInputGroup" class="custom-input-group" style="display: none;">
+                            <label for="tuneUpAmount">Zoltans to spend:</label>
+                            <input type="number" id="tuneUpAmount" min="1" max="10000" value="100">
+                        </div>
+                        
+                        <div id="confirmationSection" class="confirmation-section" style="display: none;">
+                            <div id="confirmationText" class="confirmation-text"></div>
+                            <div class="confirmation-buttons">
+                                <button id="confirmBtn" class="btn confirm-btn">Confirm</button>
+                                <button id="cancelBtn" class="btn cancel-btn">Cancel</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Grid Expansion Section -->
+                <div class="upgrade-grid-section">
+                    <h4>Grid Expansion</h4>
+                    <button id="upgradeGridBtn" class="btn upgrade-grid-btn">
+                        Upgrade Grid (<span id="upgradePointsBtn">20</span> points)
+                    </button>
+                    <div class="upgrade-info">
+                        <small>Expand your grid to fit more pieces</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Grid Section -->
+        <div class="grid-section layout-manageable" data-container-id="grid">
+            <div class="boundary-bottom-left"></div>
+            <div class="boundary-bottom-right"></div>
+            <h2>Mecha Grid</h2>
+            
+            <!-- Grid Zoom Control -->
+            <div class="grid-zoom-control">
+                <label for="gridZoomSlider">Zoom:</label>
+                <input type="range" id="gridZoomSlider" class="grid-zoom-slider" 
+                       min="100" max="200" value="100" step="10">
+                <span class="grid-zoom-value" id="gridZoomValue">1.0x</span>
+            </div>
+            
+            <!-- Grid Statistics -->
+            <div class="grid-statistics">
+                <h4>Grid Status</h4>
+                <div class="grid-stats-row">
+                    <span class="stat-label">Total Cells:</span>
+                    <span class="stat-value" id="totalCells">64</span>
+                </div>
+                <div class="grid-stats-row">
+                    <span class="stat-label">Installed:</span>
+                    <span class="stat-value" id="installedUpgrades">0 upgrades</span>
+                </div>
+                <div class="grid-stats-row">
+                    <span class="stat-label">Available:</span>
+                    <span class="stat-value" id="availableUpgrades">64 cells</span>
+                </div>
+                <div class="grid-stats-row">
+                    <span class="stat-label">Fill Rate:</span>
+                    <span class="stat-value" id="fillRate">0%</span>
+                </div>
+            </div>
+
+            <!-- Grid Instructions -->
+            <div class="grid-instructions">
+                <p>Click cells to place pieces. Drag pieces to move them. Press R to rotate selected piece.</p>
+            </div>
+
+            <!-- Grid Container -->
+            <div class="grid-container">
+                <div class="full-grid-container" id="fullGridContainer">
+                    <div class="mecha-grid-full" id="mechaGridFull"></div>
+                </div>
+            </div>
+
+                    <!-- Grid Controls -->
+        <div class="grid-controls">
+            <button id="rotateBtn" class="btn">Rotate (R)</button>
+            <button id="removeBtn" class="btn">Remove (Del)</button>
+            <button id="clearBtn" class="btn">Clear All</button>
+            <button id="combatLogBtn" class="btn">Combat Log</button>
+        </div>
+
+            <!-- Launch Section -->
+            <div class="launch-section">
+                <button id="launchBtn" class="launch-btn">
+                    <div class="launch-decoration">
+                        <span class="corner-dot">•</span>
+                        <span class="corner-dot">•</span>
+                        <span class="corner-dot">•</span>
+                        <span class="corner-dot">•</span>
+                    </div>
+                    LAUNCH MECHA
+                </button>
+                
+                <div id="launchSequence" class="launch-sequence" style="display: none;">
+                    <div class="command-line">
+                        <span class="prompt">SYSTEM CHECK</span>
+                        <span id="loadingDots" class="loading-dots">...</span>
+                    </div>
+                    <div id="systemCheck" style="display: none;">
+                        <div class="command-line">
+                            <span class="prompt">ALL SYSTEMS OPERATIONAL</span>
+                        </div>
+                    </div>
+                    <button id="engageBtn" class="engage-btn" style="display: none;">ENGAGE</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Piece Library -->
+        <div class="piece-library layout-manageable" data-container-id="library">
+            <div class="boundary-bottom-left"></div>
+            <div class="boundary-bottom-right"></div>
+            <h3>Piece Library</h3>
+            
+            <!-- Library Filters -->
+            <div class="library-filters">
+                <h4>Filters</h4>
+                
+                <div class="filter-group">
+                    <label for="statTypeFilter">Stat Type:</label>
+                    <select id="statTypeFilter">
+                        <option value="all">All Types</option>
+                        <option value="hp">HP Focus</option>
+                        <option value="attack">Attack Focus</option>
+                        <option value="defense">Defense Focus</option>
+                        <option value="speed">Speed Focus</option>
+                    </select>
+                </div>
+                
+                <div class="filter-group">
+                    <label for="hpRangeFilter">Max HP: <span id="hpRangeDisplay">500</span></label>
+                    <input type="range" id="hpRangeFilter" min="50" max="1000" value="500" class="filter-slider">
+                </div>
+                
+                <div class="filter-group">
+                    <label for="blockCountFilter">Max Blocks: <span id="blockCountDisplay">10</span></label>
+                    <input type="range" id="blockCountFilter" min="1" max="20" value="10" class="filter-slider">
+                </div>
+                
+                <button id="resetFiltersBtn" class="filter-reset-btn">Reset Filters</button>
+                
+                <div class="library-controls">
+                    <button id="libraryToggleBtn" class="library-toggle-btn">Float Library</button>
+                </div>
+            </div>
+            
+            <!-- Library Content -->
+            <div class="library-content" id="pieceLibrary">
+                <!-- Pieces will be loaded here -->
+            </div>
+        </div>
+
+        <!-- Fortress Section -->
+        <div class="fortress-section layout-manageable" data-container-id="fortress">
+            <div class="boundary-bottom-left"></div>
+            <div class="boundary-bottom-right"></div>
+            <h2>🏰 Fortress Defense</h2>
+            <div class="fortress-status" id="fortressStatus">
+                <div class="fortress-hp">
+                    <div class="hp-label">Fortress HP:</div>
+                    <div class="hp-bar-container">
+                        <div class="hp-bar" id="fortressHPBar">
+                            <div class="hp-fill" id="fortressHPFill"></div>
+                        </div>
+                        <div class="hp-text">
+                            <span id="fortressCurrentHP">100,000,000,000</span> / 
+                            <span id="fortressMaxHP">100,000,000,000</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="fortress-stats">
+                    <div class="stat-item">
+                        <span class="stat-label">Total Damage Taken:</span>
+                        <span id="fortressTotalDamage">0</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">Days Under Attack:</span>
+                        <span id="fortressDaysAttacked">0</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">Last Attack:</span>
+                        <span id="fortressLastAttack">Never</span>
+                    </div>
+                </div>
+                <div class="fortress-status-indicator" id="fortressStatusIndicator">
+                    <span class="status-text">🛡️ FORTRESS SECURE</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Shop Section -->
+        <div class="shop-section layout-manageable" data-container-id="shop">
+            <div class="boundary-bottom-left"></div>
+            <div class="boundary-bottom-right"></div>
+            <h2>RBHI Shop</h2>
+            <div class="shop-items" id="shopItems">
+                <!-- Shop items will be loaded here -->
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Floating Library Widget -->
+<div id="floatingLibrary" class="floating-library">
+    <div id="floatingLibraryHeader" class="floating-library-header">
+        <h4>Piece Library</h4>
+        <button id="floatingLibraryClose" class="floating-library-close">&times;</button>
+    </div>
+    <div id="floatingLibraryContent" class="floating-library-content">
+        <!-- Floating library content -->
+    </div>
+</div>
+
+<!-- Floating Combat Log Widget -->
+<div id="floatingCombatLog" class="floating-combat-log">
+    <div id="floatingCombatLogHeader" class="floating-combat-log-header">
+        <h4>Combat Log</h4>
+        <button id="floatingCombatLogClose" class="floating-combat-log-close">&times;</button>
+    </div>
+    <div id="floatingCombatLogContent" class="floating-combat-log-content">
+        <!-- Combat log entries -->
+    </div>
+</div>
+
+<!-- Duplicate layout controls removed - using the one in header area -->
+
+<!-- Old duplicate container selector and layout mode info removed -->
+
+<!-- Name Edit Modal -->
+<div id="editNameModal" class="edit-name-modal">
+    <div class="edit-name-content">
+        <h3 id="editNameTitle">Edit Name</h3>
+        <input type="text" id="editNameInput" placeholder="Enter name">
+        <div class="edit-name-buttons">
+            <button id="saveNameBtn" class="btn">Save</button>
+            <button id="cancelNameBtn" class="btn secondary">Cancel</button>
+        </div>
+    </div>
+</div>
+
+<!-- First Time Setup Overlay -->
+<div id="firstTimeSetup" class="first-time-setup">
+    <div class="setup-terminal">
+        <div class="setup-header">DREAM MECHA INITIALIZATION</div>
+        <div id="setupContent" class="setup-content">
+            <!-- Setup content will be generated here -->
+        </div>
+        <!-- Debug skip button -->
+        <div class="setup-debug" style="position: absolute; top: 10px; right: 10px; z-index: 1000;">
+            <button onclick="window.mechaGrid.skipSetup()" style="background: #ff4444; color: white; border: none; padding: 5px 10px; border-radius: 3px; cursor: pointer; font-size: 12px;">SKIP SETUP</button>
+        </div>
+    </div>
+</div>
+
+<!-- Floating Combat Log Widget -->
+<div id="floatingCombatLog" class="floating-combat-log">
+    <div id="floatingCombatLogHeader" class="floating-combat-log-header">
+        <h4>Combat Log</h4>
+        <button id="floatingCombatLogClose" class="floating-combat-log-close">&times;</button>
+    </div>
+    <div id="floatingCombatLogContent" class="floating-combat-log-content">
+        <!-- Combat log entries will be populated here -->
+    </div>
+</div>
+
+<!-- Old static layout containers removed - using new dynamic layout-manageable system -->
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Initialize the grid system
+    document.addEventListener('DOMContentLoaded', () => {
+        if (window.mechaGrid) {
+            console.log('MechaGrid already initialized');
+        } else {
+            console.log('Initializing MechaGrid...');
+            // The main.js file will handle the initialization
+        }
+    });
+</script>
+{% endblock %} 

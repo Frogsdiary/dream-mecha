@@ -12,6 +12,7 @@ from core.systems.mecha_system import MechaSystem, Mecha
 from core.systems.combat_system import CombatSystem
 from core.systems.shop_system import ShopSystem
 from core.systems.grid_system import GridSystem
+from core.managers.fortress_manager import FortressManager
 
 
 class GameManager:
@@ -21,6 +22,7 @@ class GameManager:
         self.mecha_system = MechaSystem()
         self.combat_system = CombatSystem()
         self.shop_system = ShopSystem()
+        self.fortress_manager = FortressManager()
         self.voidstate = 0
         self.daily_cycle = 1
         self.last_reset = datetime.now()
@@ -74,6 +76,19 @@ class GameManager:
         
         # Resolve combat
         result = self.combat_system.resolve_combat()
+        
+        # Check if fortress should be attacked
+        launched_count = len(self.combat_system.launched_mechas)
+        all_mechs_defeated = result.get('all_mechs_defeated', False)
+        
+        if self.fortress_manager.check_fortress_condition(launched_count, all_mechs_defeated):
+            # Calculate total enemy power for fortress attack
+            enemy_power = sum(enemy.attack for enemy in result.get('enemies', []))
+            fortress_result = self.fortress_manager.fortress_under_attack(
+                enemy_power=enemy_power,
+                no_mechs_launched=(launched_count == 0)
+            )
+            result['fortress_attack'] = fortress_result
         
         # Update voidstate
         self.voidstate = result.get('voidstate_change', self.voidstate)

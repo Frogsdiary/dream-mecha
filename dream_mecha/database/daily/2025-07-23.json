@@ -1,0 +1,1266 @@
+{
+  "date": "2025-07-23",
+  "voidstate": 1,
+  "generation_metadata": {
+    "player_count": 10,
+    "pieces_generated": 22,
+    "generation_time": "2025-07-23T16:20:54.307379Z"
+  },
+  "shop_pieces": [
+    {
+      "pattern": "+2...3...4..",
+      "pattern_array": [
+        [
+          1,
+          2,
+          0,
+          0,
+          0,
+          3,
+          0,
+          0,
+          0,
+          4,
+          0,
+          0
+        ]
+      ],
+      "blocks": 4,
+      "stats": {
+        "hp": 1242,
+        "att": 0,
+        "def": 0,
+        "spd": 0
+      },
+      "stat_type": "attack",
+      "price": 124,
+      "rarity": "common",
+      "id": "piece_20250723_001",
+      "size_category": "small",
+      "generation_method": "random",
+      "beta_mode": true
+    },
+    {
+      "pattern": "+...23..4.5.",
+      "pattern_array": [
+        [
+          1,
+          0,
+          0,
+          0,
+          2,
+          3,
+          0,
+          0,
+          4,
+          0,
+          5,
+          0
+        ]
+      ],
+      "blocks": 5,
+      "stats": {
+        "hp": 0,
+        "att": 0,
+        "def": 0,
+        "spd": 0
+      },
+      "stat_type": "defense",
+      "price": 0,
+      "rarity": "common",
+      "id": "piece_20250723_002",
+      "size_category": "small",
+      "generation_method": "random",
+      "beta_mode": true
+    },
+    {
+      "pattern": "+.......2...\n3..4........",
+      "pattern_array": [
+        [
+          1,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          2,
+          0,
+          0,
+          0
+        ],
+        [
+          3,
+          0,
+          0,
+          4,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ]
+      ],
+      "blocks": 4,
+      "stats": {
+        "hp": 0,
+        "att": 0,
+        "def": 0,
+        "spd": 0
+      },
+      "stat_type": "hp",
+      "price": 0,
+      "rarity": "common",
+      "id": "piece_20250723_003",
+      "size_category": "small",
+      "generation_method": "random",
+      "beta_mode": true
+    },
+    {
+      "pattern": "+...........",
+      "pattern_array": [
+        [
+          1,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ]
+      ],
+      "blocks": 1,
+      "stats": {
+        "hp": 0,
+        "att": 0,
+        "def": 0,
+        "spd": 0
+      },
+      "stat_type": "defense",
+      "price": 0,
+      "rarity": "common",
+      "id": "piece_20250723_004",
+      "size_category": "small",
+      "generation_method": "random",
+      "beta_mode": true
+    },
+    {
+      "pattern": "+...2.......",
+      "pattern_array": [
+        [
+          1,
+          0,
+          0,
+          0,
+          2,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ]
+      ],
+      "blocks": 2,
+      "stats": {
+        "hp": 0,
+        "att": 0,
+        "def": 0,
+        "spd": 0
+      },
+      "stat_type": "hp",
+      "price": 0,
+      "rarity": "common",
+      "id": "piece_20250723_005",
+      "size_category": "small",
+      "generation_method": "random",
+      "beta_mode": true
+    },
+    {
+      "pattern": "+2.345......",
+      "pattern_array": [
+        [
+          1,
+          2,
+          0,
+          3,
+          4,
+          5,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ]
+      ],
+      "blocks": 5,
+      "stats": {
+        "hp": 0,
+        "att": 0,
+        "def": 0,
+        "spd": 0
+      },
+      "stat_type": "hp",
+      "price": 0,
+      "rarity": "common",
+      "id": "piece_20250723_006",
+      "size_category": "small",
+      "generation_method": "random",
+      "beta_mode": true
+    },
+    {
+      "pattern": "+..2.....3.4\n....5.......",
+      "pattern_array": [
+        [
+          1,
+          0,
+          0,
+          2,
+          0,
+          0,
+          0,
+          0,
+          0,
+          3,
+          0,
+          4
+        ],
+        [
+          0,
+          0,
+          0,
+          0,
+          5,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ]
+      ],
+      "blocks": 5,
+      "stats": {
+        "hp": 0,
+        "att": 0,
+        "def": 0,
+        "spd": 0
+      },
+      "stat_type": "defense",
+      "price": 0,
+      "rarity": "common",
+      "id": "piece_20250723_007",
+      "size_category": "small",
+      "generation_method": "random",
+      "beta_mode": true
+    },
+    {
+      "pattern": "+.2.........",
+      "pattern_array": [
+        [
+          1,
+          0,
+          2,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ]
+      ],
+      "blocks": 2,
+      "stats": {
+        "hp": 0,
+        "att": 0,
+        "def": 0,
+        "spd": 0
+      },
+      "stat_type": "speed",
+      "price": 0,
+      "rarity": "common",
+      "id": "piece_20250723_008",
+      "size_category": "small",
+      "generation_method": "random",
+      "beta_mode": true
+    },
+    {
+      "pattern": "+...2.......\n....3.......",
+      "pattern_array": [
+        [
+          1,
+          0,
+          0,
+          0,
+          2,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        [
+          0,
+          0,
+          0,
+          0,
+          3,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ]
+      ],
+      "blocks": 3,
+      "stats": {
+        "hp": 0,
+        "att": 0,
+        "def": 0,
+        "spd": 0
+      },
+      "stat_type": "speed",
+      "price": 0,
+      "rarity": "common",
+      "id": "piece_20250723_009",
+      "size_category": "small",
+      "generation_method": "random",
+      "beta_mode": true
+    },
+    {
+      "pattern": "+......2....\n......3..4..",
+      "pattern_array": [
+        [
+          1,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          2,
+          0,
+          0,
+          0,
+          0
+        ],
+        [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          3,
+          0,
+          0,
+          4,
+          0,
+          0
+        ]
+      ],
+      "blocks": 4,
+      "stats": {
+        "hp": 0,
+        "att": 0,
+        "def": 0,
+        "spd": 0
+      },
+      "stat_type": "attack",
+      "price": 0,
+      "rarity": "common",
+      "id": "piece_20250723_010",
+      "size_category": "small",
+      "generation_method": "random",
+      "beta_mode": true
+    },
+    {
+      "pattern": "+.2.......34\n5...........",
+      "pattern_array": [
+        [
+          1,
+          0,
+          2,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          3,
+          4
+        ],
+        [
+          5,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ]
+      ],
+      "blocks": 5,
+      "stats": {
+        "hp": 0,
+        "att": 0,
+        "def": 0,
+        "spd": 0
+      },
+      "stat_type": "hp",
+      "price": 0,
+      "rarity": "common",
+      "id": "piece_20250723_011",
+      "size_category": "small",
+      "generation_method": "random",
+      "beta_mode": true
+    },
+    {
+      "pattern": "+...2...3...\n.4.5..67.8..\n9...........",
+      "pattern_array": [
+        [
+          1,
+          0,
+          0,
+          0,
+          2,
+          0,
+          0,
+          0,
+          3,
+          0,
+          0,
+          0
+        ],
+        [
+          0,
+          4,
+          0,
+          5,
+          0,
+          0,
+          6,
+          7,
+          0,
+          8,
+          0,
+          0
+        ],
+        [
+          9,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ]
+      ],
+      "blocks": 9,
+      "stats": {
+        "hp": 0,
+        "att": 0,
+        "def": 0,
+        "spd": 0
+      },
+      "stat_type": "hp",
+      "price": 0,
+      "rarity": "uncommon",
+      "id": "piece_20250723_012",
+      "size_category": "medium",
+      "generation_method": "random",
+      "beta_mode": true
+    },
+    {
+      "pattern": "+........2.3\n4.....56....",
+      "pattern_array": [
+        [
+          1,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          2,
+          0,
+          3
+        ],
+        [
+          4,
+          0,
+          0,
+          0,
+          0,
+          0,
+          5,
+          6,
+          0,
+          0,
+          0,
+          0
+        ]
+      ],
+      "blocks": 6,
+      "stats": {
+        "hp": 0,
+        "att": 0,
+        "def": 0,
+        "spd": 0
+      },
+      "stat_type": "defense",
+      "price": 0,
+      "rarity": "uncommon",
+      "id": "piece_20250723_013",
+      "size_category": "medium",
+      "generation_method": "random",
+      "beta_mode": true
+    },
+    {
+      "pattern": "+...2..34..5\n.67....89...\n.1011..12......",
+      "pattern_array": [
+        [
+          1,
+          0,
+          0,
+          0,
+          2,
+          0,
+          0,
+          3,
+          4,
+          0,
+          0,
+          5
+        ],
+        [
+          0,
+          6,
+          7,
+          0,
+          0,
+          0,
+          0,
+          8,
+          9,
+          0,
+          0,
+          0
+        ],
+        [
+          0,
+          1,
+          0,
+          1,
+          1,
+          0,
+          0,
+          1,
+          2,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ]
+      ],
+      "blocks": 12,
+      "stats": {
+        "hp": 0,
+        "att": 0,
+        "def": 0,
+        "spd": 0
+      },
+      "stat_type": "defense",
+      "price": 0,
+      "rarity": "uncommon",
+      "id": "piece_20250723_014",
+      "size_category": "medium",
+      "generation_method": "random",
+      "beta_mode": true
+    },
+    {
+      "pattern": "+.2.3.......\n....4.5..6..\n.78..9.1011...",
+      "pattern_array": [
+        [
+          1,
+          0,
+          2,
+          0,
+          3,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        [
+          0,
+          0,
+          0,
+          0,
+          4,
+          0,
+          5,
+          0,
+          0,
+          6,
+          0,
+          0
+        ],
+        [
+          0,
+          7,
+          8,
+          0,
+          0,
+          9,
+          0,
+          1,
+          0,
+          1,
+          1,
+          0,
+          0,
+          0
+        ]
+      ],
+      "blocks": 11,
+      "stats": {
+        "hp": 0,
+        "att": 0,
+        "def": 0,
+        "spd": 0
+      },
+      "stat_type": "hp",
+      "price": 0,
+      "rarity": "uncommon",
+      "id": "piece_20250723_015",
+      "size_category": "medium",
+      "generation_method": "random",
+      "beta_mode": true
+    },
+    {
+      "pattern": "+..2.3.45.6.",
+      "pattern_array": [
+        [
+          1,
+          0,
+          0,
+          2,
+          0,
+          3,
+          0,
+          4,
+          5,
+          0,
+          6,
+          0
+        ]
+      ],
+      "blocks": 6,
+      "stats": {
+        "hp": 0,
+        "att": 0,
+        "def": 0,
+        "spd": 0
+      },
+      "stat_type": "defense",
+      "price": 0,
+      "rarity": "uncommon",
+      "id": "piece_20250723_016",
+      "size_category": "medium",
+      "generation_method": "random",
+      "beta_mode": true
+    },
+    {
+      "pattern": "+...23......\n4.5.....678.",
+      "pattern_array": [
+        [
+          1,
+          0,
+          0,
+          0,
+          2,
+          3,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        [
+          4,
+          0,
+          5,
+          0,
+          0,
+          0,
+          0,
+          0,
+          6,
+          7,
+          8,
+          0
+        ]
+      ],
+      "blocks": 8,
+      "stats": {
+        "hp": 0,
+        "att": 0,
+        "def": 0,
+        "spd": 0
+      },
+      "stat_type": "defense",
+      "price": 0,
+      "rarity": "uncommon",
+      "id": "piece_20250723_017",
+      "size_category": "medium",
+      "generation_method": "random",
+      "beta_mode": true
+    },
+    {
+      "pattern": "+....23.....\n...4..5.....\n....678.....\n.9.10.......11\n...12......13.\n14..15........",
+      "pattern_array": [
+        [
+          1,
+          0,
+          0,
+          0,
+          0,
+          2,
+          3,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        [
+          0,
+          0,
+          0,
+          4,
+          0,
+          0,
+          5,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        [
+          0,
+          0,
+          0,
+          0,
+          6,
+          7,
+          8,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        [
+          0,
+          9,
+          0,
+          1,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          1,
+          1
+        ],
+        [
+          0,
+          0,
+          0,
+          1,
+          2,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          1,
+          3,
+          0
+        ],
+        [
+          1,
+          4,
+          0,
+          0,
+          1,
+          5,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ]
+      ],
+      "blocks": 15,
+      "stats": {
+        "hp": 0,
+        "att": 0,
+        "def": 0,
+        "spd": 29710
+      },
+      "stat_type": "hp",
+      "price": 3128,
+      "rarity": "uncommon",
+      "id": "piece_20250723_018",
+      "size_category": "medium",
+      "generation_method": "random",
+      "beta_mode": true
+    },
+    {
+      "pattern": "+.2.3.....4.\n56.7..89....\n10...........",
+      "pattern_array": [
+        [
+          1,
+          0,
+          2,
+          0,
+          3,
+          0,
+          0,
+          0,
+          0,
+          0,
+          4,
+          0
+        ],
+        [
+          5,
+          6,
+          0,
+          7,
+          0,
+          0,
+          8,
+          9,
+          0,
+          0,
+          0,
+          0
+        ],
+        [
+          1,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ]
+      ],
+      "blocks": 10,
+      "stats": {
+        "hp": 0,
+        "att": 0,
+        "def": 0,
+        "spd": 0
+      },
+      "stat_type": "attack",
+      "price": 0,
+      "rarity": "uncommon",
+      "id": "piece_20250723_019",
+      "size_category": "medium",
+      "generation_method": "random",
+      "beta_mode": true
+    },
+    {
+      "pattern": "+2.3.45...6.\n..7..8910....",
+      "pattern_array": [
+        [
+          1,
+          2,
+          0,
+          3,
+          0,
+          4,
+          5,
+          0,
+          0,
+          0,
+          6,
+          0
+        ],
+        [
+          0,
+          0,
+          7,
+          0,
+          0,
+          8,
+          9,
+          1,
+          0,
+          0,
+          0,
+          0,
+          0
+        ]
+      ],
+      "blocks": 10,
+      "stats": {
+        "hp": 0,
+        "att": 0,
+        "def": 0,
+        "spd": 0
+      },
+      "stat_type": "attack",
+      "price": 0,
+      "rarity": "uncommon",
+      "id": "piece_20250723_020",
+      "size_category": "medium",
+      "generation_method": "random",
+      "beta_mode": true
+    },
+    {
+      "pattern": "+2.3....4...\n....5...67.8\n.9.10........\n..11.....12...\n............\n.........13.14\n.15..........\n.16..17.18.....",
+      "pattern_array": [
+        [
+          1,
+          2,
+          0,
+          3,
+          0,
+          0,
+          0,
+          0,
+          4,
+          0,
+          0,
+          0
+        ],
+        [
+          0,
+          0,
+          0,
+          0,
+          5,
+          0,
+          0,
+          0,
+          6,
+          7,
+          0,
+          8
+        ],
+        [
+          0,
+          9,
+          0,
+          1,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        [
+          0,
+          0,
+          1,
+          1,
+          0,
+          0,
+          0,
+          0,
+          0,
+          1,
+          2,
+          0,
+          0,
+          0
+        ],
+        [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          1,
+          3,
+          0,
+          1,
+          4
+        ],
+        [
+          0,
+          1,
+          5,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        [
+          0,
+          1,
+          6,
+          0,
+          0,
+          1,
+          7,
+          0,
+          1,
+          8,
+          0,
+          0,
+          0,
+          0,
+          0
+        ]
+      ],
+      "blocks": 18,
+      "stats": {
+        "hp": 0,
+        "att": 0,
+        "def": 0,
+        "spd": 0
+      },
+      "stat_type": "attack",
+      "price": 0,
+      "rarity": "rare",
+      "id": "piece_20250723_021",
+      "size_category": "large",
+      "generation_method": "random",
+      "beta_mode": true
+    },
+    {
+      "pattern": "+..2..34...5\n........6.78\n..9..1011..121314\n.1516..1718.....\n.....19.20....\n....21.......\n..22....23....",
+      "pattern_array": [
+        [
+          1,
+          0,
+          0,
+          2,
+          0,
+          0,
+          3,
+          4,
+          0,
+          0,
+          0,
+          5
+        ],
+        [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          6,
+          0,
+          7,
+          8
+        ],
+        [
+          0,
+          0,
+          9,
+          0,
+          0,
+          1,
+          0,
+          1,
+          1,
+          0,
+          0,
+          1,
+          2,
+          1,
+          3,
+          1,
+          4
+        ],
+        [
+          0,
+          1,
+          5,
+          1,
+          6,
+          0,
+          0,
+          1,
+          7,
+          1,
+          8,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        [
+          0,
+          0,
+          0,
+          0,
+          0,
+          1,
+          9,
+          0,
+          2,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        [
+          0,
+          0,
+          0,
+          0,
+          2,
+          1,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        [
+          0,
+          0,
+          2,
+          2,
+          0,
+          0,
+          0,
+          0,
+          2,
+          3,
+          0,
+          0,
+          0,
+          0
+        ]
+      ],
+      "blocks": 23,
+      "stats": {
+        "hp": 0,
+        "att": 0,
+        "def": 0,
+        "spd": 0
+      },
+      "stat_type": "speed",
+      "price": 0,
+      "rarity": "rare",
+      "id": "piece_20250723_022",
+      "size_category": "large",
+      "generation_method": "random",
+      "beta_mode": true
+    }
+  ],
+  "enemies": [
+    {
+      "id": "enemy_20250723_001",
+      "hp": 48000,
+      "att": 5760,
+      "def": 4800,
+      "spd": 1728,
+      "description": "A small void beast sporting sharp claws",
+      "threat_level": "moderate"
+    }
+  ],
+  "economy_data": {
+    "base_zoltan_reward": 50000,
+    "voidstate_bonus": 10000,
+    "total_zoltan_reward": 60000,
+    "repair_cost_multiplier": 0.05
+  }
+}

@@ -1,0 +1,1147 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dream Mecha - Dev Parts Reference</title>
+    <style>
+        :root {
+            /* Base Unit - 1 dot = 4px */
+            --dot: 4px;
+            --dot-2: 8px;
+            --dot-3: 12px;
+            --dot-4: 16px;
+            --dot-5: 20px;
+            --dot-6: 24px;
+            --dot-8: 32px;
+            --dot-10: 40px;
+            --dot-12: 48px;
+            --dot-16: 64px;
+            --dot-20: 80px;
+            --dot-24: 96px;
+            --dot-32: 128px;
+            --dot-40: 160px;
+            --dot-48: 192px;
+            --dot-64: 256px;
+            
+            /* Colors */
+            --bg-primary: #000;
+            --text-primary: #fff;
+            --text-secondary: #ccc;
+            --accent: #fff;
+            --corner-symbol: #fff;
+            --dot-matrix: rgba(255, 255, 255, 0.2);
+            --dot-matrix-size: var(--dot-4); /* 16px spacing */
+            
+            /* Typography */
+            --font-size-xs: var(--dot-3);    /* 12px */
+            --font-size-sm: var(--dot-4);    /* 16px */
+            --font-size-md: var(--dot-5);    /* 20px */
+            --font-size-lg: var(--dot-6);    /* 24px */
+            --font-size-xl: var(--dot-8);    /* 32px */
+            --font-size-2xl: var(--dot-10);  /* 40px */
+            --font-size-3xl: var(--dot-12);  /* 48px */
+            
+            /* Grid System */
+            --grid-cell: var(--dot-10);      /* 40px base grid cell */
+            --grid-gap: var(--dot);          /* 4px gap */
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Courier New', monospace;
+            background: var(--bg-primary);
+            background-image: 
+                radial-gradient(circle at 1px 1px, var(--dot-matrix) 1px, transparent 0);
+            background-size: var(--dot-matrix-size) var(--dot-matrix-size);
+            color: var(--text-primary);
+            line-height: 1.4;
+            font-size: var(--font-size-sm);
+            padding: var(--dot-4);
+        }
+
+        .container {
+            max-width: calc(var(--dot-64) * 8); /* 2048px max for expanded reference */
+            margin: 0 auto;
+        }
+
+        /* Header */
+        .header {
+            text-align: center;
+            margin-bottom: var(--dot-12);
+            padding-bottom: var(--dot-6);
+            border-bottom: var(--dot) solid var(--text-secondary);
+        }
+
+        .header h1 {
+            font-size: var(--font-size-3xl);
+            margin-bottom: var(--dot-4);
+            text-transform: uppercase;
+            letter-spacing: var(--dot);
+            font-weight: bold;
+        }
+
+        .header p {
+            color: var(--text-secondary);
+            font-size: var(--font-size-md);
+        }
+
+        /* Main three-column layout */
+        .dev-content {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: var(--dot-8);
+            margin-bottom: var(--dot-12);
+        }
+
+        /* Column styling */
+        .visual-column,
+        .docs-column,
+        .api-column {
+            position: relative;
+            padding: var(--dot-8);
+        }
+
+        .visual-column::before,
+        .visual-column::after,
+        .docs-column::before,
+        .docs-column::after,
+        .api-column::before,
+        .api-column::after {
+            content: '▣';
+            position: absolute;
+            color: var(--corner-symbol);
+            font-size: var(--font-size-md);
+            z-index: 1;
+        }
+
+        .visual-column::before,
+        .docs-column::before,
+        .api-column::before {
+            top: var(--dot-2);
+            left: var(--dot-2);
+        }
+
+        .visual-column::after,
+        .docs-column::after,
+        .api-column::after {
+            top: var(--dot-2);
+            right: var(--dot-2);
+        }
+
+        .visual-column .corner-bottom-left,
+        .visual-column .corner-bottom-right,
+        .docs-column .corner-bottom-left,
+        .docs-column .corner-bottom-right,
+        .api-column .corner-bottom-left,
+        .api-column .corner-bottom-right {
+            position: absolute;
+            color: var(--corner-symbol);
+            font-size: var(--font-size-md);
+            bottom: var(--dot-2);
+            z-index: 1;
+        }
+
+        .visual-column .corner-bottom-left,
+        .docs-column .corner-bottom-left,
+        .api-column .corner-bottom-left {
+            left: var(--dot-2);
+        }
+
+        .visual-column .corner-bottom-right,
+        .docs-column .corner-bottom-right,
+        .api-column .corner-bottom-right {
+            right: var(--dot-2);
+        }
+
+        .visual-column h2,
+        .docs-column h2,
+        .api-column h2 {
+            margin-bottom: var(--dot-8);
+            text-transform: uppercase;
+            letter-spacing: var(--dot);
+            font-size: var(--font-size-lg);
+            color: var(--text-secondary);
+        }
+
+        /* Component sections */
+        .component-section {
+            margin-bottom: var(--dot-16);
+            padding: var(--dot-8);
+            background: rgba(34, 34, 34, 0.8);
+            border: 1px solid var(--text-secondary);
+            border-radius: 4px;
+        }
+
+        .component-section h3 {
+            margin-bottom: var(--dot-6);
+            text-transform: uppercase;
+            letter-spacing: var(--dot);
+            font-size: var(--font-size-md);
+            color: var(--accent);
+        }
+
+        /* Visual demo containers */
+        .demo-container {
+            padding: var(--dot-8);
+            background: rgba(17, 17, 17, 0.9);
+            border: 1px solid var(--text-secondary);
+            margin-bottom: var(--dot-6);
+            min-height: var(--dot-32);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        /* Documentation containers */
+        .doc-container {
+            margin-bottom: var(--dot-6);
+        }
+
+        .doc-title {
+            font-weight: bold;
+            margin-bottom: var(--dot-2);
+            color: var(--accent);
+            font-size: var(--font-size-md);
+        }
+
+        .doc-description {
+            margin-bottom: var(--dot-4);
+            color: var(--text-secondary);
+            line-height: 1.6;
+        }
+
+        .doc-code {
+            background: rgba(0, 0, 0, 0.8);
+            border: 1px solid var(--text-secondary);
+            padding: var(--dot-4);
+            font-family: 'Courier New', monospace;
+            font-size: var(--font-size-xs);
+            color: var(--text-primary);
+            white-space: pre-wrap;
+            overflow-x: auto;
+            margin-bottom: var(--dot-4);
+        }
+
+        /* API Documentation */
+        .api-endpoint {
+            background: rgba(51, 51, 51, 0.9);
+            border: 1px solid var(--text-secondary);
+            padding: var(--dot-4);
+            margin-bottom: var(--dot-4);
+            border-radius: 4px;
+        }
+
+        .api-method {
+            display: inline-block;
+            padding: var(--dot-1) var(--dot-2);
+            background: var(--accent);
+            color: var(--bg-primary);
+            font-weight: bold;
+            font-size: var(--font-size-xs);
+            margin-right: var(--dot-2);
+        }
+
+        .api-path {
+            font-family: 'Courier New', monospace;
+            color: var(--text-primary);
+            font-size: var(--font-size-sm);
+        }
+
+        .api-description {
+            margin-top: var(--dot-2);
+            color: var(--text-secondary);
+            font-size: var(--font-size-xs);
+        }
+
+        /* Database Schema */
+        .schema-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: var(--dot-4);
+            font-size: var(--font-size-xs);
+        }
+
+        .schema-table th,
+        .schema-table td {
+            border: 1px solid var(--text-secondary);
+            padding: var(--dot-2);
+            text-align: left;
+        }
+
+        .schema-table th {
+            background: rgba(51, 51, 51, 0.9);
+            color: var(--accent);
+            font-weight: bold;
+        }
+
+        /* Button styles (from main app) */
+        .btn {
+            background: var(--accent);
+            color: var(--bg-primary);
+            border: none;
+            padding: var(--dot-4) var(--dot-6);
+            cursor: pointer;
+            font-weight: bold;
+            text-transform: uppercase;
+            letter-spacing: var(--dot);
+            transition: all 0.2s ease;
+            font-size: var(--font-size-sm);
+            font-family: inherit;
+            margin: var(--dot-2);
+        }
+
+        .btn:hover {
+            background: var(--text-secondary);
+            transform: translateY(-var(--dot));
+        }
+
+        .btn.secondary {
+            background: transparent;
+            color: var(--text-primary);
+            border: 1px solid var(--text-secondary);
+        }
+
+        .btn.secondary:hover {
+            background: var(--text-secondary);
+            color: var(--bg-primary);
+        }
+
+        /* Grid demo styles */
+        .grid-demo {
+            display: grid;
+            gap: var(--grid-gap);
+            background: rgba(34, 34, 34, 0.8);
+            padding: var(--dot-4);
+            border: 1px solid var(--text-secondary);
+            grid-template-columns: repeat(4, var(--grid-cell));
+            grid-template-rows: repeat(4, var(--grid-cell));
+        }
+
+        .grid-cell-demo {
+            width: var(--grid-cell);
+            height: var(--grid-cell);
+            background: rgba(17, 17, 17, 0.9);
+            border: 1px solid var(--text-secondary);
+            transition: all 0.2s ease;
+        }
+
+        .grid-cell-demo.occupied {
+            border-color: var(--accent);
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        .grid-cell-demo.selected {
+            border: 3px solid var(--accent);
+            box-shadow: 0 0 10px var(--accent);
+        }
+
+        /* Stat colors demo */
+        .stat-demo {
+            display: flex;
+            gap: var(--dot-4);
+            margin-bottom: var(--dot-4);
+        }
+
+        .stat-color {
+            width: var(--dot-8);
+            height: var(--dot-8);
+            border: 1px solid var(--text-secondary);
+        }
+
+        .stat-hp { background-color: #ff4444; }
+        .stat-attack { background-color: #ff8800; }
+        .stat-defense { background-color: #4444ff; }
+        .stat-speed { background-color: #44ff44; }
+
+        /* Piece library demo */
+        .piece-demo {
+            background: rgba(51, 51, 51, 0.9);
+            border: 2px solid var(--text-secondary);
+            padding: var(--dot-4);
+            margin-bottom: var(--dot-4);
+            cursor: grab;
+            transition: all 0.2s ease;
+            border-radius: 4px;
+        }
+
+        .piece-demo:hover {
+            background: rgba(68, 68, 68, 0.9);
+            border-color: var(--accent);
+            transform: translateY(-2px);
+        }
+
+        .piece-name-demo {
+            font-weight: bold;
+            margin-bottom: var(--dot-2);
+            font-size: var(--font-size-sm);
+        }
+
+        .piece-stats-demo {
+            font-size: var(--font-size-xs);
+            color: var(--text-secondary);
+            font-family: 'Courier New', monospace;
+            margin-bottom: var(--dot-3);
+        }
+
+        .piece-preview-demo {
+            margin: var(--dot-3) 0;
+            display: flex;
+            justify-content: center;
+            gap: 1px;
+        }
+
+        .piece-cell-demo {
+            width: 12px;
+            height: 12px;
+            border: 1px solid rgba(255, 255, 255, 0.4);
+            background: rgba(0, 0, 0, 0.6);
+        }
+
+        .piece-cell-demo.filled {
+            border: 1px solid rgba(255, 255, 255, 0.9);
+            background: var(--accent);
+        }
+
+        /* Shop item demo */
+        .shop-item-demo {
+            background: rgba(34, 34, 34, 0.9);
+            padding: var(--dot-4);
+            text-align: center;
+            border: 1px solid var(--text-secondary);
+            border-radius: 4px;
+            margin-bottom: var(--dot-4);
+        }
+
+        .shop-item-demo h4 {
+            margin-bottom: var(--dot-2);
+            font-size: var(--font-size-sm);
+        }
+
+        .shop-item-demo .price {
+            color: var(--text-secondary);
+            margin-bottom: var(--dot-2);
+            font-family: 'Courier New', monospace;
+            font-size: var(--font-size-xs);
+        }
+
+        /* Error states demo */
+        .error-demo {
+            background: rgba(255, 68, 68, 0.1);
+            border: 1px solid #ff4444;
+            padding: var(--dot-4);
+            margin-bottom: var(--dot-4);
+            border-radius: 4px;
+        }
+
+        .warning-demo {
+            background: rgba(255, 255, 0, 0.1);
+            border: 1px solid #ffff00;
+            padding: var(--dot-4);
+            margin-bottom: var(--dot-4);
+            border-radius: 4px;
+        }
+
+        /* Responsive design */
+        @media (max-width: 1600px) {
+            .dev-content {
+                grid-template-columns: 1fr 1fr;
+                gap: var(--dot-12);
+            }
+            
+            .api-column {
+                grid-column: 1 / -1;
+                margin-top: var(--dot-12);
+            }
+        }
+
+        @media (max-width: 1200px) {
+            .dev-content {
+                grid-template-columns: 1fr;
+                gap: var(--dot-12);
+            }
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                max-width: 100%;
+            }
+            
+            .btn {
+                width: 100%;
+                margin: var(--dot-1);
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Dream Mecha</h1>
+            <p>Complete Developer Reference Guide</p>
+        </div>
+
+        <div class="dev-content">
+            <!-- Left Column - Visual Representations -->
+            <div class="visual-column">
+                <h2>Visual Components</h2>
+                
+                <!-- Buttons Section -->
+                <div class="component-section">
+                    <h3>Button Components</h3>
+                    
+                    <div class="demo-container">
+                        <button class="btn">Primary Button</button>
+                        <button class="btn secondary">Secondary Button</button>
+                        <button class="btn" disabled>Disabled Button</button>
+                    </div>
+                </div>
+
+                <!-- Grid System Section -->
+                <div class="component-section">
+                    <h3>Grid System</h3>
+                    
+                    <div class="demo-container">
+                        <div class="grid-demo">
+                            <div class="grid-cell-demo"></div>
+                            <div class="grid-cell-demo occupied"></div>
+                            <div class="grid-cell-demo"></div>
+                            <div class="grid-cell-demo selected"></div>
+                            <div class="grid-cell-demo"></div>
+                            <div class="grid-cell-demo occupied"></div>
+                            <div class="grid-cell-demo"></div>
+                            <div class="grid-cell-demo"></div>
+                            <div class="grid-cell-demo"></div>
+                            <div class="grid-cell-demo"></div>
+                            <div class="grid-cell-demo occupied"></div>
+                            <div class="grid-cell-demo"></div>
+                            <div class="grid-cell-demo"></div>
+                            <div class="grid-cell-demo"></div>
+                            <div class="grid-cell-demo"></div>
+                            <div class="grid-cell-demo"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Stat Colors Section -->
+                <div class="component-section">
+                    <h3>Stat Color System</h3>
+                    
+                    <div class="demo-container">
+                        <div class="stat-demo">
+                            <div class="stat-color stat-hp" title="HP - Red"></div>
+                            <div class="stat-color stat-attack" title="Attack - Orange"></div>
+                            <div class="stat-color stat-defense" title="Defense - Blue"></div>
+                            <div class="stat-color stat-speed" title="Speed - Green"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Piece Library Section -->
+                <div class="component-section">
+                    <h3>Piece Library Items</h3>
+                    
+                    <div class="demo-container">
+                        <div class="piece-demo">
+                            <div class="piece-name-demo">Basic Core</div>
+                            <div class="piece-stats-demo">HP: 10 | ATK: 5 | DEF: 3 | SPD: 2</div>
+                            <div class="piece-preview-demo">
+                                <div class="piece-cell-demo filled"></div>
+                                <div class="piece-cell-demo"></div>
+                                <div class="piece-cell-demo filled"></div>
+                                <div class="piece-cell-demo"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Shop Items Section -->
+                <div class="component-section">
+                    <h3>Shop Items</h3>
+                    
+                    <div class="demo-container">
+                        <div class="shop-item-demo">
+                            <h4>Rare Core</h4>
+                            <div class="price">Price: 150 ZOL</div>
+                            <button class="btn">Purchase</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Error States Section -->
+                <div class="component-section">
+                    <h3>Error States</h3>
+                    
+                    <div class="demo-container">
+                        <div class="error-demo">
+                            <strong>Error:</strong> Player not found
+                        </div>
+                        <div class="warning-demo">
+                            <strong>Warning:</strong> Low HP - Cannot launch
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Corner Symbols Section -->
+                <div class="component-section">
+                    <h3>Corner Symbols</h3>
+                    
+                    <div class="demo-container">
+                        <div style="position: relative; width: 100px; height: 100px; border: 1px solid var(--text-secondary);">
+                            <div style="position: absolute; top: 8px; left: 8px; color: var(--corner-symbol);">▣</div>
+                            <div style="position: absolute; top: 8px; right: 8px; color: var(--corner-symbol);">▣</div>
+                            <div style="position: absolute; bottom: 8px; left: 8px; color: var(--corner-symbol);">▣</div>
+                            <div style="position: absolute; bottom: 8px; right: 8px; color: var(--corner-symbol);">▣</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="corner-bottom-left">▣</div>
+                <div class="corner-bottom-right">▣</div>
+            </div>
+
+            <!-- Middle Column - Documentation -->
+            <div class="docs-column">
+                <h2>Documentation</h2>
+                
+                <!-- Button Documentation -->
+                <div class="component-section">
+                    <h3>Button Components</h3>
+                    
+                    <div class="doc-container">
+                        <div class="doc-title">Primary Button</div>
+                        <div class="doc-description">
+                            Standard action button with white background and black text. Used for primary actions like "Save", "Purchase", "Expand Grid".
+                        </div>
+                        <div class="doc-code">.btn {
+    background: var(--accent);
+    color: var(--bg-primary);
+    border: none;
+    padding: var(--dot-4) var(--dot-6);
+    cursor: pointer;
+    font-weight: bold;
+    text-transform: uppercase;
+    letter-spacing: var(--dot);
+    transition: all 0.2s ease;
+    font-size: var(--font-size-sm);
+    font-family: inherit;
+}</div>
+                    </div>
+
+                    <div class="doc-container">
+                        <div class="doc-title">Secondary Button</div>
+                        <div class="doc-description">
+                            Alternative button style with transparent background and white border. Used for secondary actions or cancel operations.
+                        </div>
+                        <div class="doc-code">.btn.secondary {
+    background: transparent;
+    color: var(--text-primary);
+    border: 1px solid var(--text-secondary);
+}</div>
+                    </div>
+                </div>
+
+                <!-- Grid System Documentation -->
+                <div class="component-section">
+                    <h3>Grid System</h3>
+                    
+                    <div class="doc-container">
+                        <div class="doc-title">Grid Container</div>
+                        <div class="doc-description">
+                            CSS Grid-based system with 40px cells and 4px gaps. Supports drag-and-drop operations and visual feedback states.
+                        </div>
+                        <div class="doc-code">.grid {
+    display: grid;
+    gap: var(--grid-gap);
+    background: rgba(34, 34, 34, 0.8);
+    padding: var(--dot-4);
+    border: 1px solid var(--text-secondary);
+}
+
+.grid-cell {
+    width: var(--grid-cell); /* 40px */
+    height: var(--grid-cell);
+    background: rgba(17, 17, 17, 0.9);
+    border: 1px solid var(--text-secondary);
+    cursor: pointer;
+    transition: all 0.2s ease;
+}</div>
+                    </div>
+
+                    <div class="doc-container">
+                        <div class="doc-title">Grid States</div>
+                        <div class="doc-description">
+                            Different visual states for grid cells: empty, occupied, selected, hover, drag-over, and ghost preview.
+                        </div>
+                        <div class="doc-code">.grid-cell.occupied {
+    border-color: var(--accent);
+}
+
+.grid-cell.selected {
+    border: 3px solid var(--accent);
+    box-shadow: 0 0 10px var(--accent);
+}
+
+.grid-cell.ghost {
+    background: rgba(255, 255, 255, 0.3) !important;
+    border: 2px dashed var(--accent) !important;
+    opacity: 0.8;
+}</div>
+                    </div>
+                </div>
+
+                <!-- Stat Colors Documentation -->
+                <div class="component-section">
+                    <h3>Stat Color System</h3>
+                    
+                    <div class="doc-container">
+                        <div class="doc-title">Color Coding</div>
+                        <div class="doc-description">
+                            Consistent color scheme for different stat types: HP (red), Attack (orange), Defense (blue), Speed (green).
+                        </div>
+                        <div class="doc-code">.stat-hp { background-color: #ff4444; }
+.stat-attack { background-color: #ff8800; }
+.stat-defense { background-color: #4444ff; }
+.stat-speed { background-color: #44ff44; }</div>
+                    </div>
+                </div>
+
+                <!-- Piece Library Documentation -->
+                <div class="component-section">
+                    <h3>Piece Library Items</h3>
+                    
+                    <div class="doc-container">
+                        <div class="doc-title">Piece Item Structure</div>
+                        <div class="doc-description">
+                            Draggable piece items with name, stats, and visual preview. Includes hover effects and drag states.
+                        </div>
+                        <div class="doc-code">.piece-item {
+    background: rgba(51, 51, 51, 0.9);
+    border: 2px solid var(--text-secondary);
+    padding: 20px;
+    cursor: grab;
+    transition: all 0.2s ease;
+    border-radius: 4px;
+}
+
+.piece-item:hover {
+    background: rgba(68, 68, 68, 0.9);
+    border-color: var(--accent);
+    transform: translateY(-2px);
+}</div>
+                    </div>
+                </div>
+
+                <!-- Shop Items Documentation -->
+                <div class="component-section">
+                    <h3>Shop Items</h3>
+                    
+                    <div class="doc-container">
+                        <div class="doc-title">Shop Item Layout</div>
+                        <div class="doc-description">
+                            Grid-based shop items with title, price, and purchase button. Responsive design with auto-fit columns.
+                        </div>
+                        <div class="doc-code">.shop-items {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 20px;
+}
+
+.shop-item {
+    background: rgba(34, 34, 34, 0.9);
+    padding: 20px;
+    text-align: center;
+    border: 1px solid var(--text-secondary);
+    border-radius: 4px;
+}</div>
+                    </div>
+                </div>
+
+                <!-- Design System Documentation -->
+                <div class="component-section">
+                    <h3>Design System</h3>
+                    
+                    <div class="doc-container">
+                        <div class="doc-title">Dot Matrix Background</div>
+                        <div class="doc-description">
+                            Consistent dot matrix pattern using CSS radial gradients. 16px spacing with 20% opacity white dots.
+                        </div>
+                        <div class="doc-code">body {
+    background-image: 
+        radial-gradient(circle at 1px 1px, var(--dot-matrix) 1px, transparent 0);
+    background-size: var(--dot-matrix-size) var(--dot-matrix-size);
+}
+
+:root {
+    --dot-matrix: rgba(255, 255, 255, 0.2);
+    --dot-matrix-size: var(--dot-4); /* 16px */
+}</div>
+                    </div>
+
+                    <div class="doc-container">
+                        <div class="doc-title">Corner Symbols</div>
+                        <div class="doc-description">
+                            Decorative corner symbols (▣) positioned absolutely at the corners of major sections for visual consistency.
+                        </div>
+                        <div class="doc-code">.section::before,
+.section::after {
+    content: '▣';
+    position: absolute;
+    color: var(--corner-symbol);
+    font-size: var(--font-size-md);
+    z-index: 1;
+}</div>
+                    </div>
+                </div>
+
+                <div class="corner-bottom-left">▣</div>
+                <div class="corner-bottom-right">▣</div>
+            </div>
+
+            <!-- Right Column - API & Database -->
+            <div class="api-column">
+                <h2>API & Database</h2>
+
+                <!-- API Endpoints -->
+                <div class="component-section">
+                    <h3>Web API Endpoints</h3>
+                    
+                    <div class="api-endpoint">
+                        <span class="api-method">GET</span>
+                        <span class="api-path">/api/player/{player_id}/grid</span>
+                        <div class="api-description">Get player's current grid state</div>
+                    </div>
+
+                    <div class="api-endpoint">
+                        <span class="api-method">POST</span>
+                        <span class="api-path">/api/player/{player_id}/grid</span>
+                        <div class="api-description">Update player's grid with new piece placement</div>
+                    </div>
+
+                    <div class="api-endpoint">
+                        <span class="api-method">GET</span>
+                        <span class="api-path">/api/shop</span>
+                        <div class="api-description">Get current daily shop inventory</div>
+                    </div>
+
+                    <div class="api-endpoint">
+                        <span class="api-method">POST</span>
+                        <span class="api-path">/api/shop/purchase</span>
+                        <div class="api-description">Purchase item from shop</div>
+                    </div>
+
+                    <div class="api-endpoint">
+                        <span class="api-method">GET</span>
+                        <span class="api-path">/api/game/status</span>
+                        <div class="api-description">Get current game state and voidstate</div>
+                    </div>
+
+                    <div class="api-endpoint">
+                        <span class="api-method">GET</span>
+                        <span class="api-path">/api/daily/{date}</span>
+                        <div class="api-description">Get daily content for specific date</div>
+                    </div>
+
+                    <div class="api-endpoint">
+                        <span class="api-method">GET</span>
+                        <span class="api-path">/health</span>
+                        <div class="api-description">Health check endpoint</div>
+                    </div>
+                </div>
+
+                <!-- Database Schema -->
+                <div class="component-section">
+                    <h3>Database Schema</h3>
+                    
+                    <div class="doc-container">
+                        <div class="doc-title">Player Data Structure</div>
+                        <div class="doc-description">
+                            Core player data stored in JSON format per player file.
+                        </div>
+                        <div class="doc-code">{
+  "player_id": "string",
+  "username": "string", 
+  "join_date": "ISO datetime",
+  "last_active": "ISO datetime",
+  "days_played": "integer",
+  "total_zoltans_earned": "integer",
+  "combat_participation": "integer",
+  "mecha": {
+    "name": "string",
+    "stats": {
+      "hp": "integer",
+      "max_hp": "integer", 
+      "attack": "integer",
+      "defense": "integer",
+      "speed": "integer"
+    },
+    "state": "ready|launched|downed|repairing",
+    "grid_size": "integer",
+    "grid": "2D array",
+    "zoltans": "integer"
+  },
+  "piece_library": "array of piece objects"
+}</div>
+                    </div>
+
+                    <div class="doc-container">
+                        <div class="doc-title">Daily Data Structure</div>
+                        <div class="doc-description">
+                            Daily content including shop pieces and enemies.
+                        </div>
+                        <div class="doc-code">{
+  "date": "YYYY-MM-DD",
+  "voidstate": "integer",
+  "generation_metadata": {
+    "player_count": "integer",
+    "pieces_generated": "integer",
+    "generation_time": "ISO datetime"
+  },
+  "shop_pieces": "array of piece objects",
+  "enemies": "array of enemy objects"
+}</div>
+                    </div>
+
+                    <div class="doc-container">
+                        <div class="doc-title">Piece Object Structure</div>
+                        <div class="doc-description">
+                            Individual piece data with stats and pattern.
+                        </div>
+                        <div class="doc-code">{
+  "id": "string",
+  "pattern": "string representation",
+  "pattern_array": "2D array of integers",
+  "blocks": "integer",
+  "stats": {
+    "hp": "integer",
+    "att": "integer", 
+    "def": "integer",
+    "spd": "integer"
+  },
+  "stat_type": "hp|attack|defense|speed",
+  "price": "integer",
+  "rarity": "common|rare|epic|legendary",
+  "size_category": "small|medium|large",
+  "generation_method": "string",
+  "beta_mode": "boolean"
+}</div>
+                    </div>
+                </div>
+
+                <!-- Discord Bot Commands -->
+                <div class="component-section">
+                    <h3>Discord Bot Commands</h3>
+                    
+                    <div class="doc-container">
+                        <div class="doc-title">Core Commands</div>
+                        <div class="doc-description">
+                            Essential Discord bot commands for game management.
+                        </div>
+                        <div class="doc-code">!mecha status - Show player mecha stats
+!mecha launch - Launch mecha for combat
+!mecha repair - Repair downed mecha
+!shop - Show current shop inventory
+!grid - Open grid management UI
+!voidstate - Show current voidstate
+!leaderboard - Show player rankings
+!help - Show command list</div>
+                    </div>
+
+                    <div class="doc-container">
+                        <div class="doc-title">Admin Commands</div>
+                        <div class="doc-description">
+                            Administrative commands for game management.
+                        </div>
+                        <div class="doc-code">!admin daily_reset - Force daily reset
+!admin voidstate <level> - Set voidstate
+!admin shop_refresh - Regenerate shop
+!admin player_data <id> - View player data
+!admin backup - Create data backup</div>
+                    </div>
+                </div>
+
+                <!-- Error Handling -->
+                <div class="component-section">
+                    <h3>Error Handling</h3>
+                    
+                    <div class="doc-container">
+                        <div class="doc-title">HTTP Status Codes</div>
+                        <div class="doc-description">
+                            Standard HTTP response codes for API endpoints.
+                        </div>
+                        <div class="doc-code">200 - Success
+201 - Created (new player/mecha)
+400 - Bad Request (invalid data)
+401 - Unauthorized (no auth)
+404 - Not Found (player/piece not found)
+409 - Conflict (already exists)
+422 - Unprocessable Entity (validation error)
+500 - Internal Server Error</div>
+                    </div>
+
+                    <div class="doc-container">
+                        <div class="doc-title">Error Response Format</div>
+                        <div class="doc-description">
+                            Consistent error response structure.
+                        </div>
+                        <div class="doc-code">{
+  "error": "Error message",
+  "code": "ERROR_CODE",
+  "details": "Additional details",
+  "timestamp": "ISO datetime"
+}</div>
+                    </div>
+
+                    <div class="doc-container">
+                        <div class="doc-title">Common Error Codes</div>
+                        <div class="doc-description">
+                            Standard error codes used throughout the system.
+                        </div>
+                        <div class="doc-code">PLAYER_NOT_FOUND - Player doesn't exist
+INSUFFICIENT_ZOLTANS - Not enough currency
+INVALID_GRID_PLACEMENT - Piece can't be placed
+MECHA_NOT_LAUNCHABLE - HP too low to launch
+SHOP_ITEM_UNAVAILABLE - Item already sold
+DAILY_LIMIT_EXCEEDED - Purchase limit reached</div>
+                    </div>
+                </div>
+
+                <!-- Testing Framework -->
+                <div class="component-section">
+                    <h3>Testing Framework</h3>
+                    
+                    <div class="doc-container">
+                        <div class="doc-title">Test Structure</div>
+                        <div class="doc-description">
+                            Organized test structure for comprehensive coverage.
+                        </div>
+                        <div class="doc-code">tests/
+├── unit/
+│   ├── test_mecha_system.py
+│   ├── test_grid_system.py
+│   ├── test_combat_system.py
+│   └── test_shop_system.py
+├── integration/
+│   ├── test_api_endpoints.py
+│   ├── test_database_operations.py
+│   └── test_discord_bot.py
+├── fixtures/
+│   ├── sample_players.json
+│   ├── sample_pieces.json
+│   └── sample_daily_data.json
+└── conftest.py</div>
+                    </div>
+
+                    <div class="doc-container">
+                        <div class="doc-title">Test Commands</div>
+                        <div class="doc-description">
+                            Standard pytest commands for running tests.
+                        </div>
+                        <div class="doc-code"># Run all tests
+pytest tests/
+
+# Run specific test file
+pytest tests/unit/test_mecha_system.py
+
+# Run with coverage
+pytest --cov=core tests/
+
+# Run integration tests only
+pytest tests/integration/
+
+# Run with verbose output
+pytest -v tests/</div>
+                    </div>
+
+                    <div class="doc-container">
+                        <div class="doc-title">Test Data Fixtures</div>
+                        <div class="doc-description">
+                            Reusable test data for consistent testing.
+                        </div>
+                        <div class="doc-code">@pytest.fixture
+def sample_player():
+    return {
+        "player_id": "test_player",
+        "username": "TestUser",
+        "zoltans": 5000,
+        "mecha": {
+            "stats": {"hp": 100, "attack": 10, "defense": 5, "speed": 10}
+        }
+    }
+
+@pytest.fixture  
+def sample_piece():
+    return {
+        "id": "test_piece",
+        "pattern": "+2..3",
+        "blocks": 3,
+        "stats": {"hp": 100, "att": 0, "def": 0, "spd": 0}
+    }</div>
+                    </div>
+                </div>
+
+                <div class="corner-bottom-left">▣</div>
+                <div class="corner-bottom-right">▣</div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Interactive demo functionality
+        document.addEventListener('DOMContentLoaded', function() {
+            // Make grid cells interactive
+            const gridCells = document.querySelectorAll('.grid-cell-demo');
+            gridCells.forEach(cell => {
+                cell.addEventListener('click', function() {
+                    this.classList.toggle('occupied');
+                });
+            });
+
+            // Make piece demo draggable
+            const pieceDemo = document.querySelector('.piece-demo');
+            if (pieceDemo) {
+                pieceDemo.addEventListener('mousedown', function() {
+                    this.style.transform = 'rotate(5deg) scale(0.95)';
+                    this.style.opacity = '0.8';
+                });
+                
+                pieceDemo.addEventListener('mouseup', function() {
+                    this.style.transform = '';
+                    this.style.opacity = '';
+                });
+            }
+
+            // Button hover effects
+            const buttons = document.querySelectorAll('.btn');
+            buttons.forEach(btn => {
+                btn.addEventListener('mouseenter', function() {
+                    if (!this.disabled) {
+                        this.style.transform = 'translateY(-4px)';
+                    }
+                });
+                
+                btn.addEventListener('mouseleave', function() {
+                    this.style.transform = '';
+                });
+            });
+
+            // API endpoint hover effects
+            const apiEndpoints = document.querySelectorAll('.api-endpoint');
+            apiEndpoints.forEach(endpoint => {
+                endpoint.addEventListener('mouseenter', function() {
+                    this.style.background = 'rgba(68, 68, 68, 0.9)';
+                });
+                
+                endpoint.addEventListener('mouseleave', function() {
+                    this.style.background = 'rgba(51, 51, 51, 0.9)';
+                });
+            });
+        });
+    </script>
+</body>
+</html> 

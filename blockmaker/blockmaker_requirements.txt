@@ -1,0 +1,22 @@
+# Blockmaker Requirements
+# Updated for GATE CREATOR functionality
+
+# Core GUI framework
+PyQt5>=5.15.0
+
+# Executable building
+pyinstaller>=5.0.0
+
+# Cryptography for GATE CREATOR
+cryptography>=3.4.0
+
+# Optional: For development and testing
+# pytest>=6.0.0
+# black>=21.0.0
+# flake8>=3.8.0
+
+# Note: These are the minimum versions tested
+# For production use, consider using exact versions:
+# PyQt5==5.15.9
+# pyinstaller==5.13.0
+# cryptography==41.0.0 

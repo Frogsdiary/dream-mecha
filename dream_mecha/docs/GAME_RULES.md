@@ -33,12 +33,13 @@ Dream Mechas have four core stats:
   - Grid Expansion items drop for each player after major boss defeats
 - **Stat Pieces**: Generated via blockmaker tool following blockmaker rules
 - **Piece Sizes**: Can range from 1 block up to 80+ blocks (generated fresh daily)
+- **Single Stat Rule**: Each piece provides ONLY ONE stat (HP, ATK, DEF, or SPD)
 - **Scaling**: Exponential stat increases per block size reaching billions for large pieces
-  - 1 block piece = ~100 HP
-  - 10 block piece = ~100,000 HP 
-  - 20 block piece = ~10,000,000 HP
-  - 80 block piece = ~10,000,000,000 HP (10 billion)
-  - Total mecha HP can reach 100 billion range through optimal grid stacking
+  - 1 block piece = ~100 stat points
+  - 10 block piece = ~100,000 stat points 
+  - 20 block piece = ~10,000,000 stat points
+  - 80 block piece = ~10,000,000,000 stat points (10 billion)
+  - Total mecha stats can reach 100 billion range through optimal grid stacking
 - **Piece Management**: 
   - Players can rotate pieces when placing
   - Pieces can be removed and reorganized anytime
