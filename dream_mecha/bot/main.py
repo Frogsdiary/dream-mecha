@@ -428,13 +428,37 @@ async def setup(bot):
 
 def main():
     """Main function to run the bot"""
+    # Debug environment variables with more detail
+    token = os.getenv('DISCORD_TOKEN')
+    web_url = os.getenv('WEB_UI_URL')
+    debug_mode = os.getenv('DEBUG_MODE')
+    
+    print(f"🔍 Environment Check:")
+    print(f"   DISCORD_TOKEN: {'SET' if token else 'MISSING'}")
+    print(f"   WEB_UI_URL: {web_url if web_url else 'NOT SET'}")
+    print(f"   DEBUG_MODE: {debug_mode if debug_mode else 'NOT SET'}")
+    
+    # List all environment variables for debugging
+    print(f"🔍 All Environment Variables:")
+    for key, value in os.environ.items():
+        if 'DISCORD' in key or 'WEB' in key or 'FLASK' in key:
+            print(f"   {key}: {'SET' if value else 'MISSING'}")
+    
+    if not token:
+        print("❌ ERROR: DISCORD_TOKEN is not set!")
+        print("   Please check Railway environment variables")
+        print("   Make sure the variable name is exactly 'DISCORD_TOKEN'")
+        return
+    
+    print(f"✅ Token found, starting bot...")
+    
     bot = DreamMechaBot()
     
     # Setup commands
     asyncio.run(setup(bot))
     
     # Run the bot
-    bot.run(os.getenv('DISCORD_TOKEN'))
+    bot.run(token)
 
 if __name__ == '__main__':
     main() 
