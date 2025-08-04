@@ -1656,31 +1656,64 @@ class MechaGrid {
         switch(step) {
             case 1:
                 content.innerHTML = `
-                    <div class="setup-step">
-                        <h2>WELCOME TO DREAM MECHA</h2>
-                        <p>Enter your operator name:</p>
-                        <input type="text" id="operatorNameInput" placeholder="Operator" maxlength="20">
-                        <div class="setup-buttons">
-                            <button onclick="window.mechaGrid.nextSetupStep(2)">NEXT</button>
+                    <div class="setup-terminal">
+                        <div class="terminal-output" id="terminalOutput">
+                            <div class="output-line">There is a record of a dream...</div>
+                            <div class="output-line">Input Operator name to proceed.</div>
+                        </div>
+                        <div class="terminal-input-area">
+                            <input type="text" id="operatorNameInput" placeholder="Enter operator name..." maxlength="20" class="terminal-input">
+                            <button onclick="window.mechaGrid.nextSetupStep(2)" class="terminal-btn">SUBMIT</button>
                         </div>
                     </div>
                 `;
+                this.animateTextOutput();
                 break;
             case 2:
                 const operatorName = document.getElementById('operatorNameInput')?.value || 'Operator';
                 content.innerHTML = `
-                    <div class="setup-step">
-                        <h2>NAME YOUR MECHA</h2>
-                        <p>Choose a name for your mecha:</p>
-                        <input type="text" id="mechaNameInput" placeholder="Dream Mecha" maxlength="30">
-                        <div class="setup-buttons">
-                            <button onclick="window.mechaGrid.prevSetupStep(1)">BACK</button>
-                            <button onclick="window.mechaGrid.completeSetup()">START GAME</button>
+                    <div class="setup-terminal">
+                        <div class="terminal-output" id="terminalOutput">
+                            <div class="output-line">Welcome ${operatorName}.</div>
+                            <div class="output-line"></div>
+                            <div class="output-line">Rident Basmont Heavy Industries presents:</div>
+                            <div class="output-line"></div>
+                            <div class="output-line">DREAM MECHA</div>
+                            <div class="output-line"></div>
+                            <div class="output-line">See in your mind's eye- the tower that dreams. Look upon one of 8 elemental fortresses of the machine god Xaryxis-</div>
+                            <div class="output-line">sing praise to the tower glistening with sleeping radiant energy, whose sparks turn into whispers and echoes, clouds-</div>
+                            <div class="output-line">picked up and exploded into the great void, released into memory- all things, passing back and forth by the sun's will.</div>
+                            <div class="output-line"></div>
+                            <div class="output-line">RBHI New Pilot Manual:</div>
+                            <div class="output-line"></div>
+                            <div class="output-line">Your Mecha is created in the dreamspace. Outfit your Mecha with parts from the parts library.</div>
+                            <div class="output-line">For Mobile users, pop out the library for quick reference. Use the Filters to narrow your search.</div>
+                            <div class="output-line"></div>
+                            <div class="output-line">Rident Basmont Heavy Industries has provided each new pilot 10,000Z (Zoltans) which is the currency of this current dreamspace.</div>
+                            <div class="output-line">Use it to buy new parts, or repair your Mecha. You may list up to 3 parts from your library that you'd like to sell to other pilots.</div>
+                            <div class="output-line">RBHI Shop will update on each earthcycle 6:00AM UST.</div>
+                            <div class="output-line"></div>
+                            <div class="output-line">Work together with other pilots. Defend the tower.</div>
+                        </div>
+                        <div class="terminal-input-area">
+                            <button onclick="window.mechaGrid.completeSetup()" class="terminal-btn primary">ENGAGE</button>
                         </div>
                     </div>
                 `;
+                this.animateTextOutput();
                 break;
         }
+    }
+    
+    animateTextOutput() {
+        const outputLines = document.querySelectorAll('.output-line');
+        outputLines.forEach((line, index) => {
+            line.style.opacity = '0';
+            setTimeout(() => {
+                line.style.opacity = '1';
+                line.style.animation = 'typewriter 0.05s ease-in-out';
+            }, index * 100); // Stagger the animations
+        });
     }
     
     nextSetupStep(step) {
@@ -1692,9 +1725,11 @@ class MechaGrid {
     }
     
     completeSetup() {
-        // Get names from inputs
+        // Get operator name from input
         const operatorName = document.getElementById('operatorNameInput')?.value || 'Operator';
-        const mechaName = document.getElementById('mechaNameInput')?.value || 'Dream Mecha';
+        
+        // Set default mecha name
+        const mechaName = 'Dream Mecha';
         
         // Save to localStorage
         this.operatorName = operatorName;

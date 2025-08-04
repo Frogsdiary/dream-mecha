@@ -54,6 +54,12 @@ DISCORD_CLIENT_ID = os.getenv('DISCORD_CLIENT_ID')
 DISCORD_CLIENT_SECRET = os.getenv('DISCORD_CLIENT_SECRET')
 DISCORD_REDIRECT_URI = os.getenv('WEB_UI_URL', 'http://localhost:3000') + '/oauth/callback'
 
+# Debug OAuth configuration
+print(f"🔧 OAuth Configuration:")
+print(f"   CLIENT_ID: {'SET' if DISCORD_CLIENT_ID else 'MISSING'}")
+print(f"   CLIENT_SECRET: {'SET' if DISCORD_CLIENT_SECRET else 'MISSING'}")
+print(f"   REDIRECT_URI: {DISCORD_REDIRECT_URI}")
+
 # Initialize managers
 player_manager = PlayerManager()
 fortress_manager = FortressManager()
