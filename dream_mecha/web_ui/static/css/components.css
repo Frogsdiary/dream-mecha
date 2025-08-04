@@ -290,9 +290,22 @@
 }
 
 .grid-cell.piece {
-    background: #ff4444;
     border-color: var(--accent);
     animation: piecePlacement 0.4s ease-out;
+}
+
+/* Grid cell stat colors - match piece cell colors */
+.grid-cell.stat-hp { 
+    background: #44ff44 !important; 
+}
+.grid-cell.stat-attack { 
+    background: #ff4444 !important; 
+}
+.grid-cell.stat-defense { 
+    background: #ff8800 !important; 
+}
+.grid-cell.stat-speed { 
+    background: #ffff44 !important; 
 }
 
 @keyframes piecePlacement {
@@ -417,10 +430,9 @@
     border: 2px solid var(--text-secondary);
     padding: var(--dot-2);
     font-family: 'Courier New', monospace;
-    display: grid;
-    grid-template-columns: 1fr 1fr;
+    display: flex;
+    flex-direction: column;
     gap: var(--dot-2);
-    align-content: start;
 }
 
 .library-content::-webkit-scrollbar {

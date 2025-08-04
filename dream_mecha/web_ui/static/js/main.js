@@ -1345,9 +1345,7 @@ class MechaGrid {
             itemElement.className = 'shop-item';
             itemElement.innerHTML = `
                 <h4>${item.name}</h4>
-                <div class="shop-item-preview">
-                    <div class="piece-preview" data-pattern='${JSON.stringify(item.pattern)}'></div>
-                </div>
+                <div class="shop-item-preview"></div>
                 <div class="shop-item-stats">
                     ${this.getActiveStatDisplay(item.stats)}
                 </div>
@@ -1357,8 +1355,10 @@ class MechaGrid {
                 <button class="shop-buy-btn" data-piece-id="${item.piece_id}">Buy</button>
             `;
             
-            // Render piece preview
-            this.renderPiecePreview(itemElement.querySelector('.piece-preview'), item.pattern);
+            // Use the same piece preview as library - with colors!
+            const previewContainer = itemElement.querySelector('.shop-item-preview');
+            const piecePreview = this.createPiecePreview(item, false);
+            previewContainer.appendChild(piecePreview);
             
             // Add buy button listener
             const buyBtn = itemElement.querySelector('.shop-buy-btn');
@@ -1369,6 +1369,16 @@ class MechaGrid {
     }
 
     async buyShopItem(pieceId, pieceName) {
+        // Check if user is logged in first
+        const authCheck = await fetch('/api/auth/status');
+        const authData = await authCheck.json();
+        
+        if (!authData.authenticated) {
+            alert('Please log in to purchase items');
+            window.location.href = '/login';
+            return;
+        }
+        
         try {
             const response = await fetch('/api/player/shop/buy', {
                 method: 'POST',

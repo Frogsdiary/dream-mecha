@@ -895,23 +895,21 @@ class DreamMechaIntegration(QWidget):
         scaling_factor = 1.6  # Game rules scaling factor
         total_stat_power = int(base_hp * (block_count ** scaling_factor))
         
-        # Distribute stats based on algorithm and type
-        if algorithm == "random":
-            # Balanced distribution
-            hp_ratio, att_ratio, def_ratio, spd_ratio = 0.4, 0.25, 0.2, 0.15
-        elif algorithm == "stars":
-            # Attack-focused
-            hp_ratio, att_ratio, def_ratio, spd_ratio = 0.3, 0.4, 0.15, 0.15
-        elif algorithm == "glyph":
-            # Defense-focused
-            hp_ratio, att_ratio, def_ratio, spd_ratio = 0.35, 0.15, 0.35, 0.15
-        else:
-            # Default balanced
-            hp_ratio, att_ratio, def_ratio, spd_ratio = 0.4, 0.25, 0.2, 0.15
-        
-        # Each piece gives ONLY ONE stat (random selection)
+        # Each piece gives ONLY ONE stat (use the specified stat_type)
         stat_types = ["hp", "attack", "defense", "speed"]
-        chosen_stat = random.choice(stat_types)
+        
+        # Use the specified stat_type, or random if "random"
+        if stat_type == "random":
+            chosen_stat = random.choice(stat_types)
+        else:
+            # Map stat_type to the correct stat name
+            stat_mapping = {
+                "hp": "hp",
+                "attack": "attack", 
+                "defense": "defense",
+                "speed": "speed"
+            }
+            chosen_stat = stat_mapping.get(stat_type, "hp")  # Default to hp if invalid
         
         # All power goes to the chosen stat
         base_stats = {
@@ -1193,6 +1191,100 @@ class DreamMechaIntegration(QWidget):
             preview_text += f"  Pattern:\n{piece['pattern']}\n\n"
             
         self.manual_preview_text.setPlainText(preview_text)
+    
+    def generate_headless_daily_content(self, player_count: int, voidstate: int, gen_date: date = None) -> Dict[str, Any]:
+        """
+        HEADLESS VERSION for Railway deployment
+        
+        Generate daily content without any GUI dependencies.
+        This function can be called from Railway's headless environment.
+        
+        Args:
+            player_count: Number of active players
+            voidstate: Current voidstate level
+            gen_date: Generation date (defaults to today)
+            
+        Returns:
+            Dictionary containing generated pieces and enemies
+        """
+        if gen_date is None:
+            gen_date = date.today()
+        
+        try:
+            # Generate daily pieces using headless algorithms
+            pieces = self.generate_daily_pieces_beta(player_count, voidstate, gen_date)
+            
+            # Generate daily enemies
+            estimated_power = self.estimate_player_power(player_count)
+            enemies = self.generate_daily_enemies(voidstate, estimated_power)
+            
+            # Create headless response
+            daily_content = {
+                "generation_date": gen_date.isoformat(),
+                "player_count": player_count,
+                "voidstate": voidstate,
+                "pieces": pieces,
+                "enemies": enemies,
+                "generation_metadata": {
+                    "total_pieces": len(pieces),
+                    "total_enemies": len(enemies),
+                    "estimated_player_power": estimated_power,
+                    "generation_timestamp": datetime.now().isoformat()
+                }
+            }
+            
+            return daily_content
+            
+        except Exception as e:
+            # Return error response for Railway
+            return {
+                "error": f"Headless generation failed: {str(e)}",
+                "generation_date": gen_date.isoformat(),
+                "player_count": player_count,
+                "voidstate": voidstate,
+                "pieces": [],
+                "enemies": [],
+                "fallback_used": True
+            }
+    
+    def generate_headless_piece(self, block_count: int, stat_type: str = "random") -> Dict[str, Any]:
+        """
+        HEADLESS VERSION for single piece generation
+        
+        Generate a single piece without GUI dependencies.
+        This function can be called from Railway's headless environment.
+        
+        Args:
+            block_count: Number of blocks in the piece
+            stat_type: Type of stats to generate ("random", "hp", "attack", "defense", "speed")
+            
+        Returns:
+            Dictionary containing piece data
+        """
+        try:
+            # Use the existing manual generation without GUI
+            piece_data = self.generate_single_piece_manual(block_count, stat_type)
+            
+            # Ensure all required fields are present
+            piece_data.setdefault("piece_id", f"headless_piece_{random.randint(10000, 99999)}")
+            piece_data.setdefault("name", f"Headless Fragment {block_count}")
+            piece_data.setdefault("pattern", piece_data.get("pattern", ""))
+            piece_data.setdefault("stats", piece_data.get("stats", {}))
+            piece_data.setdefault("price", piece_data.get("price", 100))
+            
+            return piece_data
+            
+        except Exception as e:
+            # Return fallback piece
+            return {
+                "piece_id": f"fallback_piece_{random.randint(10000, 99999)}",
+                "name": f"Fallback Fragment {block_count}",
+                "pattern": self.generate_fallback_pattern(block_count),
+                "stats": {"hp": block_count * 50, "attack": 0, "defense": 0, "speed": 0},
+                "price": block_count * 100,
+                "error": f"Headless generation failed: {str(e)}",
+                "fallback_used": True
+            }
 
 
 class BlockmakerWindow(QMainWindow):
@@ -2994,8 +3086,8 @@ This portal code can be used across any compatible system."""
                 self.unique_preview_text.setPlainText("Error: Grid is empty. Create blocks first!")
                 return
                 
-            # Count blocks
-            block_count = sum(1 for char in pattern if char.isdigit())
+            # Count blocks (including + symbol)
+            block_count = sum(1 for char in pattern if char.isdigit() or char == '+')
             if block_count == 0:
                 self.unique_preview_text.setPlainText("Error: No blocks in grid!")
                 return
