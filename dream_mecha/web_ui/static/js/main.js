@@ -65,8 +65,8 @@ class MechaGrid {
         // Player stats
         this.maxHp = 0;
         this.currentHp = 0;
-        this.zoltans = 10000; // Starting currency
-        this.upgradePoints = 20; // Starting with 20 for testing grid expansion
+        this.zoltans = 5000; // Starting currency (reduced for balance)
+        this.upgradePoints = 0; // New players start with 0 upgrade points
         this.hpCostMultiplier = 0.1; // 0.1 Z per HP point (placeholder)
         
         // Library filters
@@ -124,8 +124,6 @@ class MechaGrid {
         this.setupAuthentication();
         this.createFullGrid();
         this.createHpBar();
-        this.loadSamplePieces();
-        this.loadShopItems(); 
         this.setupControls();
         this.setupFloatingLibrary();
         this.setupTuneUp();
@@ -133,9 +131,15 @@ class MechaGrid {
         this.setupNameEditing();
         this.setupCombatLog();
         this.loadFortressStatus();
-        this.updateStats();
-        this.updateGridStatistics();
-        this.updateHeaderNames();
+        
+        // Load data asynchronously
+        this.loadSamplePieces().then(() => {
+            this.loadShopItems().then(() => {
+                this.updateStats();
+                this.updateGridStatistics();
+                this.updateHeaderNames();
+            });
+        });
     }
     
     createFullGrid() {
@@ -800,36 +804,28 @@ class MechaGrid {
         }
     }
     
-    loadSamplePieces() {
-        // Sample pieces with SINGLE stat rule
-        const samplePieces = [
-            {
-                id: 'piece1',
-                name: 'HP Fragment',
-                pattern: '+ 2 3\n4 5 .\n6 . .',
-                stats: { hp: 600, attack: 0, defense: 0, speed: 0 }  // 6 blocks, HP only
-            },
-            {
-                id: 'piece2',
-                name: 'Attack Core',
-                pattern: '+ 2\n3 4',
-                stats: { hp: 0, attack: 400, defense: 0, speed: 0 }  // 4 blocks, Attack only
-            },
-            {
-                id: 'piece3',
-                name: 'Defense Wall',
-                pattern: '1 + 3\n4 5 6',
-                stats: { hp: 0, attack: 0, defense: 600, speed: 0 }  // 6 blocks, Defense only
+    async loadSamplePieces() {
+        // Load pieces from backend instead of hardcoded samples
+        try {
+            const response = await fetch('/api/player/pieces');
+            if (response.ok) {
+                const piecesData = await response.json();
+                piecesData.forEach(pieceData => {
+                    this.pieces[pieceData.id] = {
+                        ...pieceData,
+                        shape: pieceData.shape || parsePattern(pieceData.pattern || ''),
+                        placed: false
+                    };
+                });
+                console.log(`📦 Loaded ${piecesData.length} pieces from backend`);
+            } else {
+                console.warn('⚠️ Could not load pieces from backend, using empty library');
+                this.pieces = {};
             }
-        ];
-        
-        samplePieces.forEach(pieceData => {
-            this.pieces[pieceData.id] = {
-                ...pieceData,
-                shape: parsePattern(pieceData.pattern),
-                placed: false
-            };
-        });
+        } catch (error) {
+            console.warn('⚠️ Error loading pieces from backend:', error);
+            this.pieces = {};
+        }
         
         this.updatePieceLibrary();
     }
@@ -1654,56 +1650,104 @@ class MechaGrid {
         if (!content) return;
         
         switch(step) {
-            case 1:
-                content.innerHTML = `
-                    <div class="setup-terminal">
-                        <div class="terminal-output" id="terminalOutput">
-                            <div class="output-line">There is a record of a dream...</div>
-                            <div class="output-line">Input Operator name to proceed.</div>
+                            case 1:
+                    content.innerHTML = `
+                        <div class="setup-terminal">
+                            <div class="terminal-output" id="terminalOutput">
+                                <div class="output-line">There is a record of a dream...</div>
+                                <div class="output-line">Input Operator name to proceed.</div>
+                            </div>
+                            <div class="terminal-input-area">
+                                <input type="text" id="operatorNameInput" placeholder="Enter operator name..." maxlength="20" class="terminal-input">
+                                <button onclick="window.mechaGrid.nextSetupStep(2)" class="terminal-btn">SUBMIT</button>
+                            </div>
                         </div>
-                        <div class="terminal-input-area">
-                            <input type="text" id="operatorNameInput" placeholder="Enter operator name..." maxlength="20" class="terminal-input">
-                            <button onclick="window.mechaGrid.nextSetupStep(2)" class="terminal-btn">SUBMIT</button>
+                    `;
+                    this.animateTextOutput();
+                    
+                    // Add Enter key functionality
+                    setTimeout(() => {
+                        const input = document.getElementById('operatorNameInput');
+                        if (input) {
+                            input.addEventListener('keypress', (e) => {
+                                if (e.key === 'Enter') {
+                                    window.mechaGrid.nextSetupStep(2);
+                                }
+                            });
+                            input.focus();
+                        }
+                    }, 1000);
+                    break;
+                            case 2:
+                    const operatorName = document.getElementById('operatorNameInput')?.value || 'Operator';
+                    content.innerHTML = `
+                        <div class="setup-terminal">
+                            <div class="terminal-output" id="terminalOutput">
+                                <div class="output-line">Welcome ${operatorName}.</div>
+                                <div class="output-line"></div>
+                                <div class="output-line">Rident Basmont Heavy Industries presents:</div>
+                                <div class="output-line"></div>
+                                <div class="output-line">DREAM MECHA</div>
+                                <div class="output-line"></div>
+                                <div class="output-line">See in your mind's eye- the tower that dreams. Look upon one of 8 elemental fortresses of the machine god Xaryxis-</div>
+                                <div class="output-line">sing praise to the tower glistening with sleeping radiant energy, whose sparks turn into whispers and echoes, clouds-</div>
+                                <div class="output-line">picked up and exploded into the great void, released into memory- all things, passing back and forth by the sun's will.</div>
+                                <div class="output-line"></div>
+                                <div class="output-line">RBHI New Pilot Manual:</div>
+                                <div class="output-line"></div>
+                                <div class="output-line">Your Mecha is created in the dreamspace. Outfit your Mecha with parts from the parts library.</div>
+                                <div class="output-line">For Mobile users, pop out the library for quick reference. Use the Filters to narrow your search.</div>
+                                <div class="output-line"></div>
+                                <div class="output-line">Rident Basmont Heavy Industries has provided each new pilot 5,000Z (Zoltans) which is the currency of this current dreamspace.</div>
+                                <div class="output-line">Use it to buy new parts, or repair your Mecha. You may list up to 3 parts from your library that you'd like to sell to other pilots.</div>
+                                <div class="output-line">RBHI Shop will update on each earthcycle 6:00AM UST.</div>
+                                <div class="output-line"></div>
+                                <div class="output-line">Work together with other pilots. Defend the tower.</div>
+                                <div class="output-line"></div>
+                                <div class="output-line">ENTER MECHA NAME:</div>
+                            </div>
+                            <div class="terminal-input-area">
+                                <input type="text" id="mechaNameInput" placeholder="Enter mecha name..." maxlength="30" class="terminal-input">
+                                <button onclick="window.mechaGrid.nextSetupStep(3)" class="terminal-btn primary">ENGAGE</button>
+                            </div>
                         </div>
-                    </div>
-                `;
-                this.animateTextOutput();
-                break;
-            case 2:
-                const operatorName = document.getElementById('operatorNameInput')?.value || 'Operator';
-                content.innerHTML = `
-                    <div class="setup-terminal">
-                        <div class="terminal-output" id="terminalOutput">
-                            <div class="output-line">Welcome ${operatorName}.</div>
-                            <div class="output-line"></div>
-                            <div class="output-line">Rident Basmont Heavy Industries presents:</div>
-                            <div class="output-line"></div>
-                            <div class="output-line">DREAM MECHA</div>
-                            <div class="output-line"></div>
-                            <div class="output-line">See in your mind's eye- the tower that dreams. Look upon one of 8 elemental fortresses of the machine god Xaryxis-</div>
-                            <div class="output-line">sing praise to the tower glistening with sleeping radiant energy, whose sparks turn into whispers and echoes, clouds-</div>
-                            <div class="output-line">picked up and exploded into the great void, released into memory- all things, passing back and forth by the sun's will.</div>
-                            <div class="output-line"></div>
-                            <div class="output-line">RBHI New Pilot Manual:</div>
-                            <div class="output-line"></div>
-                            <div class="output-line">Your Mecha is created in the dreamspace. Outfit your Mecha with parts from the parts library.</div>
-                            <div class="output-line">For Mobile users, pop out the library for quick reference. Use the Filters to narrow your search.</div>
-                            <div class="output-line"></div>
-                            <div class="output-line">Rident Basmont Heavy Industries has provided each new pilot 10,000Z (Zoltans) which is the currency of this current dreamspace.</div>
-                            <div class="output-line">Use it to buy new parts, or repair your Mecha. You may list up to 3 parts from your library that you'd like to sell to other pilots.</div>
-                            <div class="output-line">RBHI Shop will update on each earthcycle 6:00AM UST.</div>
-                            <div class="output-line"></div>
-                            <div class="output-line">Work together with other pilots. Defend the tower.</div>
+                    `;
+                    this.animateTextOutput();
+                    
+                    // Add Enter key functionality for mecha name
+                    setTimeout(() => {
+                        const input = document.getElementById('mechaNameInput');
+                        if (input) {
+                            input.addEventListener('keypress', (e) => {
+                                if (e.key === 'Enter') {
+                                    window.mechaGrid.nextSetupStep(3);
+                                }
+                            });
+                            input.focus();
+                        }
+                                        }, 3000); // Wait for animation to complete
+                    break;
+                case 3:
+                    const mechaName = document.getElementById('mechaNameInput')?.value || 'Dream Mecha';
+                    content.innerHTML = `
+                        <div class="setup-terminal">
+                            <div class="terminal-output" id="terminalOutput">
+                                <div class="output-line">Mecha designation: ${mechaName}</div>
+                                <div class="output-line"></div>
+                                <div class="output-line">All systems operational.</div>
+                                <div class="output-line">Ready for deployment.</div>
+                                <div class="output-line"></div>
+                                <div class="output-line">Welcome to Dream Mecha, pilot.</div>
+                            </div>
+                            <div class="terminal-input-area">
+                                <button onclick="window.mechaGrid.completeSetup()" class="terminal-btn primary">BEGIN MISSION</button>
+                            </div>
                         </div>
-                        <div class="terminal-input-area">
-                            <button onclick="window.mechaGrid.completeSetup()" class="terminal-btn primary">ENGAGE</button>
-                        </div>
-                    </div>
-                `;
-                this.animateTextOutput();
-                break;
+                    `;
+                    this.animateTextOutput();
+                    break;
+            }
         }
-    }
     
     animateTextOutput() {
         const outputLines = document.querySelectorAll('.output-line');
@@ -1711,8 +1755,8 @@ class MechaGrid {
             line.style.opacity = '0';
             setTimeout(() => {
                 line.style.opacity = '1';
-                line.style.animation = 'typewriter 0.05s ease-in-out';
-            }, index * 100); // Stagger the animations
+                line.style.animation = 'typewriter 0.15s ease-in-out';
+            }, index * 200); // Slower stagger (200ms instead of 100ms)
         });
     }
     
@@ -1725,11 +1769,9 @@ class MechaGrid {
     }
     
     completeSetup() {
-        // Get operator name from input
+        // Get names from inputs
         const operatorName = document.getElementById('operatorNameInput')?.value || 'Operator';
-        
-        // Set default mecha name
-        const mechaName = 'Dream Mecha';
+        const mechaName = document.getElementById('mechaNameInput')?.value || 'Dream Mecha';
         
         // Save to localStorage
         this.operatorName = operatorName;

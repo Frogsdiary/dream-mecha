@@ -488,6 +488,21 @@ def get_player_data():
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
+@app.route('/api/player/pieces', methods=['GET'])
+@require_auth
+def get_player_pieces():
+    """Get player's piece library"""
+    try:
+        player_id = session['discord_user_id']
+        player = player_manager.get_player(player_id)
+        
+        if not player:
+            return jsonify({'error': 'Player not found'}), 404
+        
+        return jsonify(player.piece_library)
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
 @app.route('/api/player/layout', methods=['GET'])
 @require_auth
 def get_player_layout():

@@ -218,37 +218,38 @@
         <div class="piece-library layout-manageable" data-container-id="library">
             <div class="boundary-bottom-left"></div>
             <div class="boundary-bottom-right"></div>
-            <h3>Piece Library</h3>
+            
+            <!-- Library Header -->
+            <div class="library-header">
+                <h3>Piece Library</h3>
+                <button id="libraryToggleBtn" class="library-toggle-btn">Float Library</button>
+            </div>
             
             <!-- Library Filters -->
             <div class="library-filters">
-                <h4>Filters</h4>
-                
-                <div class="filter-group">
-                    <label for="statTypeFilter">Stat Type:</label>
-                    <select id="statTypeFilter">
-                        <option value="all">All Types</option>
-                        <option value="hp">HP Focus</option>
-                        <option value="attack">Attack Focus</option>
-                        <option value="defense">Defense Focus</option>
-                        <option value="speed">Speed Focus</option>
-                    </select>
-                </div>
-                
-                <div class="filter-group">
-                    <label for="hpRangeFilter">Max HP: <span id="hpRangeDisplay">500</span></label>
-                    <input type="range" id="hpRangeFilter" min="50" max="1000" value="500" class="filter-slider">
-                </div>
-                
-                <div class="filter-group">
-                    <label for="blockCountFilter">Max Blocks: <span id="blockCountDisplay">10</span></label>
-                    <input type="range" id="blockCountFilter" min="1" max="20" value="10" class="filter-slider">
-                </div>
-                
-                <button id="resetFiltersBtn" class="filter-reset-btn">Reset Filters</button>
-                
-                <div class="library-controls">
-                    <button id="libraryToggleBtn" class="library-toggle-btn">Float Library</button>
+                <div class="filter-row">
+                    <div class="filter-group">
+                        <label for="statTypeFilter">Stat Type:</label>
+                        <select id="statTypeFilter">
+                            <option value="all">All Types</option>
+                            <option value="hp">HP Focus</option>
+                            <option value="attack">Attack Focus</option>
+                            <option value="defense">Defense Focus</option>
+                            <option value="speed">Speed Focus</option>
+                        </select>
+                    </div>
+                    
+                    <div class="filter-group">
+                        <label for="hpRangeFilter">Max HP: <span id="hpRangeDisplay">500</span></label>
+                        <input type="range" id="hpRangeFilter" min="50" max="1000" value="500" class="filter-slider">
+                    </div>
+                    
+                    <div class="filter-group">
+                        <label for="blockCountFilter">Max Blocks: <span id="blockCountDisplay">10</span></label>
+                        <input type="range" id="blockCountFilter" min="1" max="20" value="10" class="filter-slider">
+                    </div>
+                    
+                    <button id="resetFiltersBtn" class="filter-reset-btn">Reset</button>
                 </div>
             </div>
             
