@@ -69,9 +69,14 @@ class DreamMechaBot(commands.Bot):
         except Exception as e:
             print(f"⚠️ Error loading game data: {e}")
     
-    @tasks.loop(time=datetime.time(hour=6, minute=0))
+    @tasks.loop(minutes=1)
     async def daily_cycle(self):
         """Run daily game cycle at 6 AM"""
+        # Check if it's 6 AM
+        now = datetime.now()
+        if now.hour != 6 or now.minute != 0:
+            return
+            
         print("🔄 Starting daily cycle at 6 AM...")
         
         # Generate new shop
