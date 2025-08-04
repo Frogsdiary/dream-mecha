@@ -816,9 +816,27 @@ class MechaGrid {
                 console.log('📦 Raw pieces data:', piecesData);
                 
                 piecesData.forEach(pieceData => {
+                    console.log('🔍 Processing piece:', pieceData.name, 'Shape:', pieceData.shape);
+                    
+                    // Convert shape format if needed
+                    let shape;
+                    if (pieceData.shape && Array.isArray(pieceData.shape) && Array.isArray(pieceData.shape[0])) {
+                        // Backend shape is 2D boolean array - convert to coordinate array
+                        shape = this.convertShapeToCoordinates(pieceData.shape);
+                        console.log('🔄 Converted 2D boolean array to coordinates:', shape);
+                    } else if (pieceData.pattern) {
+                        // Pattern string - parse it
+                        shape = parsePattern(pieceData.pattern);
+                        console.log('🔄 Parsed pattern to coordinates:', shape);
+                    } else {
+                        // Fallback to empty shape
+                        shape = [];
+                        console.log('⚠️ No valid shape or pattern found');
+                    }
+                    
                     this.pieces[pieceData.id] = {
                         ...pieceData,
-                        shape: pieceData.shape || parsePattern(pieceData.pattern || ''),
+                        shape: shape,
                         placed: false
                     };
                 });
@@ -1114,7 +1132,15 @@ class MechaGrid {
         const tuneUpCustomBtn = document.getElementById('tuneUpCustomBtn');
         
         if (launchBtn) {
-            launchBtn.disabled = !this.canLaunch();
+            const canLaunch = this.canLaunch();
+            launchBtn.disabled = !canLaunch;
+            
+            // Add visual highlight when ready to launch
+            if (canLaunch) {
+                launchBtn.classList.add('ready');
+            } else {
+                launchBtn.classList.remove('ready');
+            }
         }
         
         // Update tune-up button states
