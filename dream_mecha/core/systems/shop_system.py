@@ -67,32 +67,31 @@ class ShopSystem:
         return self.daily_inventory
     
     def _generate_piece(self, min_blocks: int, max_blocks: int, voidstate: int) -> ShopPiece:
-        """Generate a single piece with specified block range using blockmaker"""
+        """Generate a single piece with specified block range using headless blockmaker"""
         block_count = random.randint(min_blocks, max_blocks)
         
         try:
-            # Use blockmaker for complete piece generation
-            from blockmaker.blockmaker_window import DailyShopWindow
+            # Use headless blockmaker for Railway-compatible generation
+            from core.utils.headless_blockmaker import generate_single_piece
             
-            shop_generator = DailyShopWindow()
-            piece_data = shop_generator.generate_single_piece_manual(block_count, "random")
+            piece_data = generate_single_piece(block_count, "random")
             
-            # Extract blockmaker data
-            shape = self._pattern_to_bool_grid(piece_data.get("pattern", ""))
+            # Extract headless blockmaker data
+            shape = piece_data.get("shape", [[True]])
             stats = piece_data.get("stats", {})
             price = piece_data.get("price", 100)
             
-            # Convert stats format (blockmaker uses att/def/spd, dream_mecha uses attack/defense/speed)
+            # Ensure stats format is correct
             formatted_stats = {
                 'hp': stats.get('hp', 0),
-                'attack': stats.get('att', 0),
-                'defense': stats.get('def', 0),
-                'speed': stats.get('spd', 0)
+                'attack': stats.get('attack', 0),
+                'defense': stats.get('defense', 0),
+                'speed': stats.get('speed', 0)
             }
             
             piece = ShopPiece(
-                piece_id=f"piece_{random.randint(10000, 99999)}",
-                name=f"Void Fragment {block_count}",
+                piece_id=piece_data.get("piece_id", f"piece_{random.randint(10000, 99999)}"),
+                name=piece_data.get("name", f"Void Fragment {block_count}"),
                 shape=shape,
                 stats=formatted_stats,
                 price=price,
@@ -102,7 +101,7 @@ class ShopSystem:
             return piece
             
         except Exception as e:
-            print(f"Blockmaker generation failed: {e}")
+            print(f"Headless blockmaker generation failed: {e}")
             # Fallback to simple generation
             return self._generate_fallback_piece(min_blocks, max_blocks, voidstate)
     
@@ -184,7 +183,7 @@ class ShopSystem:
             
             return shape
     
-    def _calculate_piece_stats(self, block_count: int, voidstate: int) -> Dict[str, int]:
+    def _calculate_piece_stats(self, block_count: int, voidstate: int, stat_type: str = "random") -> Dict[str, int]:
         """Calculate stats for a piece based on block count"""
         # Exponential scaling as specified in rules
         base_multiplier = 100 * (block_count ** 2)
@@ -195,7 +194,19 @@ class ShopSystem:
         
         # Each piece gives ONLY ONE stat
         stat_types = ['hp', 'attack', 'defense', 'speed']
-        chosen_stat = random.choice(stat_types)
+        
+        # Use the specified stat_type, or random if "random"
+        if stat_type == "random":
+            chosen_stat = random.choice(stat_types)
+        else:
+            # Map stat_type to the correct stat name
+            stat_mapping = {
+                "hp": "hp",
+                "attack": "attack", 
+                "defense": "defense",
+                "speed": "speed"
+            }
+            chosen_stat = stat_mapping.get(stat_type, "hp")  # Default to hp if invalid
         
         # All power goes to the chosen stat
         stats = {

@@ -941,6 +941,124 @@
     font-weight: bold;
 }
 
+/* Enhanced Combat Log Styles */
+.combat-log-entry.status {
+    border-left-color: var(--text-secondary);
+    background: rgba(128, 128, 128, 0.1);
+    color: var(--text-secondary);
+    font-style: italic;
+}
+
+.combat-log-entry.no-activity {
+    border-left-color: var(--text-secondary);
+    background: rgba(128, 128, 128, 0.1);
+    color: var(--text-secondary);
+    text-align: center;
+    font-style: italic;
+}
+
+/* Combat Summary Styles */
+.combat-summary {
+    background: var(--bg-secondary);
+    border: var(--dot) solid var(--border-secondary);
+    margin-bottom: var(--dot-4);
+    padding: var(--dot-3);
+}
+
+.combat-summary-header {
+    text-align: center;
+    margin-bottom: var(--dot-3);
+    padding: var(--dot-2);
+    border-radius: var(--dot-1);
+}
+
+.combat-summary-header.victory {
+    background: rgba(68, 255, 68, 0.2);
+    border: var(--dot) solid var(--success);
+    color: var(--success);
+}
+
+.combat-summary-header.defeat {
+    background: rgba(255, 68, 68, 0.2);
+    border: var(--dot) solid var(--error);
+    color: var(--error);
+}
+
+.combat-summary-header h3 {
+    margin: 0;
+    font-size: var(--font-size-lg);
+    font-weight: bold;
+}
+
+.combat-summary-stats {
+    display: flex;
+    flex-direction: column;
+    gap: var(--dot-2);
+}
+
+.combat-summary-stats .stat-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: var(--dot-1) var(--dot-2);
+    background: var(--bg-primary);
+    border: var(--dot) solid var(--border-primary);
+}
+
+.combat-summary-stats .stat-label {
+    color: var(--text-primary);
+    font-weight: bold;
+}
+
+.combat-summary-stats .stat-value {
+    color: var(--accent);
+    font-weight: bold;
+}
+
+/* Combat Status Styles */
+.combat-status {
+    background: var(--bg-secondary);
+    border: var(--dot) solid var(--border-secondary);
+    margin-bottom: var(--dot-4);
+    padding: var(--dot-3);
+}
+
+.combat-status .status-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: var(--dot-1) var(--dot-2);
+    margin-bottom: var(--dot-1);
+}
+
+.combat-status .status-item:last-child {
+    margin-bottom: 0;
+}
+
+.combat-status .status-label {
+    color: var(--text-primary);
+    font-weight: bold;
+}
+
+.combat-status .status-value {
+    color: var(--accent);
+    font-weight: bold;
+}
+
+/* Combat Log Header */
+.combat-log-header {
+    margin-bottom: var(--dot-3);
+    padding-bottom: var(--dot-2);
+    border-bottom: var(--dot) solid var(--border-secondary);
+}
+
+.combat-log-header h4 {
+    color: var(--accent);
+    margin: 0;
+    font-size: var(--font-size-md);
+    font-weight: bold;
+}
+
 .floating-library .piece-item {
     margin-bottom: var(--dot-2);
     padding: var(--dot-2);

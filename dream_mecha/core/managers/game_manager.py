@@ -77,6 +77,11 @@ class GameManager:
         # Resolve combat
         result = self.combat_system.resolve_combat()
         
+        # Add detailed combat information for announcements
+        result['mechas_launched'] = len(self.combat_system.launched_mechas)
+        result['total_enemies'] = len(self.combat_system.enemies)
+        result['enemies_defeated'] = len([e for e in self.combat_system.enemies if e.hp <= 0])
+        
         # Check if fortress should be attacked
         launched_count = len(self.combat_system.launched_mechas)
         all_mechs_defeated = result.get('all_mechs_defeated', False)

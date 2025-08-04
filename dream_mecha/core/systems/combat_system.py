@@ -58,7 +58,8 @@ class CombatSystem:
             return False
         
         self.launched_mechas.append(mecha)
-        mecha.state.value = 'launched'
+        from core.systems.mecha_system import MechaState
+        mecha.state = MechaState.LAUNCHED
         return True
     
     def generate_enemies(self, voidstate: int, player_power: int) -> List[Enemy]:
@@ -161,14 +162,19 @@ class CombatSystem:
         
         self.state = CombatState.RESOLVED
         
-        return {
+        # Store last combat result for web UI
+        self.last_combat_result = {
             'success': True,
             'enemies_remaining': len(self.enemies),
             'mechas_downed': len([m for m in mechas_by_speed if m.stats.hp <= 0]),
             'zoltan_rewards': zoltan_rewards,
             'voidstate_change': self.voidstate,
-            'combat_log': self.combat_log
+            'combat_log': self.combat_log.copy(),
+            'total_enemies': len(self.enemies) + len([e for e in self.enemies if e.hp <= 0]),
+            'enemies_defeated': len([e for e in self.enemies if e.hp <= 0])
         }
+        
+        return self.last_combat_result
     
     def _calculate_damage(self, attack: int, defense: int) -> int:
         """Calculate damage using defense formula"""
@@ -183,17 +189,21 @@ class CombatSystem:
         """Calculate Zoltan rewards for each player"""
         rewards = {}
         
-        # Base reward for participation
-        base_reward = 100
+        # Base reward for participation (increased significantly)
+        base_reward = 500
         
-        # Bonus for enemy defeats
+        # Bonus for enemy defeats (increased)
         enemies_defeated = len([e for e in self.enemies if e.hp <= 0])
-        defeat_bonus = enemies_defeated * 50
+        defeat_bonus = enemies_defeated * 200
         
-        # Voidstate bonus (higher voidstate = higher rewards)
-        voidstate_bonus = self.voidstate * 10
+        # Voidstate bonus with exponential scaling
+        voidstate_multiplier = 1 + (self.voidstate * 0.2)  # 20% increase per voidstate
+        voidstate_bonus = int(self.voidstate * 100 * voidstate_multiplier)
         
-        total_reward = base_reward + defeat_bonus + voidstate_bonus
+        # Victory bonus (if all enemies defeated)
+        victory_bonus = 1000 if enemies_defeated == len(self.enemies) else 0
+        
+        total_reward = base_reward + defeat_bonus + voidstate_bonus + victory_bonus
         
         for mecha in self.launched_mechas:
             if mecha.stats.hp > 0:  # Only reward surviving mechas

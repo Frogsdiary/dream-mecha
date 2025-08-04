@@ -1,13 +1,13 @@
 # Dream Mecha - Advanced Grid-Based Strategy Game
 
-**Current Version**: 1.0.0  
-**Last Updated**: July 28, 2025  
+**Current Version**: 0.3.5  
+**Last Updated**: August 3, 2025  
 **Status**: Core systems complete with production-ready security
 
 ## 🎮 **GAME OVERVIEW**
 
-Dream Mecha is a sophisticated grid-based strategy game featuring:
-- **12x12 Grid Combat**: Strategic piece placement and movement
+Dream Mecha is a grid-based strategy game featuring:
+- **Grid Combat**: Strategic piece placement and movement
 - **Turn-Based Combat**: Tactical battles with damage calculation
 - **Daily Shop System**: Rotating inventory with dynamic pricing
 - **Discord Integration**: OAuth authentication and bot commands
@@ -23,13 +23,6 @@ Dream Mecha is a sophisticated grid-based strategy game featuring:
 - **User Data Isolation**: Players can only access their own data
 - **Comprehensive Testing**: 25+ security tests passing
 
-### **📊 Security Metrics**
-- **Unauthorized Access Protection**: 99.9%
-- **API Abuse Protection**: 95%
-- **Cross-Site Attack Protection**: 99%
-- **Data Manipulation Protection**: 90%
-- **Input Injection Protection**: 95%
-
 ## 🏗️ **PROJECT ARCHITECTURE**
 
 ### **Core Systems** ✅ **COMPLETE**
@@ -37,7 +30,7 @@ Dream Mecha is a sophisticated grid-based strategy game featuring:
 dream_mecha/
 ├── core/
 │   ├── systems/
-│   │   ├── grid_system.py      # 12x12 grid logic
+│   │   ├── grid_system.py      # grid logic
 │   │   ├── combat_system.py    # Turn-based combat
 │   │   └── shop_system.py      # Daily shop inventory
 │   └── managers/
@@ -78,20 +71,20 @@ cp env.example .env
 ### **Environment Configuration**
 ```env
 # Discord Bot Configuration
-DISCORD_BOT_TOKEN=your_discord_bot_token_here
+DISCORD_BOT_TOKEN=<your_discord_bot_token>
 
 # Discord OAuth2 Configuration
-DISCORD_CLIENT_ID=your_discord_client_id_here
-DISCORD_CLIENT_SECRET=your_discord_client_secret_here
+DISCORD_CLIENT_ID=<your_discord_client_id>
+DISCORD_CLIENT_SECRET=<your_discord_client_secret>
 
 # Web UI Configuration
-WEB_UI_URL=http://localhost:3000
+WEB_UI_URL=<your_web_ui_url>
 PORT=3000
-FLASK_SECRET_KEY=your_secure_random_secret_key_here
+FLASK_SECRET_KEY=<your_secure_random_secret_key>
 
 # Security Configuration
 FLASK_ENV=production
-ALLOWED_ORIGINS=https://your-domain.railway.app,http://localhost:3000
+ALLOWED_ORIGINS=<your_domain>,https://discord.com
 
 # Rate Limiting
 RATE_LIMIT_DAILY=200
@@ -167,9 +160,9 @@ python -m pytest tests/
 
 ## 📚 **DOCUMENTATION**
 
-- **[Progress Audit](docs/PROGRESS_AUDIT_2025-07-28.md)**: Detailed project status
-- **[Security Implementation](docs/SECURITY_IMPLEMENTATION.md)**: Security features and testing
-- **[Game Rules](docs/GAME_RULES.md)**: Complete game mechanics and rules
+- **Game Rules**: Complete game mechanics and rules
+- **Security Implementation**: Production-ready security features
+- **Progress Audit**: Detailed project status and development history
 
 ## 🔧 **TECHNICAL DEBT**
 
@@ -196,7 +189,7 @@ python -m pytest tests/
 ## 📞 **SUPPORT**
 
 For questions or issues:
-- **Documentation**: Check the `docs/` folder
+- **Documentation**: Check the project documentation
 - **Security**: Run `python test_security.py`
 - **Testing**: Run `python -m pytest tests/`
 

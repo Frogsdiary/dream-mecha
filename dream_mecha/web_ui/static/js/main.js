@@ -125,6 +125,7 @@ class MechaGrid {
         this.createFullGrid();
         this.createHpBar();
         this.loadSamplePieces();
+        this.loadShopItems(); 
         this.setupControls();
         this.setupFloatingLibrary();
         this.setupTuneUp();
@@ -950,11 +951,14 @@ class MechaGrid {
             return preview;
         }
         
+        // Convert shape to coordinate format if it's a boolean array
+        const coordinates = this.convertShapeToCoordinates(shape);
+        
         // Find the bounding box of the shape
-        const minX = Math.min(...shape.map(([x, y]) => x));
-        const maxX = Math.max(...shape.map(([x, y]) => x));
-        const minY = Math.min(...shape.map(([x, y]) => y));
-        const maxY = Math.max(...shape.map(([x, y]) => y));
+        const minX = Math.min(...coordinates.map(([x, y]) => x));
+        const maxX = Math.max(...coordinates.map(([x, y]) => x));
+        const minY = Math.min(...coordinates.map(([x, y]) => y));
+        const maxY = Math.max(...coordinates.map(([x, y]) => y));
         
         const width = maxX - minX + 1;
         const height = maxY - minY + 1;
@@ -974,7 +978,7 @@ class MechaGrid {
         const shapeGrid = Array(height).fill().map(() => Array(width).fill(false));
         
         // Mark occupied positions
-        shape.forEach(([dx, dy]) => {
+        coordinates.forEach(([dx, dy]) => {
             const x = dx - minX;
             const y = dy - minY;
             if (x >= 0 && x < width && y >= 0 && y < height) {
@@ -1008,6 +1012,29 @@ class MechaGrid {
         
         preview.appendChild(grid);
         return preview;
+    }
+    
+    convertShapeToCoordinates(shape) {
+        // If shape is already in coordinate format [[x, y], [x, y], ...]
+        if (shape.length > 0 && Array.isArray(shape[0]) && shape[0].length === 2 && typeof shape[0][0] === 'number') {
+            return shape;
+        }
+        
+        // If shape is in boolean array format [[true, false], [true, true], ...]
+        if (shape.length > 0 && Array.isArray(shape[0]) && typeof shape[0][0] === 'boolean') {
+            const coordinates = [];
+            for (let y = 0; y < shape.length; y++) {
+                for (let x = 0; x < shape[y].length; x++) {
+                    if (shape[y][x]) {
+                        coordinates.push([x, y]);
+                    }
+                }
+            }
+            return coordinates;
+        }
+        
+        // Fallback: assume it's already in coordinate format
+        return shape;
     }
     
     setupControls() {
@@ -1735,29 +1762,90 @@ class MechaGrid {
 
     async loadCombatLog() {
         try {
-            const response = await fetch('/api/player/combat/status');
+            const response = await fetch('/api/player/combat/log');
             if (!response.ok) {
                 throw new Error(`HTTP ${response.status}`);
             }
             
             const combatData = await response.json();
-            this.displayCombatLog(combatData.combat_log || []);
+            this.displayCombatLog(combatData);
         } catch (error) {
             console.error('Failed to load combat log:', error);
-            this.displayCombatLog([]);
+            this.displayCombatLog({ combat_log: [] });
         }
     }
 
-    displayCombatLog(logEntries) {
+    displayCombatLog(combatData) {
         const combatLogContent = document.getElementById('floatingCombatLogContent');
         if (!combatLogContent) return;
         
         combatLogContent.innerHTML = '';
 
+        const logEntries = combatData.combat_log || [];
+        const lastCombatResult = combatData.last_combat_result;
+
+        // Display combat summary if available
+        if (lastCombatResult) {
+            const summaryElement = document.createElement('div');
+            summaryElement.className = 'combat-summary';
+            
+            const isVictory = lastCombatResult.enemies_remaining === 0;
+            const summaryHTML = `
+                <div class="combat-summary-header ${isVictory ? 'victory' : 'defeat'}">
+                    <h3>${isVictory ? '🎉 VICTORY' : '💀 DEFEAT'}</h3>
+                </div>
+                <div class="combat-summary-stats">
+                    <div class="stat-item">
+                        <span class="stat-label">Enemies Defeated:</span>
+                        <span class="stat-value">${lastCombatResult.enemies_defeated || 0}/${lastCombatResult.total_enemies || 0}</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">Mechas Downed:</span>
+                        <span class="stat-value">${lastCombatResult.mechas_downed || 0}</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">Voidstate:</span>
+                        <span class="stat-value">${lastCombatResult.voidstate_change || 0}</span>
+                    </div>
+                </div>
+            `;
+            
+            summaryElement.innerHTML = summaryHTML;
+            combatLogContent.appendChild(summaryElement);
+        }
+
+        // Display current combat status
+        const statusElement = document.createElement('div');
+        statusElement.className = 'combat-status';
+        statusElement.innerHTML = `
+            <div class="status-item">
+                <span class="status-label">State:</span>
+                <span class="status-value">${combatData.state || 'preparing'}</span>
+            </div>
+            <div class="status-item">
+                <span class="status-label">Mechas Launched:</span>
+                <span class="status-value">${combatData.mechas_launched || 0}</span>
+            </div>
+            <div class="status-item">
+                <span class="status-label">Enemies Remaining:</span>
+                <span class="status-value">${combatData.enemies_remaining || 0}</span>
+            </div>
+        `;
+        combatLogContent.appendChild(statusElement);
+
+        // Display combat log entries
         if (logEntries.length === 0) {
-            combatLogContent.innerHTML = '<p>No combat activity recorded.</p>';
+            const noActivityElement = document.createElement('div');
+            noActivityElement.className = 'combat-log-entry no-activity';
+            noActivityElement.innerHTML = '<p>No combat activity recorded.</p>';
+            combatLogContent.appendChild(noActivityElement);
             return;
         }
+
+        const logHeader = document.createElement('div');
+        logHeader.className = 'combat-log-header';
+        logHeader.innerHTML = '<h4>Combat Log</h4>';
+        combatLogContent.appendChild(logHeader);
 
         logEntries.forEach(entry => {
             const entryElement = document.createElement('div');
@@ -1772,6 +1860,8 @@ class MechaGrid {
                 entryElement.classList.add('destroyed');
             } else if (entry.includes('downed')) {
                 entryElement.classList.add('downed');
+            } else if (entry.includes('HP:')) {
+                entryElement.classList.add('status');
             }
             
             entryElement.innerHTML = `

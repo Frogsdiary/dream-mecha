@@ -86,7 +86,7 @@ class Mecha:
         self.grid_size = 8  # Base 8x8 grid
         self.grid = [[None for _ in range(8)] for _ in range(8)]
         self.piece_library: List[Dict] = []
-        self.zoltans = 50000  # Starting currency (increased from 5000)
+        self.zoltans = 5000  # Starting currency (reduced from 50000)
         
     def launch(self) -> bool:
         """Launch mecha for combat"""

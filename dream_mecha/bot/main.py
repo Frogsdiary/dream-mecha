@@ -83,6 +83,12 @@ class DreamMechaBot(commands.Bot):
         # Announce daily boss
         await self.announce_daily_boss()
         
+        # Resolve combat if mechas are launched
+        if self.game_manager.combat_system.launched_mechas:
+            print("⚔️ Resolving combat...")
+            combat_result = self.game_manager.resolve_combat()
+            await self.announce_combat_results(combat_result)
+        
         # Check if fortress needs status update
         await self.check_fortress_status()
         
@@ -95,6 +101,89 @@ class DreamMechaBot(commands.Bot):
                 player.mecha.state = player.mecha.state.READY
         
         print("✅ Daily cycle completed")
+    
+    async def announce_combat_results(self, combat_result):
+        """Announce combat results to all guilds"""
+        print("📢 Announcing combat results...")
+        
+        # Determine embed color based on result
+        if combat_result['enemies_remaining'] == 0:
+            color = 0x00ff00  # Green for victory
+            title = "🎉 VICTORY! Void Forces Defeated"
+        else:
+            color = 0xff0000  # Red for defeat
+            title = "💀 DEFEAT! Void Forces Remain"
+        
+        embed = discord.Embed(
+            title=title,
+            description="Battle against the void has concluded!",
+            color=color
+        )
+        
+        # Combat statistics
+        mechas_launched = len(combat_result.get('mechas_launched', []))
+        mechas_downed = combat_result.get('mechas_downed', 0)
+        enemies_defeated = combat_result.get('enemies_defeated', 0)
+        total_enemies = combat_result.get('total_enemies', 0)
+        
+        embed.add_field(
+            name="⚔️ Combat Statistics",
+            value=f"Mechas Launched: {mechas_launched}\n" +
+                  f"Mechas Downed: {mechas_downed}\n" +
+                  f"Enemies Defeated: {enemies_defeated}/{total_enemies}\n" +
+                  f"Enemies Remaining: {combat_result['enemies_remaining']}",
+            inline=True
+        )
+        
+        # Zoltan rewards
+        zoltan_rewards = combat_result.get('zoltan_rewards', {})
+        if zoltan_rewards:
+            reward_text = ""
+            for player_id, reward in zoltan_rewards.items():
+                player_name = self.player_manager.players.get(player_id, {}).get('name', f"Player {player_id}")
+                reward_text += f"{player_name}: {reward} Zoltan\n"
+            
+            embed.add_field(
+                name="💰 Zoltan Rewards",
+                value=reward_text or "No rewards distributed",
+                inline=True
+            )
+        
+        # Voidstate changes
+        voidstate_change = combat_result.get('voidstate_change', 0)
+        embed.add_field(
+            name="🌌 Voidstate",
+            value=f"New Level: {voidstate_change}\n" +
+                  f"Change: {'+' if voidstate_change > self.voidstate_manager.voidstate else ''}{voidstate_change - self.voidstate_manager.voidstate}",
+            inline=True
+        )
+        
+        # Combat log highlights (last 3 entries)
+        combat_log = combat_result.get('combat_log', [])
+        if combat_log:
+            log_highlights = "\n".join(combat_log[-3:])  # Last 3 entries
+            embed.add_field(
+                name="📜 Combat Log",
+                value=log_highlights,
+                inline=False
+            )
+        
+        # Send to all guilds
+        for guild in self.guilds:
+            try:
+                # Find a suitable channel (ONLY dream-mecha-beta)
+                channel = None
+                for channel_name in ['dream-mecha-beta']:
+                    channel = discord.utils.get(guild.text_channels, name=channel_name)
+                    if channel:
+                        break
+                
+                if channel:
+                    await channel.send(embed=embed)
+                    print(f"✅ Combat results sent to #{channel.name} in {guild.name}")
+                    
+            except Exception as e:
+                print(f"⚠️ Could not send combat results to {guild.name}: {e}")
     
     async def announce_daily_boss(self):
         """Announce the daily boss to all guilds"""
@@ -254,12 +343,12 @@ class DreamMechaBot(commands.Bot):
         except Exception as e:
             print(f"⚠️ Test fortress attack failed: {e}")
     
-    # ===== COMPREHENSIVE TESTING SYSTEM =====
+    # ===== MINIMAL BOT FUNCTIONALITY =====
     
-    async def send_debug_message(self, title: str, content: str, color: int = 0x00ff00):
-        """Send a debug message to all guilds"""
+    async def send_announcement(self, title: str, content: str, color: int = 0x00ff00):
+        """Send an announcement to all guilds"""
         embed = discord.Embed(
-            title=f"🔧 DEBUG: {title}",
+            title=title,
             description=content,
             color=color,
             timestamp=datetime.now()
@@ -270,138 +359,10 @@ class DreamMechaBot(commands.Bot):
                 channel = discord.utils.get(guild.text_channels, name='dream-mecha-beta')
                 if channel:
                     await channel.send(embed=embed)
-                    print(f"✅ Debug message sent to #{channel.name}")
+                    print(f"✅ Announcement sent to #{channel.name}")
                     break
             except Exception as e:
-                print(f"⚠️ Could not send debug message: {e}")
-    
-    async def test_system_health(self):
-        """Test all system components"""
-        try:
-            # Test managers
-            player_count = len(self.player_manager.players)
-            fortress_status = self.fortress_manager.get_fortress_status()
-            voidstate = self.voidstate_manager.voidstate
-            
-            # Test data persistence
-            self.player_manager.save_player_data()
-            self.fortress_manager.save_fortress()
-            
-            content = f"""
-**System Health Check:**
-✅ Players: {player_count}
-✅ Fortress HP: {fortress_status['current_hp']:,}
-✅ Voidstate: {voidstate}
-✅ Data persistence: Working
-✅ Bot status: Online
-            """.strip()
-            
-            await self.send_debug_message("System Health", content, 0x00ff00)
-            
-        except Exception as e:
-            await self.send_debug_message("System Health FAILED", f"Error: {str(e)}", 0xff0000)
-    
-    async def test_fortress_damage(self, damage_amount: int = 1000000):
-        """Test fortress damage system"""
-        try:
-            # Get initial status
-            initial_status = self.fortress_manager.get_fortress_status()
-            
-            # Apply damage
-            result = self.fortress_manager.fortress.take_damage(damage_amount)
-            
-            # Get final status
-            final_status = self.fortress_manager.get_fortress_status()
-            
-            content = f"""
-**Fortress Damage Test:**
-🔴 Initial HP: {initial_status['current_hp']:,}
-⚔️ Damage Applied: {damage_amount:,}
-🟢 Final HP: {final_status['current_hp']:,}
-📊 HP Percentage: {final_status['hp_percentage']:.1f}%
-💥 Damage Dealt: {result['damage_dealt']:,}
-✅ Success: {result['success']}
-            """.strip()
-            
-            await self.send_debug_message("Fortress Damage Test", content, 0xff6f61)
-            
-        except Exception as e:
-            await self.send_debug_message("Fortress Damage Test FAILED", f"Error: {str(e)}", 0xff0000)
-    
-    async def test_enemy_generation(self):
-        """Test enemy generation system"""
-        try:
-            # Generate test enemies
-            enemies = self.game_manager.combat_system.generate_enemies(
-                voidstate=self.voidstate_manager.voidstate,
-                player_power=10000
-            )
-            
-            content = f"""
-**Enemy Generation Test:**
-👹 Enemies Generated: {len(enemies)}
-⚔️ Total Attack Power: {sum(e.attack for e in enemies):,}
-🛡️ Total Defense: {sum(e.defense for e in enemies):,}
-💀 Total HP: {sum(e.hp for e in enemies):,}
-🌌 Voidstate: {self.voidstate_manager.voidstate}
-            """.strip()
-            
-            await self.send_debug_message("Enemy Generation Test", content, 0x8b0000)
-            
-        except Exception as e:
-            await self.send_debug_message("Enemy Generation Test FAILED", f"Error: {str(e)}", 0xff0000)
-    
-    async def test_web_ui_connection(self):
-        """Test web UI connectivity"""
-        try:
-            import requests
-            
-            # Test basic connectivity
-            response = requests.get(f"{self.web_ui_url}/api/status", timeout=5)
-            
-            if response.status_code == 200:
-                content = f"""
-**Web UI Connection Test:**
-✅ Status: Online
-🌐 URL: {self.web_ui_url}
-📡 Response: {response.status_code}
-⏱️ Response Time: {response.elapsed.total_seconds():.2f}s
-                """.strip()
-                
-                await self.send_debug_message("Web UI Connection Test", content, 0x00ff00)
-            else:
-                await self.send_debug_message("Web UI Connection Test", f"Status code: {response.status_code}", 0xffcc00)
-                
-        except Exception as e:
-            await self.send_debug_message("Web UI Connection Test FAILED", f"Error: {str(e)}", 0xff0000)
-    
-    async def test_data_export(self):
-        """Test data export functionality"""
-        try:
-            # Export current game state
-            export_data = {
-                'timestamp': datetime.now().isoformat(),
-                'players': len(self.player_manager.players),
-                'fortress_status': self.fortress_manager.get_fortress_status(),
-                'voidstate': self.voidstate_manager.voidstate,
-                'bot_guilds': len(self.guilds),
-                'web_ui_url': self.web_ui_url
-            }
-            
-            content = f"""
-**Data Export Test:**
-📊 Players: {export_data['players']}
-🏰 Fortress HP: {export_data['fortress_status']['current_hp']:,}
-🌌 Voidstate: {export_data['voidstate']}
-🤖 Bot Guilds: {export_data['bot_guilds']}
-🌐 Web UI: {export_data['web_ui_url']}
-⏰ Timestamp: {export_data['timestamp']}
-            """.strip()
-            
-            await self.send_debug_message("Data Export Test", content, 0x4169e1)
-            
-        except Exception as e:
-            await self.send_debug_message("Data Export Test FAILED", f"Error: {str(e)}", 0xff0000)
+                print(f"⚠️ Could not send announcement: {e}")
     
     async def on_ready(self):
         """Called when bot is ready"""
@@ -410,7 +371,7 @@ class DreamMechaBot(commands.Bot):
         
         # Send startup message
         if self.debug_mode:
-            await self.send_debug_message("Bot Startup", "Dream Mecha Bot is online and ready!", 0x00ff00)
+            await self.send_announcement("🤖 Bot Online", "Dream Mecha Bot is online and ready!", 0x00ff00)
     
     async def on_command_error(self, ctx, error):
         """Handle command errors"""
@@ -424,221 +385,41 @@ class DreamMechaBot(commands.Bot):
 async def setup(bot):
     """Setup bot commands"""
     
-    @bot.command(name='health')
-    async def health_check(ctx):
-        """Check bot health"""
-        await ctx.send("✅ Bot is healthy!")
-    
-    @bot.command(name='help')
-    async def help_command(ctx):
-        """Show help information"""
+    @bot.command(name='connect')
+    async def connect_command(ctx):
+        """Connect to the Dream Mecha web UI"""
         embed = discord.Embed(
-            title="🤖 Dream Mecha Bot Commands",
-            description="Available commands for testing and debugging",
-            color=0x4169e1
+            title="🌐 Dream Mecha Web UI",
+            description="Click the link below to access the full game interface!",
+            color=0x4169e1,
+            url=bot.web_ui_url
         )
         
         embed.add_field(
-            name="🎮 Game Commands",
-            value="`!launch` - Launch your mecha for combat\n" +
-                  "`!status` - Check your mecha status\n" +
-                  "`!help` - Show this help message",
+            name="🎮 What you can do:",
+            value="• Build and customize your mecha\n" +
+                  "• Browse the daily shop\n" +
+                  "• View your piece library\n" +
+                  "• Check combat logs\n" +
+                  "• Launch for battle",
             inline=False
         )
         
         embed.add_field(
-            name="🔧 Debug Commands",
-            value="`!test health` - Test system health\n" +
-                  "`!test fortress` - Test fortress damage\n" +
-                  "`!test enemies` - Test enemy generation\n" +
-                  "`!test webui` - Test web UI connection\n" +
-                  "`!test export` - Test data export\n" +
-                  "`!debug all` - Run all debug tests",
-            inline=False
+            name="⚔️ Game Status",
+            value=f"Players: {len(bot.player_manager.players)}\n" +
+                  f"Fortress HP: {bot.fortress_manager.get_fortress_status()['current_hp']:,}\n" +
+                  f"Voidstate: {bot.voidstate_manager.voidstate}",
+            inline=True
         )
         
         embed.add_field(
-            name="📊 Info",
-            value=f"Web UI: {bot.web_ui_url}\n" +
-                  f"Players: {len(bot.player_manager.players)}\n" +
-                  f"Debug Mode: {bot.debug_mode}",
-            inline=False
+            name="🔗 Quick Access",
+            value=f"[Open Web UI]({bot.web_ui_url})",
+            inline=True
         )
         
         await ctx.send(embed=embed)
-    
-    @bot.command(name='launch')
-    async def launch_mecha(ctx):
-        """Launch mecha for combat"""
-        try:
-            player_id = str(ctx.author.id)
-            
-            # Get or create player
-            player = bot.player_manager.get_player(player_id)
-            if not player:
-                player = bot.player_manager.create_player(player_id, ctx.author.display_name)
-            
-            # Check if player has a mecha
-            if not player.mecha:
-                await ctx.send("❌ You don't have a mecha! Visit the web UI to build one.")
-                return
-            
-            # Check if mecha is ready
-            if player.mecha.state.value != 'ready':
-                await ctx.send("❌ Your mecha is not ready for launch!")
-                return
-            
-            # Launch mecha
-            player.mecha.state.value = 'launched'
-            bot.game_manager.combat_system.add_mecha(player.mecha)
-            
-            # Save player data
-            bot.player_manager.save_player_data()
-            
-            embed = discord.Embed(
-                title="🚀 MECHA LAUNCHED!",
-                description=f"{ctx.author.display_name} has launched their mecha!",
-                color=0x00ff00
-            )
-            
-            embed.add_field(
-                name="Mecha Stats",
-                value=f"HP: {player.mecha.stats.hp:,}\n" +
-                      f"Attack: {player.mecha.stats.attack:,}\n" +
-                      f"Defense: {player.mecha.stats.defense:,}\n" +
-                      f"Speed: {player.mecha.stats.speed:,}",
-                inline=True
-            )
-            
-            embed.add_field(
-                name="Combat Status",
-                value="⚔️ Ready for battle!\n" +
-                      "🕐 Results at 6 AM tomorrow",
-                inline=True
-            )
-            
-            await ctx.send(embed=embed)
-            
-        except Exception as e:
-            await ctx.send(f"❌ Launch failed: {e}")
-    
-    @bot.command(name='status')
-    async def mecha_status(ctx):
-        """Check mecha status"""
-        try:
-            player_id = str(ctx.author.id)
-            player = bot.player_manager.get_player(player_id)
-            
-            if not player or not player.mecha:
-                await ctx.send("❌ You don't have a mecha! Visit the web UI to build one.")
-                return
-            
-            embed = discord.Embed(
-                title="🤖 MECHA STATUS",
-                description=f"{ctx.author.display_name}'s mecha information",
-                color=0x4169e1
-            )
-            
-            embed.add_field(
-                name="Status",
-                value=f"State: {player.mecha.state.value.upper()}\n" +
-                      f"Zoltans: {player.zoltans:,}",
-                inline=True
-            )
-            
-            embed.add_field(
-                name="Stats",
-                value=f"HP: {player.mecha.stats.hp:,}\n" +
-                      f"Attack: {player.mecha.stats.attack:,}\n" +
-                      f"Defense: {player.mecha.stats.defense:,}\n" +
-                      f"Speed: {player.mecha.stats.speed:,}",
-                inline=True
-            )
-            
-            await ctx.send(embed=embed)
-            
-        except Exception as e:
-            await ctx.send(f"❌ Status check failed: {e}")
-    
-    # ===== DEBUG COMMANDS =====
-    
-    @bot.command(name='test')
-    async def test_command(ctx, test_type: str = None):
-        """Run various tests"""
-        if not test_type:
-            await ctx.send("❌ Please specify a test type: `!test health|fortress|enemies|webui|export|all`")
-            return
-        
-        await ctx.send(f"🧪 Running {test_type} test...")
-        
-        if test_type == 'health':
-            await bot.test_system_health()
-        elif test_type == 'fortress':
-            await bot.test_fortress_damage()
-        elif test_type == 'enemies':
-            await bot.test_enemy_generation()
-        elif test_type == 'webui':
-            await bot.test_web_ui_connection()
-        elif test_type == 'export':
-            await bot.test_data_export()
-        elif test_type == 'all':
-            await bot.test_system_health()
-            await asyncio.sleep(1)
-            await bot.test_fortress_damage()
-            await asyncio.sleep(1)
-            await bot.test_enemy_generation()
-            await asyncio.sleep(1)
-            await bot.test_web_ui_connection()
-            await asyncio.sleep(1)
-            await bot.test_data_export()
-        else:
-            await ctx.send("❌ Unknown test type. Use: `health|fortress|enemies|webui|export|all`")
-    
-    @bot.command(name='debug')
-    async def debug_command(ctx, action: str = None):
-        """Debug commands"""
-        if not action:
-            await ctx.send("❌ Please specify an action: `!debug all|status|reset`")
-            return
-        
-        if action == 'all':
-            await ctx.send("🔧 Running comprehensive debug...")
-            await bot.test_system_health()
-            await asyncio.sleep(1)
-            await bot.test_fortress_damage(5000000)  # 5M damage test
-            await asyncio.sleep(1)
-            await bot.test_enemy_generation()
-            await asyncio.sleep(1)
-            await bot.test_web_ui_connection()
-            await asyncio.sleep(1)
-            await bot.test_data_export()
-            
-        elif action == 'status':
-            fortress_status = bot.fortress_manager.get_fortress_status()
-            content = f"""
-**Current System Status:**
-🤖 Bot Guilds: {len(bot.guilds)}
-👥 Players: {len(bot.player_manager.players)}
-🏰 Fortress HP: {fortress_status['current_hp']:,}
-🌌 Voidstate: {bot.voidstate_manager.voidstate}
-🌐 Web UI: {bot.web_ui_url}
-🔧 Debug Mode: {bot.debug_mode}
-            """.strip()
-            
-            await bot.send_debug_message("System Status", content, 0x4169e1)
-            
-        elif action == 'reset':
-            # Reset fortress to full HP
-            bot.fortress_manager.fortress.current_hp = bot.fortress_manager.fortress.max_hp
-            bot.fortress_manager.fortress.total_damage_taken = 0
-            bot.fortress_manager.fortress.days_under_attack = 0
-            bot.fortress_manager.fortress.last_attack_date = None
-            bot.fortress_manager.save_fortress()
-            
-            await bot.send_debug_message("Fortress Reset", "Fortress HP restored to maximum!", 0x00ff00)
-            
-        else:
-            await ctx.send("❌ Unknown debug action. Use: `all|status|reset`")
 
 def main():
     """Main function to run the bot"""

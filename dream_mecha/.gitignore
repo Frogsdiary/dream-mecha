@@ -1,0 +1,240 @@
+# Dream Mecha - Public Repository Gitignore
+# Excludes test files, sensitive documentation, and development artifacts
+
+# ===== TEST FILES =====
+# All test files and test data
+test_*.py
+test_*.json
+test_*.html
+verify_*.py
+*_test.py
+*_tests.py
+
+# Test reports and outputs
+test_report_*.json
+*_report_*.json
+
+# Test directories
+tests/
+Testing/
+
+# Documentation directories
+docs/
+
+# ===== SENSITIVE DOCUMENTATION =====
+# Development and debug documentation
+DEBUG_*.md
+LAYOUT_*.md
+SYSTEM_AUDIT.md
+ISSUE_ANALYSIS.md
+BOT_FIX_SUMMARY.md
+SQUISHED_FIXES*.md
+CLAUDE_DEVELOPMENT_MANIFESTO.md
+
+# Internal documentation
+DEV_PARTS.html
+debug_layout.js
+
+# Manual triggers and development scripts
+manual_triggers.py
+
+# ===== ENVIRONMENT & SECURITY =====
+# Environment files (contains secrets)
+.env
+.env.local
+.env.production
+.env.development
+
+# Player data (contains user information)
+player_data.json
+database/players/
+database/daily/
+
+# ===== DEVELOPMENT ARTIFACTS =====
+# Python cache
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+
+# Distribution / packaging
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# PyInstaller
+*.manifest
+*.spec
+
+# Installer logs
+pip-log.txt
+pip-delete-this-directory.txt
+
+# Unit test / coverage reports
+htmlcov/
+.tox/
+.coverage
+.coverage.*
+.cache
+nosetests.xml
+coverage.xml
+*.cover
+.hypothesis/
+.pytest_cache/
+
+# Jupyter Notebook
+.ipynb_checkpoints
+
+# pyenv
+.python-version
+
+# celery beat schedule file
+celerybeat-schedule
+
+# SageMath parsed files
+*.sage.py
+
+# Environments
+.venv
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
+
+# Spyder project settings
+.spyderproject
+.spyproject
+
+# Rope project settings
+.ropeproject
+
+# mkdocs documentation
+/site
+
+# mypy
+.mypy_cache/
+.dmypy.json
+dmypy.json
+
+# ===== IDE & EDITOR FILES =====
+# VSCode
+.vscode/
+*.code-workspace
+
+# PyCharm
+.idea/
+*.iml
+*.ipr
+*.iws
+
+# Sublime Text
+*.sublime-project
+*.sublime-workspace
+
+# Vim
+*.swp
+*.swo
+*~
+
+# Emacs
+*~
+\#*\#
+/.emacs.desktop
+/.emacs.desktop.lock
+*.elc
+auto-save-list
+tramp
+.\#*
+
+# ===== OS FILES =====
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+Icon
+._*
+.DocumentRevisions-V100
+.fseventsd
+.Spotlight-V100
+.TemporaryItems
+.Trashes
+.VolumeIcon.icns
+.com.apple.timemachine.donotpresent
+.AppleDB
+.AppleDesktop
+Network Trash Folder
+Temporary Items
+.apdisk
+
+# Windows
+Thumbs.db
+Thumbs.db:encryptable
+ehthumbs.db
+ehthumbs_vista.db
+*.tmp
+*.temp
+Desktop.ini
+$RECYCLE.BIN/
+*.cab
+*.msi
+*.msix
+*.msm
+*.msp
+*.lnk
+
+# Linux
+*~
+.fuse_hidden*
+.directory
+.Trash-*
+.nfs*
+
+# ===== LOGS =====
+# Log files
+*.log
+logs/
+log/
+
+# ===== TEMPORARY FILES =====
+# Temporary files
+*.tmp
+*.temp
+*.bak
+*.backup
+*.old
+
+# ===== RAILWAY SPECIFIC =====
+# Railway deployment files (if any)
+.railway/
+railway.toml
+
+# ===== BLOCKMAKER SPECIFIC =====
+# Blockmaker build artifacts
+blockmaker/dist/
+blockmaker/build/
+blockmaker/*.spec
+blockmaker/*.exe
+blockmaker/*.app
+
+# ===== CUSTOM EXCLUSIONS =====
+# Any other files that shouldn't be public
+*.key
+*.pem
+*.p12
+*.pfx
+secrets/
+private/ 

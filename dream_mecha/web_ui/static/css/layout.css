@@ -473,14 +473,18 @@ button, input[type="button"], input[type="submit"], .btn {
     .grid {
         grid-template-columns: repeat(8, 1fr);
         grid-template-rows: repeat(8, 1fr);
-        max-width: 320px;
+        max-width: 100%;
+        width: 100%;
         margin: 0 auto;
+        overflow: visible;
     }
     
     .grid-cell {
         width: 35px;
         height: 35px;
         font-size: 14px;
+        min-width: 35px;
+        min-height: 35px;
     }
     
     .grid-statistics {
@@ -535,6 +539,9 @@ button, input[type="button"], input[type="submit"], .btn {
         gap: var(--dot-4);
         display: flex;
         flex-direction: column;
+        width: 100%;
+        max-width: 100%;
+        overflow-x: auto;
     }
 
     /* 1. Header (already first) */
@@ -635,6 +642,10 @@ button, input[type="button"], input[type="submit"], .btn {
     /* 8. Shop (already last) */
     .shop-section {
         order: 7;
+        max-width: 100%;
+        width: 100%;
+        overflow: visible;
+        padding: var(--dot-3);
     }
 
     .sidebar {
@@ -677,6 +688,41 @@ button, input[type="button"], input[type="submit"], .btn {
     }
 
     /* Mobile piece library is handled by flex layout */
+    
+    /* Fix grid and shop clipping on mobile */
+    .grid {
+        grid-template-columns: repeat(8, 1fr);
+        grid-template-rows: repeat(8, 1fr);
+        max-width: 100%; /* Changed from 320px */
+        width: 100%;
+        margin: 0 auto;
+        overflow: visible; /* Ensure content is not clipped */
+    }
+    .grid-cell {
+        width: 35px;
+        height: 35px;
+        font-size: 14px;
+        min-width: 35px; /* Ensure minimum size */
+        min-height: 35px; /* Ensure minimum size */
+    }
+    
+    .shop-section {
+        order: 7;
+        max-width: 100%;
+        width: 100%;
+        overflow: visible;
+        padding: var(--dot-3);
+    }
+    
+    .main-content {
+        grid-template-columns: 1fr;
+        gap: var(--dot-4);
+        display: flex;
+        flex-direction: column;
+        width: 100%;
+        max-width: 100%;
+        overflow-x: auto; /* Allow horizontal scrolling if content overflows */
+    }
 }
 
 /* Tablet responsiveness */

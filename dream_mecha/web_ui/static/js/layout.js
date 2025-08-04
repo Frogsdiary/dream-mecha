@@ -26,6 +26,14 @@ class LayoutManager {
     // ===== LAYOUT MODE TOGGLE =====
     
     enterLayoutMode() {
+        // Only allow layout mode on desktop
+        const isMobile = window.innerWidth <= 768;
+        if (isMobile) {
+            console.log('Layout mode disabled on mobile');
+            alert('Layout mode is only available on desktop. Please use a larger screen.');
+            return;
+        }
+        
         this.isLayoutMode = true;
         document.body.classList.add('layout-mode-active');
         
@@ -35,18 +43,8 @@ class LayoutManager {
         if (controls) controls.style.display = 'flex';
         if (selector) selector.style.display = 'flex';
         
-        // Check if mobile (debug with more info)
-        const isMobile = window.innerWidth <= 768;
-        console.log('Screen width:', window.innerWidth, 'Is mobile:', isMobile);
-        console.log('User agent:', navigator.userAgent);
-        
-        if (isMobile) {
-            this.enterMobileReorderMode();
-        } else {
-            this.enterDesktopDragMode();
-        }
-        
-        console.log(isMobile ? 'Mobile reorder mode activated' : 'Desktop drag mode activated');
+        this.enterDesktopDragMode();
+        console.log('Desktop drag mode activated');
     }
     
     enterDesktopDragMode() {
@@ -72,13 +70,6 @@ class LayoutManager {
         const selector = document.getElementById('containerSelector');
         if (controls) controls.style.display = 'none';
         if (selector) selector.style.display = 'none';
-        
-        const isMobile = window.innerWidth <= 768;
-        
-        if (isMobile) {
-            // Hide mobile interface
-            this.hideMobileReorderInterface();
-        }
         
         // Remove draggable functionality
         this.removeDraggable();

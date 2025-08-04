@@ -369,6 +369,31 @@ def get_combat_status():
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
+@app.route('/api/player/combat/log', methods=['GET'])
+@require_auth
+# @limiter.limit("100 per hour")  # DISABLED FOR DEVELOPMENT
+def get_combat_log():
+    """Get recent combat log entries"""
+    try:
+        user_id = session['discord_user_id']
+        
+        # Get combat status with detailed log
+        status = combat_system.get_combat_status()
+        
+        # Add additional combat information
+        log_data = {
+            'combat_log': status.get('combat_log', []),
+            'enemies_remaining': status.get('enemies_remaining', 0),
+            'mechas_launched': status.get('mechas_launched', 0),
+            'voidstate': status.get('voidstate', 0),
+            'state': status.get('state', 'preparing'),
+            'last_combat_result': getattr(combat_system, 'last_combat_result', None)
+        }
+        
+        return jsonify(log_data)
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
 @app.route('/api/auth/status')
 # @limiter.limit("100 per hour")  # DISABLED FOR DEVELOPMENT
 def auth_status():
@@ -482,7 +507,7 @@ def status():
     return jsonify({
         'status': 'online',
         'timestamp': datetime.now().isoformat(),
-        'version': '1.0.0'
+        'version': '0.3.5'
     })
 
 if __name__ == '__main__':

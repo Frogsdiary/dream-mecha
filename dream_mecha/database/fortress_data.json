@@ -1,7 +1,7 @@
 {
-  "current_hp": 99848000000,
+  "current_hp": 100000000000,
   "max_hp": 100000000000,
-  "total_damage_taken": 152000000,
-  "days_under_attack": 1,
-  "last_attack_date": "2025-07-29"
+  "total_damage_taken": 0,
+  "days_under_attack": 0,
+  "last_attack_date": null
 }
