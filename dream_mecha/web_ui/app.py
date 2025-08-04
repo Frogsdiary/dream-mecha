@@ -108,7 +108,13 @@ def validate_json_schema(data, schema):
 @app.route('/')
 def index():
     """Main grid interface"""
+    print(f"🌐 Web UI: Root route accessed")
     return render_template('index_new.html')  # Use the refactored version
+
+@app.route('/test')
+def test():
+    """Test route to verify Web UI is working"""
+    return jsonify({'status': 'Web UI is working!', 'timestamp': datetime.now().isoformat()})
 
 @app.route('/old')
 def old_index():
@@ -391,6 +397,43 @@ def get_combat_log():
         }
         
         return jsonify(log_data)
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+
+@app.route('/api/leaderboard', methods=['GET'])
+def get_leaderboard():
+    """Get pilot leaderboard rankings with optional player filter"""
+    try:
+        from core.managers.leaderboard_manager import leaderboard_manager
+        from core.managers.combat_history_manager import combat_history_manager
+        
+        # Get parameters
+        limit = request.args.get('limit', 10, type=int)
+        player_id = request.args.get('player_id')
+        
+        if player_id:
+            # Get specific player data
+            ranking = leaderboard_manager.get_player_ranking(player_id)
+            combat_stats = combat_history_manager.get_player_combat_stats(player_id)
+            
+            if ranking:
+                return jsonify({
+                    'player_ranking': ranking,
+                    'combat_stats': combat_stats
+                })
+            else:
+                return jsonify({'error': 'Player not found'}), 404
+        else:
+            # Get all rankings
+            rankings = leaderboard_manager.get_leaderboard_rankings(limit=limit)
+            summary = leaderboard_manager.get_leaderboard_summary()
+            
+            return jsonify({
+                'rankings': rankings,
+                'summary': summary
+            })
+            
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 

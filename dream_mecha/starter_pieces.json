@@ -1,0 +1,101 @@
+{
+  "generated_at": "2025-08-04T01:01:53.121916",
+  "version": "0.3.5",
+  "description": "Dream Mecha starter pieces for new players",
+  "pieces": [
+    {
+      "piece_id": "headless_piece_78229",
+      "name": "Starter HP Core",
+      "shape": [
+        [
+          true,
+          true
+        ]
+      ],
+      "stats": {
+        "hp": 271,
+        "attack": 0,
+        "defense": 0,
+        "speed": 0
+      },
+      "price": 406,
+      "piece_type": "stat",
+      "block_count": 2,
+      "id": "starter_hp_20250804_010153",
+      "description": "Basic health module",
+      "rarity": "starter",
+      "generation_method": "starter_pieces"
+    },
+    {
+      "piece_id": "headless_piece_89751",
+      "name": "Starter Attack Core",
+      "shape": [
+        [
+          true
+        ],
+        [
+          true
+        ]
+      ],
+      "stats": {
+        "hp": 0,
+        "attack": 273,
+        "defense": 0,
+        "speed": 0
+      },
+      "price": 414,
+      "piece_type": "stat",
+      "block_count": 2,
+      "id": "starter_attack_20250804_010153",
+      "description": "Basic attack module",
+      "rarity": "starter",
+      "generation_method": "starter_pieces"
+    },
+    {
+      "piece_id": "headless_piece_66271",
+      "name": "Starter Defense Core",
+      "shape": [
+        [
+          true,
+          true
+        ]
+      ],
+      "stats": {
+        "hp": 0,
+        "attack": 0,
+        "defense": 301,
+        "speed": 0
+      },
+      "price": 412,
+      "piece_type": "stat",
+      "block_count": 2,
+      "id": "starter_defense_20250804_010153",
+      "description": "Basic defense module",
+      "rarity": "starter",
+      "generation_method": "starter_pieces"
+    },
+    {
+      "piece_id": "headless_piece_14036",
+      "name": "Starter Speed Core",
+      "shape": [
+        [
+          true,
+          true
+        ]
+      ],
+      "stats": {
+        "hp": 0,
+        "attack": 0,
+        "defense": 0,
+        "speed": 289
+      },
+      "price": 421,
+      "piece_type": "stat",
+      "block_count": 2,
+      "id": "starter_speed_20250804_010153",
+      "description": "Basic speed module",
+      "rarity": "starter",
+      "generation_method": "starter_pieces"
+    }
+  ]
+}

@@ -174,6 +174,52 @@ class CombatSystem:
             'enemies_defeated': len([e for e in self.enemies if e.hp <= 0])
         }
         
+        # Save combat records for each participating player
+        try:
+            from core.managers.combat_history_manager import combat_history_manager
+            from core.managers.leaderboard_manager import leaderboard_manager
+            
+            for mecha in mechas_by_speed:
+                if hasattr(mecha, 'player_id') and mecha.player_id:
+                    # Get player info
+                    from core.managers.player_manager import player_manager
+                    player = player_manager.get_player(mecha.player_id)
+                    if player:
+                        # Create combat record
+                        mecha_stats = {
+                            'hp': mecha.stats.hp,
+                            'attack': mecha.stats.attack,
+                            'defense': mecha.stats.defense,
+                            'speed': mecha.stats.speed
+                        }
+                        
+                        # Get board info (if available)
+                        board_size = 18  # Default grid size
+                        pieces_equipped = len(player.piece_library) if player.piece_library else 0
+                        
+                        # Create and save combat record
+                        combat_record = combat_history_manager.create_combat_record_from_result(
+                            player_id=mecha.player_id,
+                            username=player.username,
+                            combat_result=self.last_combat_result,
+                            mecha_stats=mecha_stats,
+                            board_size=board_size,
+                            pieces_equipped=pieces_equipped
+                        )
+                        combat_history_manager.save_combat_record(combat_record)
+                        
+                        # Update leaderboard score
+                        leaderboard_manager.update_player_score(
+                            player_id=mecha.player_id,
+                            username=player.username,
+                            mecha_stats=mecha_stats,
+                            board_size=board_size,
+                            pieces_equipped=pieces_equipped
+                        )
+                        
+        except Exception as e:
+            print(f"⚠️ Error saving combat records: {e}")
+        
         return self.last_combat_result
     
     def _calculate_damage(self, attack: int, defense: int) -> int:

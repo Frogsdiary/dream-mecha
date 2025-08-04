@@ -199,7 +199,7 @@ class DreamMechaBot(commands.Bot):
             if player.mecha
         ) if self.player_manager.players else 1000
         
-        boss_info = self.game_manager.combat_system.generate_enemies(
+        enemies = self.game_manager.combat_system.generate_enemies(
             voidstate=self.voidstate_manager.voidstate,
             player_power=total_power
         )
@@ -213,8 +213,8 @@ class DreamMechaBot(commands.Bot):
         
         embed.add_field(
             name="Enemy Forces",
-            value=f"Enemies: {len(boss_info['enemies'])}\n" +
-                  f"Total Power: {sum(e.attack for e in boss_info['enemies']):,}\n" +
+            value=f"Enemies: {len(enemies)}\n" +
+                  f"Total Power: {sum(e.attack for e in enemies):,}\n" +
                   f"Voidstate: {self.voidstate_manager.voidstate}",
             inline=True
         )

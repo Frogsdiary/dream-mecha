@@ -106,7 +106,7 @@ class PlayerManager:
 class Player:
     """Individual player account"""
     
-    def __init__(self, player_id: str, username: str):
+    def __init__(self, player_id: str, username: str, give_starter_pieces: bool = True):
         self.player_id = player_id
         self.username = username
         self.join_date = datetime.now()
@@ -118,6 +118,10 @@ class Player:
         self.piece_library: List[Dict] = []
         self.grid_system = GridSystem()
         self.ui_layout: Dict[str, Any] = {}  # Store UI layout preferences
+        
+        # Give new players starter pieces (only for truly new players)
+        if give_starter_pieces:
+            self._give_starter_pieces()
     
     def create_mecha(self, name: str = None) -> Mecha:
         """Create a mecha for this player"""
@@ -182,7 +186,8 @@ class Player:
     @classmethod
     def from_dict(cls, data: Dict[str, Any]) -> 'Player':
         """Create player from dictionary"""
-        player = cls(data['player_id'], data['username'])
+        # Don't give starter pieces to existing players
+        player = cls(data['player_id'], data['username'], give_starter_pieces=False)
         player.join_date = datetime.fromisoformat(data['join_date'])
         player.last_active = datetime.fromisoformat(data['last_active'])
         player.days_played = data['days_played']
@@ -200,4 +205,23 @@ class Player:
             from core.systems.mecha_system import Mecha
             player.mecha = Mecha.from_dict(data['mecha_data'])
         
-        return player 
+        return player
+    
+    def _give_starter_pieces(self):
+        """Give new players starter pieces"""
+        try:
+            # Import the starter pieces generator
+            from create_starter_pieces import generate_starter_pieces
+            
+            # Generate starter pieces
+            starter_pieces = generate_starter_pieces()
+            
+            # Add each piece to the player's library
+            for piece in starter_pieces:
+                self.add_piece_to_library(piece)
+            
+            print(f"🎁 Gave {len(starter_pieces)} starter pieces to new player {self.username}")
+            
+        except Exception as e:
+            print(f"⚠️ Error giving starter pieces to {self.username}: {e}")
+            # Don't fail if starter pieces can't be generated 

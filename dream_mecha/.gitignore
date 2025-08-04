@@ -49,6 +49,8 @@ manual_triggers.py
 player_data.json
 database/players/
 database/daily/
+database/combat_history.json
+database/leaderboard.json
 
 # ===== DEVELOPMENT ARTIFACTS =====
 # Python cache
