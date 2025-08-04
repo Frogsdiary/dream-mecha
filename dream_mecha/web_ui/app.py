@@ -166,7 +166,9 @@ def oauth_callback():
     
     response = requests.post('https://discord.com/api/oauth2/token', data=token_data)
     if response.status_code != 200:
-        return "Token exchange failed", 400
+        print(f"❌ Token exchange failed: {response.status_code}")
+        print(f"❌ Response: {response.text}")
+        return f"Token exchange failed: {response.text}", 400
     
     token_info = response.json()
     access_token = token_info['access_token']

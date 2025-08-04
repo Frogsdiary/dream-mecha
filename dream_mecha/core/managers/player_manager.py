@@ -118,6 +118,7 @@ class Player:
         self.piece_library: List[Dict] = []
         self.grid_system = GridSystem()
         self.ui_layout: Dict[str, Any] = {}  # Store UI layout preferences
+        self.setup_completed = False  # Track if first-time setup is done
         
         # Give new players starter pieces (only for truly new players)
         if give_starter_pieces:
@@ -180,7 +181,8 @@ class Player:
             'piece_library': self.piece_library,
             'grid_data': self.grid_system.to_json() if self.grid_system else None,
             'mecha_data': self.mecha.to_dict() if self.mecha else None,
-            'ui_layout': self.ui_layout
+            'ui_layout': self.ui_layout,
+            'setup_completed': self.setup_completed
         }
     
     @classmethod
@@ -195,6 +197,7 @@ class Player:
         player.combat_participation = data['combat_participation']
         player.piece_library = data.get('piece_library', [])
         player.ui_layout = data.get('ui_layout', {})
+        player.setup_completed = data.get('setup_completed', False)
         
         # Load grid data
         if data.get('grid_data'):

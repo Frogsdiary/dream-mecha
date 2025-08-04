@@ -618,24 +618,31 @@
 }
 
 .piece-cell.filled {
-    background: #ff4444; /* Default fallback */
-    color: #000;
+    background: #666; /* Default gray fallback */
+    color: #fff;
 }
 
-/* Piece cell stat colors - IMPORTANT: These must override other styles */
-.piece-cell.filled.stat-hp { 
+/* Piece colors - apply to ALL piece cells with stat classes */
+.piece-cell.stat-hp,
+.grid-cell.stat-hp { 
     background: #44ff44 !important; 
     border-color: #44ff44 !important;
 }      /* HP - GREEN */
-.piece-cell.filled.stat-attack { 
+
+.piece-cell.stat-attack,
+.grid-cell.stat-attack { 
     background: #ff4444 !important; 
     border-color: #ff4444 !important;
 }   /* ATT - RED */
-.piece-cell.filled.stat-defense { 
+
+.piece-cell.stat-defense,
+.grid-cell.stat-defense { 
     background: #ff8800 !important; 
     border-color: #ff8800 !important;
 }  /* DEF - ORANGE */
-.piece-cell.filled.stat-speed { 
+
+.piece-cell.stat-speed,
+.grid-cell.stat-speed { 
     background: #ffff44 !important; 
     border-color: #ffff44 !important;
 }    /* SPD - YELLOW */
