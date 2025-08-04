@@ -60,7 +60,16 @@ class MechaGrid {
         this.mechaName = localStorage.getItem('mechaName') || null;
         
         // Check if first-time setup is needed
-        this.isFirstTime = !localStorage.getItem('setup_completed');
+        const setupCompleted = localStorage.getItem('setup_completed');
+        const isBypass = window.location.pathname.includes('/bypass');
+        
+        console.log('🔍 Setup check:', {
+            setupCompleted,
+            isBypass,
+            pathname: window.location.pathname
+        });
+        
+        this.isFirstTime = !setupCompleted && !isBypass;
         
         // Player stats
         this.maxHp = 0;
@@ -733,10 +742,14 @@ class MechaGrid {
     getStatType(piece) {
         const stats = piece.stats;
         const maxStat = Math.max(stats.hp, stats.attack, stats.defense, stats.speed);
-        if (stats.hp === maxStat) return 'hp';
-        if (stats.attack === maxStat) return 'attack';
-        if (stats.defense === maxStat) return 'defense';
-        return 'speed';
+        let statType;
+        if (stats.hp === maxStat) statType = 'hp';
+        else if (stats.attack === maxStat) statType = 'attack';
+        else if (stats.defense === maxStat) statType = 'defense';
+        else statType = 'speed';
+        
+        console.log('🎨 getStatType:', piece.name, 'Stats:', stats, 'Max:', maxStat, 'Type:', statType);
+        return statType;
     }
     
     updateStats() {
@@ -1016,6 +1029,7 @@ class MechaGrid {
                     cell.classList.add('filled');
                     // Apply stat color based on piece's primary stat
                     const statType = this.getStatType(piece);
+                    console.log('🎨 Piece:', piece.name, 'Stats:', piece.stats, 'Stat Type:', statType);
                     cell.classList.add(`stat-${statType}`);
                     
                     // Mark the anchor point (0,0 relative to shape)

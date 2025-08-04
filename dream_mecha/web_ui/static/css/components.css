@@ -346,12 +346,13 @@
 .piece.stat-defense { background: #ff8800; }  /* DEF - ORANGE */
 .piece.stat-speed { background: #ffff44; }    /* SPD - YELLOW */
 
-/* Grid Controls - Single Column Layout */
+/* Grid Controls - Left-aligned Row Layout */
 .grid-controls {
     display: flex;
-    flex-direction: column;
+    flex-direction: row;
     gap: var(--dot-2);
     margin-bottom: var(--dot-4);
+    justify-content: flex-start;
     align-items: center;
 }
 
@@ -416,6 +417,10 @@
     border: 2px solid var(--text-secondary);
     padding: var(--dot-2);
     font-family: 'Courier New', monospace;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: var(--dot-2);
+    align-content: start;
 }
 
 .library-content::-webkit-scrollbar {
@@ -605,11 +610,23 @@
     color: #000;
 }
 
-/* Piece cell stat colors */
-.piece-cell.filled.stat-hp { background: #44ff44; }      /* HP - GREEN */
-.piece-cell.filled.stat-attack { background: #ff4444; }   /* ATT - RED */
-.piece-cell.filled.stat-defense { background: #ff8800; }  /* DEF - ORANGE */
-.piece-cell.filled.stat-speed { background: #ffff44; }    /* SPD - YELLOW */
+/* Piece cell stat colors - IMPORTANT: These must override other styles */
+.piece-cell.filled.stat-hp { 
+    background: #44ff44 !important; 
+    border-color: #44ff44 !important;
+}      /* HP - GREEN */
+.piece-cell.filled.stat-attack { 
+    background: #ff4444 !important; 
+    border-color: #ff4444 !important;
+}   /* ATT - RED */
+.piece-cell.filled.stat-defense { 
+    background: #ff8800 !important; 
+    border-color: #ff8800 !important;
+}  /* DEF - ORANGE */
+.piece-cell.filled.stat-speed { 
+    background: #ffff44 !important; 
+    border-color: #ffff44 !important;
+}    /* SPD - YELLOW */
 
 /* Shop section - no borders, positioned on dot grid */
 .shop-section {
@@ -1409,4 +1426,23 @@
 .setup-debug button:hover {
     background: #fff;
     color: #000;
+} 
+
+/* Make piece items work with 2-column grid */
+.piece-item {
+    width: 100% !important;
+    min-width: auto !important;
+    margin-bottom: var(--dot-2);
+    box-sizing: border-box;
+}
+
+/* Ensure piece previews fit in grid */
+.piece-preview {
+    width: 100% !important;
+    max-width: none !important;
+}
+
+.piece-grid {
+    width: 100% !important;
+    max-width: none !important;
 } 

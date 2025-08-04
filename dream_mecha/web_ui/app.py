@@ -52,7 +52,8 @@ CORS(app, origins=allowed_origins, supports_credentials=True)
 # Discord OAuth configuration
 DISCORD_CLIENT_ID = os.getenv('DISCORD_CLIENT_ID')
 DISCORD_CLIENT_SECRET = os.getenv('DISCORD_CLIENT_SECRET')
-DISCORD_REDIRECT_URI = os.getenv('WEB_UI_URL', 'http://localhost:3000') + '/oauth/callback'
+# Use the exact URL the user has configured in Discord Developer Portal
+DISCORD_REDIRECT_URI = 'https://dream-mecha-production.up.railway.app/oauth/callback'
 
 # Debug OAuth configuration
 print(f"🔧 OAuth Configuration:")
@@ -116,6 +117,12 @@ def index():
     """Main grid interface"""
     print(f"🌐 Web UI: Root route accessed")
     return render_template('index_new.html')  # Use the refactored version
+
+@app.route('/bypass')
+def bypass_setup():
+    """Bypass first-time setup for testing"""
+    print(f"🌐 Web UI: Bypass route accessed")
+    return render_template('index_new.html')
 
 @app.route('/test')
 def test():
@@ -245,12 +252,11 @@ def move_grid_piece():
         return jsonify({'error': str(e)}), 500
 
 @app.route('/api/player/shop', methods=['GET'])
-@require_auth
 # @limiter.limit("50 per hour")  # DISABLED FOR DEVELOPMENT
 def get_shop_items():
     """Get available shop items"""
     try:
-        player_id = session['discord_user_id']
+        player_id = session.get('discord_user_id')
         
         # Generate shop if empty (for testing/first run)
         if not shop_system.daily_inventory:
