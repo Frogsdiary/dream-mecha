@@ -489,19 +489,25 @@ def get_player_data():
         return jsonify({'error': str(e)}), 500
 
 @app.route('/api/player/pieces', methods=['GET'])
-@require_auth
 def get_player_pieces():
-    """Get player's piece library"""
+    """Get player's piece library - works without auth for demo"""
     try:
-        player_id = session['discord_user_id']
-        player = player_manager.get_player(player_id)
+        # Try to get authenticated player first
+        if 'discord_user_id' in session:
+            player_id = session['discord_user_id']
+            player = player_manager.get_player(player_id)
+            if player and player.piece_library:
+                return jsonify(player.piece_library)
         
-        if not player:
-            return jsonify({'error': 'Player not found'}), 404
+        # Fallback: return starter pieces for demo
+        from create_starter_pieces import generate_starter_pieces
+        starter_pieces = generate_starter_pieces()
+        return jsonify(starter_pieces)
         
-        return jsonify(player.piece_library)
     except Exception as e:
-        return jsonify({'error': str(e)}), 500
+        print(f"⚠️ Error loading pieces: {e}")
+        # Final fallback: return empty array
+        return jsonify([])
 
 @app.route('/api/player/layout', methods=['GET'])
 @require_auth

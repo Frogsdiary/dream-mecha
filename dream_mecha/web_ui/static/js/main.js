@@ -806,10 +806,15 @@ class MechaGrid {
     
     async loadSamplePieces() {
         // Load pieces from backend instead of hardcoded samples
+        console.log('🔄 Loading pieces from backend...');
         try {
             const response = await fetch('/api/player/pieces');
+            console.log('📡 Response status:', response.status);
+            
             if (response.ok) {
                 const piecesData = await response.json();
+                console.log('📦 Raw pieces data:', piecesData);
+                
                 piecesData.forEach(pieceData => {
                     this.pieces[pieceData.id] = {
                         ...pieceData,
@@ -818,6 +823,7 @@ class MechaGrid {
                     };
                 });
                 console.log(`📦 Loaded ${piecesData.length} pieces from backend`);
+                console.log('📦 Final pieces object:', this.pieces);
             } else {
                 console.warn('⚠️ Could not load pieces from backend, using empty library');
                 this.pieces = {};

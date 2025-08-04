@@ -617,13 +617,30 @@ button, input[type="button"], input[type="submit"], .btn {
         margin-bottom: var(--dot-4);
     }
 
+    .piece-library .library-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: var(--dot-3);
+        border-bottom: 2px solid var(--border-color);
+    }
+
+    .piece-library .library-header h3 {
+        margin: 0;
+        font-size: 18px;
+    }
+
     .piece-library .library-filters {
         width: 100%;
-        min-width: auto;
-        flex-direction: row;
+        padding: var(--dot-3);
+        border-bottom: 1px solid var(--border-color);
+    }
+
+    .piece-library .filter-row {
+        display: flex;
         flex-wrap: wrap;
         gap: var(--dot-3);
-        padding: var(--dot-3);
+        align-items: center;
     }
 
     .piece-library .library-filters .filter-group {
@@ -631,12 +648,10 @@ button, input[type="button"], input[type="submit"], .btn {
         min-width: 120px;
     }
 
-    .piece-library .library-controls {
-        margin-top: 0;
-        padding-top: 0;
-        border-top: none;
-        width: 100%;
-        order: -1;
+    .piece-library .library-content {
+        flex: 1;
+        overflow-y: auto;
+        padding: var(--dot-3);
     }
 
     /* 8. Shop (already last) */
