@@ -1293,6 +1293,7 @@ class BlockmakerWindow(QMainWindow):
     def __init__(self):
         super().__init__()
         self.block_count = 1  # Start at 1, not 0
+        self.gate_block_count = 1  # Block counter for gate grid
         self.auto_place_mode = False
         
         # Initialize UI components as None first
@@ -1388,7 +1389,7 @@ class BlockmakerWindow(QMainWindow):
             }}
         """)
         
-        # Create shared grid first (needed by GATE tabs)
+        # Create main grid for Blockmaker tab
         self.grid = BlockmakerGrid(grid_size=12)
         
         # Create Blockmaker tab
@@ -1988,9 +1989,9 @@ class BlockmakerWindow(QMainWindow):
         grid_label.setStyleSheet(f"color: {TEXT_COLOR}; font-weight: bold; font-size: 16px;")
         left_layout.addWidget(grid_label)
         
-        # Add the existing grid
-        if hasattr(self, 'grid'):
-            left_layout.addWidget(self.grid)
+        # Create a dedicated grid for GATE tab (don't share with blockmaker)
+        self.gate_grid = BlockmakerGrid(grid_size=12)
+        left_layout.addWidget(self.gate_grid)
         
         # Controls section
         controls_frame = QFrame()
@@ -2279,6 +2280,9 @@ class BlockmakerWindow(QMainWindow):
         if self.grid:
             # Use a custom handler to increment block number for each placement
             self.grid.place_block_requested.connect(self.handle_place_block)
+        if hasattr(self, 'gate_grid') and self.gate_grid:
+            # Connect gate grid to the same handler
+            self.gate_grid.place_block_requested.connect(self.handle_gate_place_block)
         if self.random_btn:
             self.random_btn.clicked.connect(self.generate_random_pattern)
             self.random_btn.setShortcut(QKeySequence("Ctrl+R"))
@@ -2350,6 +2354,22 @@ class BlockmakerWindow(QMainWindow):
             self.update_debug_log()
             self.update_clipboard_pattern()
         # If cell is already filled, do nothing (no increment, no overwrite)
+    
+    def handle_gate_place_block(self, pos: Tuple[int, int]):
+        """Place a block at the specified position on the gate grid with sequential numbering."""
+        if not self.gate_grid:
+            return
+        if len(self.gate_grid.blocks) >= 144:
+            return
+        # Only place a block if the cell is not already filled
+        if pos not in self.gate_grid.blocks:
+            # If grid is empty, always start with 1 (+)
+            if not self.gate_grid.blocks:
+                self.gate_grid.add_block(pos, 1)
+                self.gate_block_count = 2
+            else:
+                self.gate_grid.add_block(pos, self.gate_block_count)
+                self.gate_block_count += 1
     
     def clear_grid(self, reset_spinbox=True):
         """Clear the entire grid"""
@@ -2458,6 +2478,33 @@ class BlockmakerWindow(QMainWindow):
             for col in range(min_col, max_col + 1):
                 if (row, col) in self.grid.blocks:
                     block_num = self.grid.blocks[(row, col)]
+                    if block_num == -999:
+                        line += ". "  # treat flash as empty
+                    elif block_num == 1:
+                        line += "+ "
+                    else:
+                        line += f"{block_num} "
+                else:
+                    line += ". "
+            pattern_lines.append(line.rstrip())
+        return "\n".join(pattern_lines)
+
+    def generate_gate_ascii_pattern(self) -> str:
+        """Generate ASCII representation of the gate grid pattern"""
+        if not self.gate_grid or not self.gate_grid.blocks:
+            return "No blocks placed"
+        min_row = min(pos[0] for pos in self.gate_grid.blocks.keys())
+        max_row = max(pos[0] for pos in self.gate_grid.blocks.keys())
+        min_col = min(pos[1] for pos in self.gate_grid.blocks.keys())
+        max_col = max(pos[1] for pos in self.gate_grid.blocks.keys())
+        pattern_lines = []
+        pattern_lines.append(f"Block Pattern ({len(self.gate_grid.blocks)} blocks):")
+        pattern_lines.append("=" * 30)
+        for row in range(min_row, max_row + 1):
+            line = ""
+            for col in range(min_col, max_col + 1):
+                if (row, col) in self.gate_grid.blocks:
+                    block_num = self.gate_grid.blocks[(row, col)]
                     if block_num == -999:
                         line += ". "  # treat flash as empty
                     elif block_num == 1:
@@ -2818,7 +2865,7 @@ class BlockmakerWindow(QMainWindow):
             self.log_debug("Gate Creator module not available")
             return
         
-        if not self.grid or not self.grid.blocks:
+        if not self.gate_grid or not self.gate_grid.blocks:
             self.log_debug("No glyph pattern to generate GATE from")
             return
         
@@ -2827,7 +2874,7 @@ class BlockmakerWindow(QMainWindow):
             password = self.password_input.text() or "default_password"
             
             # Convert grid to glyph pattern
-            glyph_pattern = self.generate_ascii_pattern()
+            glyph_pattern = self.generate_gate_ascii_pattern()
             
             # Generate GATE using gate creator
             gate_creator = GateCreator()
@@ -2975,7 +3022,7 @@ Verification: FAILED
             integration_type = self.integration_combo.currentData()
             
             # Convert grid to sigil pattern
-            sigil_pattern = self.generate_ascii_pattern()
+            sigil_pattern = self.generate_gate_ascii_pattern()
             
             # Generate portal using gate portal system
             portal = GatePortal()

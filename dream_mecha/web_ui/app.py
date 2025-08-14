@@ -457,16 +457,22 @@ def auth_status():
     """Get authentication status"""
     try:
         if 'discord_user_id' in session:
+            player_id = session['discord_user_id']
+            player = player_manager.get_player(player_id)
+            setup_completed = player.setup_completed if player else False
+            
             return jsonify({
                 'authenticated': True,
-                'user_id': session['discord_user_id'],
-                'username': session.get('discord_username', 'Unknown')
+                'user_id': player_id,
+                'username': session.get('discord_username', 'Unknown'),
+                'setup_completed': setup_completed
             })
         else:
             return jsonify({
                 'authenticated': False,
                 'user_id': None,
-                'username': None
+                'username': None,
+                'setup_completed': False
             })
     except Exception as e:
         return jsonify({'error': str(e)}), 500
@@ -493,6 +499,27 @@ def get_player_data():
             'total_zoltans_earned': player.total_zoltans_earned,
             'combat_participation': player.combat_participation
         })
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/player/setup/complete', methods=['POST'])
+def complete_setup():
+    """Mark player's first-time setup as complete"""
+    try:
+        if 'discord_user_id' not in session:
+            return jsonify({'error': 'Not authenticated'}), 401
+            
+        player_id = session['discord_user_id']
+        player = player_manager.get_player(player_id)
+        
+        if not player:
+            return jsonify({'error': 'Player not found'}), 404
+            
+        # Update setup status
+        player.setup_completed = True
+        player_manager.save_player_data()
+        
+        return jsonify({'success': True})
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
