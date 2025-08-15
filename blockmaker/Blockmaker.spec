@@ -11,6 +11,7 @@ a = Analysis(
         ('gate_creator.py', '.'),
         ('gate_portal.py', '.'),
         ('blocklock.py', '.'),
+        ('icon_generator.py', '.'),
     ],
     hiddenimports=[
         'cryptography',
@@ -22,6 +23,10 @@ a = Analysis(
         'cryptography.hazmat.primitives.hashes',
         'cryptography.hazmat.backends',
         'cryptography.hazmat.backends.default_backend',
+        'PIL',
+        'PIL.Image',
+        'PIL.ImageDraw',
+        'PIL.ImageFont',
         'gate_creator',
         'gate_portal',
         'blocklock',

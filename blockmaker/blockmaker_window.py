@@ -24,6 +24,12 @@ import math
 import os
 from datetime import datetime, date
 from typing import List, Tuple, Set, Optional, Dict, Any
+try:
+    from icon_generator import PieceIconGenerator
+    ICON_GENERATION_AVAILABLE = True
+except ImportError:
+    ICON_GENERATION_AVAILABLE = False
+    print("Warning: Icon generation not available. Install Pillow for icon support.")
 from PyQt5.QtWidgets import (
     QMainWindow, QWidget, QVBoxLayout, QHBoxLayout, QGridLayout, 
     QPushButton, QLabel, QSpinBox, QLineEdit, QFrame, QSizePolicy,
@@ -816,21 +822,10 @@ class DreamMechaIntegration(QWidget):
             # Generate pattern using random algorithm only
             main_window.generate_random_pattern()
             
-            # Get the generated pattern
-            pattern = main_window.generate_ascii_pattern()
+            # Get the generated pattern (clean version for data export)
+            pattern = main_window.generate_clean_pattern()
             
-            # Extract just the pattern part (remove header)
-            lines = pattern.split('\n')
-            pattern_lines = []
-            in_pattern = False
-            for line in lines:
-                if line.startswith('='):
-                    in_pattern = True
-                    continue
-                if in_pattern and line.strip():
-                    pattern_lines.append(line.rstrip())
-            
-            result_pattern = '\n'.join(pattern_lines) if pattern_lines else self.generate_fallback_pattern(block_count)
+            result_pattern = pattern if pattern else self.generate_fallback_pattern(block_count)
             
         except Exception as e:
             print(f"Error generating blockmaker pattern: {e}")
@@ -874,6 +869,7 @@ class DreamMechaIntegration(QWidget):
         """Convert pattern string to 2D array"""
         lines = pattern.strip().split('\n')
         result = []
+        
         for line in lines:
             row = []
             for char in line:
@@ -886,6 +882,32 @@ class DreamMechaIntegration(QWidget):
                 else:
                     row.append(0)
             result.append(row)
+        
+        # If we have a single row that's very long, it might be a flattened pattern
+        # Try to reshape it into a more reasonable 2D shape
+        if len(result) == 1 and len(result[0]) > 8:
+            flat_row = result[0]
+            # Find non-zero positions to determine actual shape
+            non_zero_positions = [(i, val) for i, val in enumerate(flat_row) if val > 0]
+            if non_zero_positions:
+                # Try to determine grid dimensions from the positions
+                max_pos = max(pos for pos, val in non_zero_positions)
+                # Assume a reasonable grid size (12x12 like the game)
+                grid_width = 12 if max_pos >= 12 else max(8, max_pos + 1)
+                
+                # Reshape into 2D grid
+                reshaped = []
+                for row_idx in range((len(flat_row) + grid_width - 1) // grid_width):
+                    row = []
+                    for col_idx in range(grid_width):
+                        flat_idx = row_idx * grid_width + col_idx
+                        if flat_idx < len(flat_row):
+                            row.append(flat_row[flat_idx])
+                        else:
+                            row.append(0)
+                    reshaped.append(row)
+                result = reshaped
+        
         return result
         
     def calculate_proper_piece_stats(self, block_count: int, stat_type: str, algorithm: str) -> Dict[str, int]:
@@ -1113,6 +1135,18 @@ class DreamMechaIntegration(QWidget):
             
             with open(filepath, 'w') as f:
                 json.dump(export_data, f, indent=2)
+                
+            # Generate icons for the pieces
+            if ICON_GENERATION_AVAILABLE:
+                try:
+                    icon_generator = PieceIconGenerator(64)  # 64px icons
+                    generated_icons = icon_generator.generate_icons_for_daily_content(export_data, export_dir)
+                    if generated_icons:
+                        self.log_status(f"Generated {len(generated_icons)} piece icons")
+                except Exception as icon_error:
+                    self.log_status(f"Warning: Icon generation failed: {str(icon_error)}")
+            else:
+                self.log_status("Icon generation skipped (Pillow not installed)")
                 
             self.log_status(f"Exported daily content to: {filepath}")
             
@@ -1893,6 +1927,24 @@ class BlockmakerWindow(QMainWindow):
         self.unique_generate_btn.clicked.connect(self.generate_unique_piece)
         gen_layout.addRow("", self.unique_generate_btn)
         
+        # Add export button for unique pieces
+        self.unique_export_btn = QPushButton("Export Piece with Icon")
+        self.unique_export_btn.setStyleSheet(f"""
+            QPushButton {{ 
+                background: {SECONDARY_ACCENT}; 
+                color: #fff; 
+                border: none; 
+                border-radius: 5px; 
+                padding: 10px 16px; 
+                font-weight: bold; 
+                font-size: 12px;
+            }}
+            QPushButton:hover {{ background: #8ea6f8; }}
+            QPushButton:pressed {{ background: #5c6bc0; }}
+        """)
+        self.unique_export_btn.clicked.connect(self.export_unique_piece)
+        gen_layout.addRow("", self.unique_export_btn)
+        
         right_layout.addWidget(gen_group)
         
         # Preview area
@@ -2486,6 +2538,31 @@ class BlockmakerWindow(QMainWindow):
                         line += f"{block_num} "
                 else:
                     line += ". "
+            pattern_lines.append(line.rstrip())
+        return "\n".join(pattern_lines)
+
+    def generate_clean_pattern(self) -> str:
+        """Generate clean pattern without headers for data export"""
+        if not self.grid or not self.grid.blocks:
+            return ""
+        min_row = min(pos[0] for pos in self.grid.blocks.keys())
+        max_row = max(pos[0] for pos in self.grid.blocks.keys())
+        min_col = min(pos[1] for pos in self.grid.blocks.keys())
+        max_col = max(pos[1] for pos in self.grid.blocks.keys())
+        pattern_lines = []
+        for row in range(min_row, max_row + 1):
+            line = ""
+            for col in range(min_col, max_col + 1):
+                if (row, col) in self.grid.blocks:
+                    block_num = self.grid.blocks[(row, col)]
+                    if block_num == -999:
+                        line += "."  # treat flash as empty
+                    elif block_num == 1:
+                        line += "+"
+                    else:
+                        line += str(block_num)
+                else:
+                    line += "."
             pattern_lines.append(line.rstrip())
         return "\n".join(pattern_lines)
 
@@ -3173,6 +3250,105 @@ This portal code can be used across any compatible system."""
             
         except Exception as e:
             self.unique_preview_text.setPlainText(f"Error generating unique piece: {str(e)}")
+    
+    def export_unique_piece(self):
+        """Export the unique piece with icon generation"""
+        try:
+            # Get grid pattern
+            if not self.unique_grid.blocks:
+                self.unique_preview_text.setPlainText("Error: Grid is empty. Create blocks first!")
+                return
+                
+            # Generate pattern from grid  
+            pattern = self.generate_pattern_from_grid(self.unique_grid)
+            if not pattern or pattern == "+ ":
+                self.unique_preview_text.setPlainText("Error: Grid is empty. Create blocks first!")
+                return
+                
+            # Count blocks
+            block_count = sum(1 for char in pattern if char.isdigit() or char == '+')
+            if block_count == 0:
+                self.unique_preview_text.setPlainText("Error: No blocks in grid!")
+                return
+                
+            stat_type = self.unique_stat_type.currentText()
+            
+            # Generate piece stats
+            piece = self.dream_mecha_integration.generate_single_piece_manual(block_count, stat_type)
+            piece["id"] = f"unique_piece_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
+            piece["pattern"] = pattern
+            piece["size_category"] = "unique"
+            piece["generation_method"] = "unique_grid"
+            
+            # Convert grid pattern to pattern_array for icon generation
+            piece["pattern_array"] = self.grid_to_pattern_array(self.unique_grid)
+            
+            # Create export directory structure
+            export_dir = os.path.join("dream_mecha", "database", "unique_pieces")
+            os.makedirs(export_dir, exist_ok=True)
+            
+            # Export piece JSON
+            piece_filename = f"{piece['id']}.json"
+            piece_filepath = os.path.join(export_dir, piece_filename)
+            
+            with open(piece_filepath, 'w') as f:
+                json.dump(piece, f, indent=2)
+                
+            # Generate icon
+            if ICON_GENERATION_AVAILABLE:
+                try:
+                    icon_generator = PieceIconGenerator(64)  # 64px icons
+                    icon_filename = f"{piece['id']}.webp"
+                    icon_filepath = os.path.join(export_dir, icon_filename)
+                    icon_generator.generate_icon(piece, icon_filepath)
+                    
+                    success_msg = f"Exported unique piece:\n"
+                    success_msg += f"JSON: {piece_filepath}\n"
+                    success_msg += f"Icon: {icon_filepath}\n\n"
+                    success_msg += f"ID: {piece['id']}\n"
+                    success_msg += f"Blocks: {block_count}\n"
+                    success_msg += f"Type: {stat_type}\n"
+                    
+                    self.unique_preview_text.setPlainText(success_msg)
+                    
+                except Exception as icon_error:
+                    self.unique_preview_text.setPlainText(f"Piece exported but icon generation failed: {str(icon_error)}")
+            else:
+                success_msg = f"Exported unique piece:\n"
+                success_msg += f"JSON: {piece_filepath}\n"
+                success_msg += f"Icon: Not generated (Pillow not installed)\n\n"
+                success_msg += f"ID: {piece['id']}\n"
+                success_msg += f"Blocks: {block_count}\n"
+                success_msg += f"Type: {stat_type}\n"
+                
+                self.unique_preview_text.setPlainText(success_msg)
+                
+        except Exception as e:
+            self.unique_preview_text.setPlainText(f"Error exporting unique piece: {str(e)}")
+    
+    def grid_to_pattern_array(self, grid):
+        """Convert a grid object to pattern_array format for icon generation"""
+        if not grid.blocks:
+            return []
+            
+        # Find bounds
+        min_row = min(pos[0] for pos in grid.blocks.keys())
+        max_row = max(pos[0] for pos in grid.blocks.keys())
+        min_col = min(pos[1] for pos in grid.blocks.keys())
+        max_col = max(pos[1] for pos in grid.blocks.keys())
+        
+        # Create pattern array
+        pattern_array = []
+        for row in range(min_row, max_row + 1):
+            row_data = []
+            for col in range(min_col, max_col + 1):
+                if (row, col) in grid.blocks:
+                    row_data.append(grid.blocks[(row, col)])
+                else:
+                    row_data.append(0)
+            pattern_array.append(row_data)
+            
+        return pattern_array
     
     def handle_unique_place_block(self, pos):
         """Handle block placement in unique grid"""

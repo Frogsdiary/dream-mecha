@@ -10,6 +10,9 @@ pyinstaller>=5.0.0
 # Cryptography for GATE CREATOR
 cryptography>=3.4.0
 
+# Image processing for icon generation
+Pillow>=9.0.0
+
 # Optional: For development and testing
 # pytest>=6.0.0
 # black>=21.0.0
@@ -19,4 +22,5 @@ cryptography>=3.4.0
 # For production use, consider using exact versions:
 # PyQt5==5.15.9
 # pyinstaller==5.13.0
-# cryptography==41.0.0 
+# cryptography==41.0.0
+# Pillow==11.3.0 

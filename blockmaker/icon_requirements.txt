@@ -1,0 +1,4 @@
+# Requirements for icon generation module
+# Install with: pip install -r icon_requirements.txt
+
+Pillow>=10.0.0    # For image generation (PIL)
