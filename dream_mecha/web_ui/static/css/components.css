@@ -130,7 +130,6 @@
     border: 1px solid var(--text-secondary);
     padding: var(--dot-3);
     margin-bottom: var(--dot-4);
-    border-radius: 4px;
 }
 
 .grid-instructions p {
@@ -445,7 +444,6 @@
 
 .library-content::-webkit-scrollbar-thumb {
     background: var(--accent);
-    border-radius: 3px;
 }
 
 .library-filters {
@@ -488,7 +486,6 @@
     padding: var(--dot-2);
     font-family: inherit;
     font-size: var(--font-size-xs);
-    border-radius: var(--dot);
 }
 
 .filter-slider {
@@ -855,7 +852,6 @@
 
 .floating-library-content::-webkit-scrollbar-thumb {
     background: var(--accent);
-    border-radius: 3px;
 }
 
 /* Floating Combat Log Widget */
@@ -909,7 +905,6 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    border-radius: 4px;
     transition: background 0.2s ease;
 }
 
@@ -936,7 +931,6 @@
 
 .floating-combat-log-content::-webkit-scrollbar-thumb {
     background: #ff4444;
-    border-radius: 3px;
 }
 
 .combat-log-entry {
@@ -944,7 +938,6 @@
     padding: var(--dot-2);
     background: rgba(255, 68, 68, 0.1);
     border-left: 2px solid #ff4444;
-    border-radius: 2px;
 }
 
 .combat-log-entry.attack {
@@ -1005,7 +998,6 @@
     text-align: center;
     margin-bottom: var(--dot-3);
     padding: var(--dot-2);
-    border-radius: var(--dot-1);
 }
 
 .combat-summary-header.victory {
@@ -1110,7 +1102,6 @@
     border: none;
     padding: var(--dot-2) var(--dot-3);
     margin-bottom: var(--dot-3);
-    border-radius: 4px;
     cursor: pointer;
     font-weight: bold;
     width: 100%;

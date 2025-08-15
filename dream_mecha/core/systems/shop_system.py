@@ -20,6 +20,7 @@ class ShopPiece:
     price: int
     piece_type: str = 'stat'  # 'stat' or 'glyph'
     seller_id: Optional[str] = None  # None for AI-generated, player_id for trades
+    icon_path: Optional[str] = None  # Path to generated icon
 
 
 class ShopSystem:
@@ -38,30 +39,66 @@ class ShopSystem:
         }
     
     def generate_daily_shop(self, voidstate: int, player_count: int) -> List[ShopPiece]:
-        """Generate new daily shop inventory"""
+        """Generate new daily shop inventory with icons"""
         self.daily_inventory.clear()
         self.daily_purchases.clear()
         
-        # Generate 6-8 pieces with guaranteed size distribution
-        total_pieces = random.randint(6, 8)
-        
-        # Small pieces (1-2 blocks) for new players
-        small_count = random.randint(2, 3)
-        for _ in range(small_count):
-            piece = self._generate_piece(1, 2, voidstate)
-            self.daily_inventory.append(piece)
-        
-        # Medium pieces (3-5 blocks) for established players
-        medium_count = random.randint(2, 3)
-        for _ in range(medium_count):
-            piece = self._generate_piece(3, 5, voidstate)
-            self.daily_inventory.append(piece)
-        
-        # Large pieces (6+ blocks) for advanced players
-        large_count = total_pieces - small_count - medium_count
-        for _ in range(large_count):
-            piece = self._generate_piece(6, 12, voidstate)
-            self.daily_inventory.append(piece)
+        # Use enhanced headless blockmaker for complete generation with icons
+        try:
+            from core.utils.headless_blockmaker import headless_blockmaker
+            from datetime import date
+            
+            # Generate daily content with icons
+            daily_content = headless_blockmaker.generate_daily_content(
+                player_count=player_count,
+                voidstate=voidstate,
+                gen_date=date.today()
+            )
+            
+            # Convert headless pieces to shop pieces
+            for piece_data in daily_content.get("pieces", []):
+                shop_piece = ShopPiece(
+                    piece_id=piece_data.get("piece_id", f"shop_{random.randint(1000, 9999)}"),
+                    name=piece_data.get("name", "Unknown Piece"),
+                    shape=piece_data.get("shape", [[True]]),
+                    stats=piece_data.get("stats", {}),
+                    price=piece_data.get("price", 100),
+                    piece_type=piece_data.get("piece_type", "stat"),
+                    seller_id=None  # AI-generated pieces have no seller
+                )
+                
+                # Add icon path if available
+                if "icon_path" in piece_data:
+                    shop_piece.icon_path = piece_data["icon_path"]
+                
+                self.daily_inventory.append(shop_piece)
+                
+            print(f"✅ Generated {len(self.daily_inventory)} daily shop pieces")
+            if daily_content.get("generation_metadata", {}).get("icons_generated", 0) > 0:
+                print(f"📸 Generated {daily_content['generation_metadata']['icons_generated']} icons")
+            
+        except Exception as e:
+            print(f"⚠️ Enhanced generation failed, using fallback: {e}")
+            # Fallback to old method
+            total_pieces = random.randint(6, 8)
+            
+            # Small pieces (1-2 blocks) for new players
+            small_count = random.randint(2, 3)
+            for _ in range(small_count):
+                piece = self._generate_piece(1, 2, voidstate)
+                self.daily_inventory.append(piece)
+            
+            # Medium pieces (3-5 blocks) for established players
+            medium_count = random.randint(2, 3)
+            for _ in range(medium_count):
+                piece = self._generate_piece(3, 5, voidstate)
+                self.daily_inventory.append(piece)
+            
+            # Large pieces (6+ blocks) for advanced players
+            large_count = total_pieces - small_count - medium_count
+            for _ in range(large_count):
+                piece = self._generate_piece(6, 12, voidstate)
+                self.daily_inventory.append(piece)
         
         self.last_reset = datetime.now()
         return self.daily_inventory

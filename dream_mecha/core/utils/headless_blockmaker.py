@@ -7,8 +7,125 @@ that can run on Railway's headless Linux environment without GUI dependencies.
 
 import random
 import math
+import os
+import json
 from typing import Dict, List, Any, Optional
 from datetime import datetime, date
+
+# Try to import icon generation, but continue without it if not available
+try:
+    from PIL import Image, ImageDraw
+    ICON_GENERATION_AVAILABLE = True
+except ImportError:
+    ICON_GENERATION_AVAILABLE = False
+    print("Warning: PIL/Pillow not available. Icon generation disabled.")
+
+
+class HeadlessIconGenerator:
+    """Headless icon generation for railway deployment"""
+    
+    # Stat colors from Dream Mecha CSS
+    STAT_COLORS = {
+        'hp': (68, 255, 68),        # #44ff44 - Green
+        'attack': (255, 68, 68),    # #ff4444 - Red  
+        'defense': (255, 136, 0),   # #ff8800 - Orange
+        'speed': (255, 255, 68)     # #ffff44 - Yellow
+    }
+    
+    def __init__(self, icon_size: int = 64):
+        self.icon_size = icon_size
+        self.cell_size = max(2, icon_size // 16)
+        self.border_width = max(1, icon_size // 32)
+    
+    def generate_icon_from_shape(self, shape: List[List[bool]], stat_type: str, piece_id: str, output_dir: str) -> Optional[str]:
+        """Generate icon from shape array"""
+        if not ICON_GENERATION_AVAILABLE:
+            return None
+            
+        try:
+            # Get stat color
+            color = self.STAT_COLORS.get(stat_type.lower(), self.STAT_COLORS['hp'])
+            
+            # Convert shape to filled positions
+            filled_positions = []
+            for row_idx, row in enumerate(shape):
+                for col_idx, cell in enumerate(row):
+                    if cell:
+                        filled_positions.append((row_idx, col_idx))
+            
+            if not filled_positions:
+                return None
+                
+            # Create icon
+            icon = self._create_icon_from_positions(filled_positions, color)
+            
+            # Save icon
+            os.makedirs(output_dir, exist_ok=True)
+            icon_path = os.path.join(output_dir, f"{piece_id}.webp")
+            icon.save(icon_path, 'WEBP', quality=85, method=6)
+            
+            return icon_path
+            
+        except Exception as e:
+            print(f"Icon generation failed for {piece_id}: {e}")
+            return None
+    
+    def _create_icon_from_positions(self, filled_positions: List[tuple], color: tuple):
+        """Create icon from list of filled positions"""
+        if not filled_positions:
+            filled_positions = [(0, 0)]
+        
+        # Calculate bounds
+        min_row = min(pos[0] for pos in filled_positions)
+        max_row = max(pos[0] for pos in filled_positions)
+        min_col = min(pos[1] for pos in filled_positions)
+        max_col = max(pos[1] for pos in filled_positions)
+        
+        pattern_width = max_col - min_col + 1
+        pattern_height = max_row - min_row + 1
+        
+        # Calculate scaling
+        padding = self.icon_size // 8
+        available_size = self.icon_size - (2 * padding)
+        scale_factor = min(available_size / pattern_width, available_size / pattern_height)
+        cell_size = max(1, int(scale_factor))
+        
+        # Calculate actual pattern size
+        scaled_width = pattern_width * cell_size
+        scaled_height = pattern_height * cell_size
+        
+        # Center the pattern
+        offset_x = (self.icon_size - scaled_width) // 2
+        offset_y = (self.icon_size - scaled_height) // 2
+        
+        # Create image
+        icon = Image.new('RGBA', (self.icon_size, self.icon_size), (0, 0, 0, 0))
+        draw = ImageDraw.Draw(icon)
+        
+        # Draw the pattern
+        for row_idx, col_idx in filled_positions:
+            norm_row = row_idx - min_row
+            norm_col = col_idx - min_col
+            
+            x = offset_x + (norm_col * cell_size)
+            y = offset_y + (norm_row * cell_size)
+            
+            # Draw filled rectangle
+            draw.rectangle(
+                [x, y, x + cell_size - 1, y + cell_size - 1],
+                fill=(*color, 255)
+            )
+            
+            # Add border for definition
+            if cell_size > 2:
+                border_color = tuple(max(0, c - 40) for c in color)
+                draw.rectangle(
+                    [x, y, x + cell_size - 1, y + cell_size - 1],
+                    outline=(*border_color, 255),
+                    width=1
+                )
+        
+        return icon
 
 
 class HeadlessBlockmaker:
@@ -16,6 +133,7 @@ class HeadlessBlockmaker:
     
     def __init__(self):
         self.generation_history = []
+        self.icon_generator = HeadlessIconGenerator() if ICON_GENERATION_AVAILABLE else None
     
     def generate_daily_content(self, player_count: int, voidstate: int, gen_date: date = None) -> Dict[str, Any]:
         """
@@ -36,6 +154,26 @@ class HeadlessBlockmaker:
             # Generate daily pieces
             pieces = self.generate_daily_pieces(player_count, voidstate, gen_date)
             
+            # Generate icons for pieces
+            icons_generated = 0
+            if self.icon_generator:
+                icons_dir = os.path.join("web_ui", "static", "daily", gen_date.isoformat(), "icons")
+                for piece in pieces:
+                    try:
+                        # Determine stat type from stats
+                        stat_type = self.get_primary_stat_type(piece["stats"])
+                        icon_path = self.icon_generator.generate_icon_from_shape(
+                            piece["shape"], 
+                            stat_type, 
+                            piece["piece_id"], 
+                            icons_dir
+                        )
+                        if icon_path:
+                            piece["icon_path"] = icon_path
+                            icons_generated += 1
+                    except Exception as e:
+                        print(f"Failed to generate icon for {piece['piece_id']}: {e}")
+            
             # Create response
             daily_content = {
                 "generation_date": gen_date.isoformat(),
@@ -44,6 +182,8 @@ class HeadlessBlockmaker:
                 "pieces": pieces,
                 "generation_metadata": {
                     "total_pieces": len(pieces),
+                    "icons_generated": icons_generated,
+                    "icon_generation_available": self.icon_generator is not None,
                     "estimated_player_power": self.estimate_player_power(player_count),
                     "generation_timestamp": datetime.now().isoformat()
                 }
@@ -87,6 +227,25 @@ class HeadlessBlockmaker:
             pieces.append(piece)
         
         return pieces
+    
+    def get_primary_stat_type(self, stats: Dict[str, int]) -> str:
+        """Determine which stat type has the highest value"""
+        stat_mapping = {
+            "hp": "hp",
+            "attack": "attack", 
+            "defense": "defense",
+            "speed": "speed"
+        }
+        
+        max_value = 0
+        primary_stat = "hp"  # default
+        
+        for stat_name, value in stats.items():
+            if value > max_value:
+                max_value = value
+                primary_stat = stat_mapping.get(stat_name, "hp")
+        
+        return primary_stat
     
     def generate_piece(self, min_blocks: int, max_blocks: int, voidstate: int) -> Dict[str, Any]:
         """Generate a single piece using current blockmaker algorithms"""

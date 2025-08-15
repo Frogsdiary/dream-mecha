@@ -52,8 +52,10 @@ CORS(app, origins=allowed_origins, supports_credentials=True)
 # Discord OAuth configuration
 DISCORD_CLIENT_ID = os.getenv('DISCORD_CLIENT_ID')
 DISCORD_CLIENT_SECRET = os.getenv('DISCORD_CLIENT_SECRET')
-# Use the exact URL the user has configured in Discord Developer Portal
-DISCORD_REDIRECT_URI = 'https://dream-mecha-production.up.railway.app/oauth/callback'
+
+# Flexible redirect URI - can be overridden with environment variable
+default_redirect_uri = 'https://dream-mecha-production.up.railway.app/oauth/callback'
+DISCORD_REDIRECT_URI = os.getenv('DISCORD_REDIRECT_URI', default_redirect_uri)
 
 # Debug OAuth configuration
 print(f"🔧 OAuth Configuration:")
@@ -129,6 +131,20 @@ def test():
     """Test route to verify Web UI is working"""
     return jsonify({'status': 'Web UI is working!', 'timestamp': datetime.now().isoformat()})
 
+@app.route('/debug/oauth')
+def debug_oauth():
+    """Debug OAuth configuration"""
+    return jsonify({
+        'client_id_set': bool(DISCORD_CLIENT_ID),
+        'client_secret_set': bool(DISCORD_CLIENT_SECRET),
+        'redirect_uri': DISCORD_REDIRECT_URI,
+        'session_data': {
+            'discord_user_id': session.get('discord_user_id'),
+            'discord_username': session.get('discord_username'),
+            'session_keys': list(session.keys())
+        }
+    })
+
 @app.route('/old')
 def old_index():
     """Original index for comparison"""
@@ -145,15 +161,34 @@ def login():
     if 'discord_user_id' in session:
         return redirect(url_for('index'))
     
-    auth_url = f"https://discord.com/api/oauth2/authorize?client_id={DISCORD_CLIENT_ID}&redirect_uri={DISCORD_REDIRECT_URI}&response_type=code&scope=identify"
+    # Check if OAuth is properly configured
+    if not DISCORD_CLIENT_ID or not DISCORD_CLIENT_SECRET:
+        return "Discord OAuth not configured. Please set DISCORD_CLIENT_ID and DISCORD_CLIENT_SECRET environment variables.", 500
+    
+    # URL-encode the redirect URI properly
+    import urllib.parse
+    encoded_redirect_uri = urllib.parse.quote(DISCORD_REDIRECT_URI, safe=':/?#[]@!$&\'()*+,;=')
+    
+    auth_url = f"https://discord.com/api/oauth2/authorize?client_id={DISCORD_CLIENT_ID}&redirect_uri={encoded_redirect_uri}&response_type=code&scope=identify"
+    print(f"🔗 OAuth URL: {auth_url}")
     return redirect(auth_url)
 
 @app.route('/oauth/callback')
 def oauth_callback():
     """Handle Discord OAuth callback"""
+    # Check for error parameters first
+    error = request.args.get('error')
+    if error:
+        error_description = request.args.get('error_description', 'No description provided')
+        print(f"❌ OAuth Error: {error} - {error_description}")
+        return f"Discord OAuth Error: {error} - {error_description}", 400
+    
     code = request.args.get('code')
     if not code:
-        return "Authorization failed", 400
+        print("❌ No authorization code received")
+        return "Authorization failed - no code received", 400
+    
+    print(f"✅ Received auth code: {code[:10]}...")
     
     # Exchange code for token
     token_data = {
@@ -164,29 +199,58 @@ def oauth_callback():
         'redirect_uri': DISCORD_REDIRECT_URI
     }
     
-    response = requests.post('https://discord.com/api/oauth2/token', data=token_data)
-    if response.status_code != 200:
-        print(f"❌ Token exchange failed: {response.status_code}")
-        print(f"❌ Response: {response.text}")
-        return f"Token exchange failed: {response.text}", 400
-    
-    token_info = response.json()
-    access_token = token_info['access_token']
-    
-    # Get user info
-    headers = {'Authorization': f'Bearer {access_token}'}
-    user_response = requests.get('https://discord.com/api/users/@me', headers=headers)
-    if user_response.status_code != 200:
-        return "Failed to get user info", 400
-    
-    user_info = user_response.json()
-    session['discord_user_id'] = user_info['id']
-    session['discord_username'] = user_info['username']
-    
-    # Ensure player exists
-    player_manager.get_or_create_player(user_info['id'], user_info['username'])
-    
-    return redirect(url_for('index'))
+    print(f"🔄 Requesting token from Discord...")
+    try:
+        response = requests.post('https://discord.com/api/oauth2/token', 
+                               data=token_data,
+                               headers={'Content-Type': 'application/x-www-form-urlencoded'},
+                               timeout=10)
+        
+        print(f"📡 Token response status: {response.status_code}")
+        
+        if response.status_code != 200:
+            error_detail = response.text
+            print(f"❌ Token exchange failed: {response.status_code}")
+            print(f"❌ Response: {error_detail}")
+            return f"Token exchange failed (Status {response.status_code}): {error_detail}", 400
+        
+        token_info = response.json()
+        access_token = token_info.get('access_token')
+        
+        if not access_token:
+            print(f"❌ No access token in response: {token_info}")
+            return "Failed to get access token from Discord", 400
+            
+        print(f"✅ Access token received")
+        
+        # Get user info
+        headers = {'Authorization': f'Bearer {access_token}'}
+        user_response = requests.get('https://discord.com/api/users/@me', 
+                                   headers=headers, 
+                                   timeout=10)
+        
+        if user_response.status_code != 200:
+            print(f"❌ User info request failed: {user_response.status_code} - {user_response.text}")
+            return f"Failed to get user info: {user_response.text}", 400
+        
+        user_info = user_response.json()
+        print(f"✅ User info received for: {user_info.get('username', 'Unknown')}")
+        
+        session['discord_user_id'] = user_info['id']
+        session['discord_username'] = user_info['username']
+        
+        # Ensure player exists
+        player_manager.get_or_create_player(user_info['id'], user_info['username'])
+        print(f"✅ Player created/updated for {user_info['username']}")
+        
+        return redirect(url_for('index'))
+        
+    except requests.exceptions.RequestException as e:
+        print(f"❌ Network error during OAuth: {e}")
+        return f"Network error during authentication: {e}", 500
+    except Exception as e:
+        print(f"❌ Unexpected error during OAuth: {e}")
+        return f"Unexpected error during authentication: {e}", 500
 
 @app.route('/logout')
 def logout():
@@ -266,11 +330,16 @@ def get_shop_items():
             voidstate = 0  # Default voidstate
             shop_system.generate_daily_shop(voidstate, player_count)
         
-        items = shop_system.get_shop_inventory()
+        # Get both daily items and player trades
+        daily_items = shop_system.get_shop_inventory()
+        player_trades = shop_system.player_trades
+        
+        # Combine both types of items
+        all_items = daily_items + player_trades
         
         # Convert to frontend-expected format
         formatted_items = []
-        for item in items:
+        for item in all_items:
             # Convert List[List[bool]] to coordinate array format
             shape_coords = []
             for y, row in enumerate(item.shape):
@@ -285,7 +354,9 @@ def get_shop_items():
                 'shape': shape_coords,
                 'stats': item.stats,
                 'price': item.price,
-                'piece_type': item.piece_type
+                'piece_type': item.piece_type,
+                'seller_id': getattr(item, 'seller_id', None),
+                'icon_path': getattr(item, 'icon_path', None)
             })
         
         return jsonify({'items': formatted_items})
@@ -335,6 +406,121 @@ def buy_shop_item():
         })
     except Exception as e:
         return jsonify({'error': str(e)}), 500
+
+@app.route('/api/player/sell-piece', methods=['POST'])
+@require_auth
+def sell_piece_to_shop():
+    """Sell a piece back to the shop for zoltans (piece gets deleted)"""
+    try:
+        data = request.get_json()
+        if not data or 'piece_id' not in data:
+            return jsonify({'error': 'Missing piece_id'}), 400
+            
+        player_id = session['discord_user_id']
+        piece_name = data['piece_id']  # piece_id is actually piece name in our system
+        
+        # Get player
+        player = player_manager.get_player(player_id)
+        if not player:
+            return jsonify({'error': 'Player not found'}), 404
+            
+        # Find the piece in player's inventory
+        piece_to_sell = None
+        for piece in player.pieces:
+            if piece.name == piece_name:
+                piece_to_sell = piece
+                break
+        
+        if not piece_to_sell:
+            return jsonify({'error': 'Piece not found in inventory'}), 404
+            
+        # Calculate sell price (50% of market value, minimum 10 zoltans)
+        sell_price = max(10, (piece_to_sell.price or 100) // 2)
+        
+        # Remove piece from player inventory
+        player.pieces.remove(piece_to_sell)
+        
+        # Add zoltans to player
+        player.zoltans += sell_price
+        
+        # Save player data
+        player_manager.save_player_data()
+        
+        return jsonify({
+            'success': True,
+            'message': f'Sold {piece_to_sell.name} for {sell_price} zoltans',
+            'zoltans_gained': sell_price,
+            'player_zoltans': player.zoltans
+        })
+        
+    except Exception as e:
+        return jsonify({'error': f'Sell failed: {str(e)}'}), 500
+
+@app.route('/api/player/list-piece', methods=['POST'])
+@require_auth
+def list_piece_for_sale():
+    """List a piece for sale to other players"""
+    try:
+        data = request.get_json()
+        if not data or 'piece_id' not in data:
+            return jsonify({'error': 'Missing piece_id'}), 400
+            
+        player_id = session['discord_user_id']
+        piece_name = data['piece_id']
+        asking_price = data.get('price', 0)
+        
+        if asking_price < 0:
+            return jsonify({'error': 'Price must be non-negative'}), 400
+            
+        # Get player
+        player = player_manager.get_player(player_id)
+        if not player:
+            return jsonify({'error': 'Player not found'}), 404
+            
+        # Find the piece in player's inventory
+        piece_to_sell = None
+        for piece in player.pieces:
+            if piece.name == piece_name:
+                piece_to_sell = piece
+                break
+        
+        if not piece_to_sell:
+            return jsonify({'error': 'Piece not found in inventory'}), 404
+            
+        # Create shop piece for player trading
+        from core.systems.shop_system import ShopPiece
+        trade_piece = ShopPiece(
+            piece_id=f"player_trade_{player_id}_{piece_name}",
+            name=piece_to_sell.name,
+            shape=piece_to_sell.shape,
+            stats={
+                'hp': piece_to_sell.hp,
+                'attack': piece_to_sell.attack, 
+                'defense': piece_to_sell.defense,
+                'speed': piece_to_sell.speed
+            },
+            price=asking_price,
+            piece_type='stat',
+            seller_id=player_id
+        )
+        
+        # Add to shop trading system
+        shop_system.player_trades.append(trade_piece)
+        
+        # Remove from player inventory (it's now in the shop)
+        player.pieces.remove(piece_to_sell)
+        
+        # Save data
+        player_manager.save_player_data()
+        
+        return jsonify({
+            'success': True,
+            'message': f'Listed {piece_to_sell.name} for {asking_price} zoltans',
+            'piece_id': trade_piece.piece_id
+        })
+        
+    except Exception as e:
+        return jsonify({'error': f'List failed: {str(e)}'}), 500
 
 @app.route('/api/player/combat', methods=['POST'])
 @require_auth
@@ -612,7 +798,7 @@ def status():
     return jsonify({
         'status': 'online',
         'timestamp': datetime.now().isoformat(),
-        'version': '0.3.5'
+        'version': '0.4.0'
     })
 
 if __name__ == '__main__':

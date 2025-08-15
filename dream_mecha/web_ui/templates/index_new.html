@@ -1,11 +1,15 @@
 {% extends "base.html" %}
 
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/piece-browser.css') }}">
+{% endblock %}
+
 {% block content %}
 <div class="container">
     <!-- Header Section -->
     <div class="header">
         <h1>Dream Mecha</h1>
-        <p>Neural Interface v0.3.5</p>
+        <p>Neural Interface v0.4.0</p>
         <div class="pilot-info">
             <div class="pilot-names">
                 <span class="operator-name">Operator: <strong id="operatorName">Unknown</strong></span>
@@ -219,45 +223,9 @@
             <div class="boundary-bottom-left"></div>
             <div class="boundary-bottom-right"></div>
             
-            <!-- Library Header -->
-            <div class="library-header">
-                <h3>Piece Library</h3>
-                <button id="libraryToggleBtn" class="library-toggle-btn">Float Library</button>
-            </div>
-            
-            <!-- Library Main Content - 2 columns: filters left, inventory right -->
-            <div class="library-main">
-                <!-- Library Filters Column -->
-                <div class="library-filters">
-                    <div class="filter-row">
-                    <div class="filter-group">
-                        <label for="statTypeFilter">Stat Type:</label>
-                        <select id="statTypeFilter">
-                            <option value="all">All Types</option>
-                            <option value="hp">HP Focus</option>
-                            <option value="attack">Attack Focus</option>
-                            <option value="defense">Defense Focus</option>
-                            <option value="speed">Speed Focus</option>
-                        </select>
-                    </div>
-                    
-                    <div class="filter-group">
-                        <label for="hpRangeFilter">Max HP: <span id="hpRangeDisplay">500</span></label>
-                        <input type="range" id="hpRangeFilter" min="50" max="1000" value="500" class="filter-slider">
-                    </div>
-                    
-                    <div class="filter-group">
-                        <label for="blockCountFilter">Max Blocks: <span id="blockCountDisplay">10</span></label>
-                        <input type="range" id="blockCountFilter" min="1" max="20" value="10" class="filter-slider">
-                    </div>
-                    
-                    <button id="resetFiltersBtn" class="filter-reset-btn">Reset</button>
-                </div>
-            </div>
-            
-            <!-- Library Content -->
-            <div class="library-content" id="pieceLibrary">
-                <!-- Pieces will be loaded here -->
+            <!-- New Unified Piece Browser -->
+            <div id="libraryBrowser">
+                <!-- Will be populated by PieceBrowser component -->
             </div>
         </div>
 
@@ -265,7 +233,7 @@
         <div class="fortress-section layout-manageable" data-container-id="fortress">
             <div class="boundary-bottom-left"></div>
             <div class="boundary-bottom-right"></div>
-            <h2>🏰 Fortress Defense</h2>
+            <h2>Fortress Defense</h2>
             <div class="fortress-status" id="fortressStatus">
                 <div class="fortress-hp">
                     <div class="hp-label">Fortress HP:</div>
@@ -294,7 +262,7 @@
                     </div>
                 </div>
                 <div class="fortress-status-indicator" id="fortressStatusIndicator">
-                    <span class="status-text">🛡️ FORTRESS SECURE</span>
+                    <span class="status-text">FORTRESS SECURE</span>
                 </div>
             </div>
         </div>
@@ -303,9 +271,10 @@
         <div class="shop-section layout-manageable" data-container-id="shop">
             <div class="boundary-bottom-left"></div>
             <div class="boundary-bottom-right"></div>
-            <h2>RBHI Shop</h2>
-            <div class="shop-items" id="shopItems">
-                <!-- Shop items will be loaded here -->
+            
+            <!-- New Unified Piece Browser for Shop -->
+            <div id="shopBrowser">
+                <!-- Will be populated by PieceBrowser component -->
             </div>
         </div>
     </div>
@@ -378,6 +347,7 @@
 {% endblock %}
 
 {% block extra_js %}
+<script src="{{ url_for('static', filename='js/piece-browser.js') }}"></script>
 <script>
     // Initialize the grid system
     document.addEventListener('DOMContentLoaded', () => {
@@ -386,6 +356,32 @@
         } else {
             console.log('Initializing MechaGrid...');
             // The main.js file will handle the initialization
+        }
+        
+        // Initialize piece browsers
+        window.libraryBrowser = new PieceBrowser('libraryBrowser', 'library');
+        
+        // Initialize shop browser  
+        window.shopBrowser = new PieceBrowser('shopBrowser', 'shop');
+        
+        // Integration with existing system
+        if (window.mechaGrid) {
+            // Add refresh method to existing grid system
+            const originalLoadSamplePieces = window.mechaGrid.loadSamplePieces;
+            window.mechaGrid.loadSamplePieces = function() {
+                originalLoadSamplePieces.call(this);
+                if (window.libraryBrowser) {
+                    window.libraryBrowser.refresh();
+                }
+            };
+            
+            const originalLoadShopItems = window.mechaGrid.loadShopItems;
+            window.mechaGrid.loadShopItems = function() {
+                originalLoadShopItems.call(this);
+                if (window.shopBrowser) {
+                    window.shopBrowser.refresh();
+                }
+            };
         }
     });
 </script>
