@@ -50,26 +50,28 @@ class CombatSystem:
         self.voidstate = 0
     
     def add_mecha(self, mecha: 'Mecha') -> bool:
-        """Add mecha to combat queue"""
-        if mecha.state.value != 'ready':
+        """Add mecha to combat queue with daily limits"""
+        if not mecha.can_launch():
             return False
         
         if mecha in self.launched_mechas:
             return False
         
-        self.launched_mechas.append(mecha)
-        from core.systems.mecha_system import MechaState
-        mecha.state = MechaState.LAUNCHED
-        return True
+        # Use the mecha's launch method which handles daily limits
+        if mecha.launch():
+            self.launched_mechas.append(mecha)
+            return True
+        
+        return False
     
     def generate_enemies(self, voidstate: int, player_power: int) -> List[Enemy]:
         """Generate enemies based on voidstate and player power"""
         self.voidstate = voidstate
         self.enemies.clear()
         
-        # Base enemy count scales with voidstate
-        base_count = 1 + (voidstate // 10)
-        enemy_count = min(base_count, 10)  # Cap at 10 enemies
+        # Cap enemies at 5 for better combat readability
+        base_count = 1 + (voidstate // 15)  # Slower enemy count scaling
+        enemy_count = min(base_count, 5)  # Cap at 5 enemies
         
         for i in range(enemy_count):
             enemy = self._create_enemy(i, voidstate, player_power)
@@ -78,22 +80,37 @@ class CombatSystem:
         return self.enemies
     
     def _create_enemy(self, index: int, voidstate: int, player_power: int) -> Enemy:
-        """Create a single enemy with scaled stats"""
-        # Enemy stats scale with voidstate and player power
+        """Create a single enemy with scaled stats and modifiers"""
+        # Base enemy stats with linear scaling
         base_hp = 100 * (1 + voidstate * 0.1)
         base_attack = 20 * (1 + voidstate * 0.05)
         base_defense = 10 * (1 + voidstate * 0.03)
+        
+        # Every 10 voidstate levels, add modifiers for variety
+        hp_modifier = 1.0
+        attack_modifier = 1.0
+        defense_modifier = 1.0
+        speed_modifier = 1.0
+        
+        if voidstate >= 10:
+            hp_modifier += 0.5 * (voidstate // 10)  # +50% HP every 10 levels
+        if voidstate >= 20:
+            attack_modifier += 0.5 * ((voidstate - 10) // 10)  # +50% Attack starting at 20
+        if voidstate >= 30:
+            defense_modifier += 0.5 * ((voidstate - 20) // 10)  # +50% Defense starting at 30
+        if voidstate >= 40:
+            speed_modifier += 0.25 * ((voidstate - 30) // 10)  # +25% Speed starting at 40
         
         # Adjust based on total player power
         power_factor = max(0.5, min(2.0, player_power / 10000))
         
         enemy = Enemy(
             name=f"Void Drone {index + 1}",
-            hp=int(base_hp * power_factor),
-            max_hp=int(base_hp * power_factor),
-            attack=int(base_attack * power_factor),
-            defense=int(base_defense * power_factor),
-            speed=10 + (voidstate * 2),
+            hp=int(base_hp * power_factor * hp_modifier),
+            max_hp=int(base_hp * power_factor * hp_modifier),
+            attack=int(base_attack * power_factor * attack_modifier),
+            defense=int(base_defense * power_factor * defense_modifier),
+            speed=int((10 + (voidstate * 2)) * speed_modifier),
             voidstate_level=voidstate
         )
         
@@ -120,8 +137,13 @@ class CombatSystem:
             if not target_enemy:
                 break
             
-            # Calculate damage
-            damage = self._calculate_damage(mecha.stats.attack, target_enemy.defense)
+            # Calculate damage with glancing blow mechanic
+            damage = self._calculate_damage(
+                mecha.stats.attack, 
+                target_enemy.defense, 
+                mecha.stats.speed, 
+                target_enemy.speed
+            )
             target_enemy.hp = max(0, target_enemy.hp - damage)
             
             self.combat_log.append(f"{mecha.name} attacks {target_enemy.name} for {damage} damage")
@@ -141,8 +163,13 @@ class CombatSystem:
             if not target_mecha or target_mecha.stats.hp <= 0:
                 continue
             
-            # Calculate damage
-            damage = self._calculate_damage(enemy.attack, target_mecha.stats.defense)
+            # Calculate damage with glancing blow mechanic
+            damage = self._calculate_damage(
+                enemy.attack, 
+                target_mecha.stats.defense, 
+                enemy.speed, 
+                target_mecha.stats.speed
+            )
             actual_damage = target_mecha.take_damage(damage)
             
             self.combat_log.append(f"{enemy.name} attacks {target_mecha.name} for {actual_damage} damage")
@@ -222,29 +249,39 @@ class CombatSystem:
         
         return self.last_combat_result
     
-    def _calculate_damage(self, attack: int, defense: int) -> int:
-        """Calculate damage using defense formula"""
+    def _calculate_damage(self, attack: int, defense: int, attacker_speed: int = 0, defender_speed: int = 0) -> int:
+        """Calculate damage using improved defense formula with glancing blow mechanic"""
         if defense <= 0:
             return attack
         
-        damage_reduction = defense / (defense + attack)
+        # New formula: damage = attack * (1 - defense/(defense + 100 + attack*0.5))
+        # This ensures attack always matters while defense still provides value
+        denominator = defense + 100 + (attack * 0.5)
+        damage_reduction = defense / denominator
         actual_damage = int(attack * (1 - damage_reduction))
+        
+        # Glancing blow mechanic: if defender is faster, reduce damage by 25%
+        if defender_speed > attacker_speed and defender_speed > 0:
+            actual_damage = int(actual_damage * 0.75)
+            
         return max(1, actual_damage)  # Minimum 1 damage
     
     def _calculate_rewards(self) -> Dict[str, int]:
         """Calculate Zoltan rewards for each player"""
         rewards = {}
         
-        # Base reward for participation (increased significantly)
+        # Minimum reward to prevent death spiral - ALWAYS at least 500 Zoltans
+        minimum_reward = 500
+        
+        # Base reward for participation
         base_reward = 500
         
-        # Bonus for enemy defeats (increased)
+        # Bonus for enemy defeats
         enemies_defeated = len([e for e in self.enemies if e.hp <= 0])
         defeat_bonus = enemies_defeated * 200
         
-        # Voidstate bonus with exponential scaling
-        voidstate_multiplier = 1 + (self.voidstate * 0.2)  # 20% increase per voidstate
-        voidstate_bonus = int(self.voidstate * 100 * voidstate_multiplier)
+        # Voidstate bonus - LINEAR scaling instead of exponential
+        voidstate_bonus = self.voidstate * 150  # Linear: 150 per voidstate level
         
         # Victory bonus (if all enemies defeated)
         victory_bonus = 1000 if enemies_defeated == len(self.enemies) else 0
@@ -252,10 +289,8 @@ class CombatSystem:
         total_reward = base_reward + defeat_bonus + voidstate_bonus + victory_bonus
         
         for mecha in self.launched_mechas:
-            if mecha.stats.hp > 0:  # Only reward surviving mechas
-                rewards[mecha.player_id] = total_reward
-            else:
-                rewards[mecha.player_id] = total_reward // 2  # Half reward for downed mechas
+            player_reward = total_reward if mecha.stats.hp > 0 else max(minimum_reward, total_reward // 2)
+            rewards[mecha.player_id] = player_reward
         
         return rewards
     

@@ -87,28 +87,43 @@ class MechaGrid {
         
         // Authentication
         this.authenticated = false;
+        this.isGuest = false;
         this.currentUserId = null;
         this.currentUsername = null;
+        this.mainUIInitialized = false;
         
         this.init();
     }
     
-    init() {
-        // Check if first-time setup is needed
-        if (this.isFirstTime) {
+    async init() {
+        // Check authentication status first to get server-side setup status
+        await this.checkAuthStatus();
+        
+        // After auth check, re-evaluate if setup is needed
+        // The auth check may have updated this.isFirstTime
+        const setupCompleted = localStorage.getItem('setup_completed');
+        const shouldSkipSetup = setupCompleted || (this.authenticated && !this.isGuest);
+        
+        if (this.isFirstTime && !shouldSkipSetup) {
             this.startFirstTimeSetup();
         } else {
-        // Set default names if not already set
-        if (!this.operatorName) {
-            this.operatorName = 'Operator';
-            localStorage.setItem('operatorName', this.operatorName);
-        }
-        if (!this.mechaName) {
-            this.mechaName = 'Dream Mecha';
-            localStorage.setItem('mechaName', this.mechaName);
-        }
-        
-        this.initializeMainUI();
+            // Ensure any showing setup screen is hidden
+            const setupElement = document.getElementById('firstTimeSetup');
+            if (setupElement) {
+                setupElement.style.display = 'none';
+            }
+            
+            // Set default names if not already set
+            if (!this.operatorName) {
+                this.operatorName = 'Operator';
+                localStorage.setItem('operatorName', this.operatorName);
+            }
+            if (!this.mechaName) {
+                this.mechaName = 'Dream Mecha';
+                localStorage.setItem('mechaName', this.mechaName);
+            }
+            
+            this.initializeMainUI();
         }
     }
 
@@ -149,6 +164,9 @@ class MechaGrid {
                 this.updateHeaderNames();
             });
         });
+        
+        // Mark main UI as initialized
+        this.mainUIInitialized = true;
     }
     
     createFullGrid() {
@@ -1232,7 +1250,7 @@ class MechaGrid {
     // ===== AUTHENTICATION METHODS =====
     
     setupAuthentication() {
-        this.checkAuthStatus();
+        // Auth status already checked in init(), just setup the buttons
         this.setupAuthButtons();
     }
 
@@ -1243,11 +1261,43 @@ class MechaGrid {
             
             if (data.authenticated) {
                 this.authenticated = true;
+                this.isGuest = data.is_guest || false;
                 this.currentUserId = data.user_id;
                 this.currentUsername = data.username;
+                
+                // Check server-side setup status for authenticated users
+                // For Discord users: use server setup status
+                // For guests: still use local setup (they need to set names locally)
+                if (data.setup_completed && !data.is_guest) {
+                    localStorage.setItem('setup_completed', 'true');
+                    this.isFirstTime = false;
+                    
+                    // Hide setup screen if it's showing
+                    const setupElement = document.getElementById('firstTimeSetup');
+                    if (setupElement) {
+                        setupElement.style.display = 'none';
+                    }
+                    
+                    // Ensure main UI is initialized
+                    if (!this.mainUIInitialized) {
+                        this.initializeMainUI();
+                    }
+                } else if (data.is_guest) {
+                    // For guests, check local setup status only
+                    const localSetup = localStorage.getItem('setup_completed');
+                    if (localSetup) {
+                        this.isFirstTime = false;
+                        if (!this.mainUIInitialized) {
+                            this.initializeMainUI();
+                        }
+                    }
+                    // If no local setup, let the original isFirstTime logic handle it
+                }
+                
                 this.updateAuthUI();
             } else {
                 this.authenticated = false;
+                this.isGuest = false;
                 this.currentUserId = null;
                 this.currentUsername = null;
                 this.updateAuthUI();
@@ -1260,8 +1310,16 @@ class MechaGrid {
     }
 
     setupAuthButtons() {
+        const guestBtn = document.getElementById('guestBtn');
         const loginBtn = document.getElementById('loginBtn');
         const logoutBtn = document.getElementById('logoutBtn');
+        const linkAccountBtn = document.getElementById('linkAccountBtn');
+        
+        if (guestBtn) {
+            guestBtn.addEventListener('click', () => {
+                window.location.href = '/guest';
+            });
+        }
         
         if (loginBtn) {
             loginBtn.addEventListener('click', () => {
@@ -1274,22 +1332,46 @@ class MechaGrid {
                 window.location.href = '/logout';
             });
         }
+        
+        if (linkAccountBtn) {
+            linkAccountBtn.addEventListener('click', () => {
+                // Redirect to Discord login to link guest account
+                window.location.href = '/login';
+            });
+        }
     }
 
     updateAuthUI() {
         const authUsername = document.getElementById('authUsername');
+        const guestBtn = document.getElementById('guestBtn');
         const loginBtn = document.getElementById('loginBtn');
         const logoutBtn = document.getElementById('logoutBtn');
+        const linkAccountBtn = document.getElementById('linkAccountBtn');
         
         if (this.authenticated) {
-            if (authUsername) authUsername.textContent = `Discord: ${this.currentUsername}`;
-            if (loginBtn) loginBtn.style.display = 'none';
-            if (logoutBtn) logoutBtn.style.display = 'inline-block';
+            if (this.isGuest) {
+                // Guest user UI
+                if (authUsername) authUsername.textContent = `Guest: ${this.currentUsername}`;
+                if (guestBtn) guestBtn.style.display = 'none';
+                if (loginBtn) loginBtn.style.display = 'none';
+                if (linkAccountBtn) linkAccountBtn.style.display = 'inline-block';
+                if (logoutBtn) logoutBtn.style.display = 'inline-block';
+            } else {
+                // Discord user UI
+                if (authUsername) authUsername.textContent = `Discord: ${this.currentUsername}`;
+                if (guestBtn) guestBtn.style.display = 'none';
+                if (loginBtn) loginBtn.style.display = 'none';
+                if (linkAccountBtn) linkAccountBtn.style.display = 'none';
+                if (logoutBtn) logoutBtn.style.display = 'inline-block';
+            }
             // Load shop items when authenticated
             this.loadShopItems();
         } else {
+            // Not authenticated UI
             if (authUsername) authUsername.textContent = 'Not authenticated';
+            if (guestBtn) guestBtn.style.display = 'inline-block';
             if (loginBtn) loginBtn.style.display = 'inline-block';
+            if (linkAccountBtn) linkAccountBtn.style.display = 'none';
             if (logoutBtn) logoutBtn.style.display = 'none';
         }
     }

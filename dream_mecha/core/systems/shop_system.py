@@ -259,8 +259,9 @@ class ShopSystem:
     def _calculate_piece_price(self, block_count: int, stats: Dict[str, int]) -> int:
         """Calculate price for a piece"""
         # Pricing formula: base_cost * (block_count ^ scaling_factor)
+        # Reduced from 1.5 to 1.2 to make larger pieces more attainable
         base_cost = 100
-        scaling_factor = 1.5
+        scaling_factor = 1.2
         
         price = int(base_cost * (block_count ** scaling_factor))
         

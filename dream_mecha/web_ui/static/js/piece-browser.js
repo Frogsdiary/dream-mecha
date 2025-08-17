@@ -44,10 +44,10 @@ class PieceBrowser {
                     <div class="browser-filters">
                         <!-- Block count slider -->
                         <div class="filter-group">
-                            <label>Block Count: <span id="blockCountDisplay">1 - 120</span></label>
+                            <label>Block Count: <span id="blockCountDisplay_${this.containerId}">1 - 120</span></label>
                             <div class="range-slider-container">
-                                <input type="range" id="blockCountMin" min="1" max="120" value="1" class="range-slider">
-                                <input type="range" id="blockCountMax" min="1" max="120" value="120" class="range-slider">
+                                <input type="range" id="blockCountMin_${this.containerId}" min="1" max="120" value="1" class="range-slider">
+                                <input type="range" id="blockCountMax_${this.containerId}" min="1" max="120" value="120" class="range-slider">
                             </div>
                         </div>
                         
@@ -55,7 +55,7 @@ class PieceBrowser {
                         <div class="filter-group">
                             <label>Sort by:</label>
                             <div class="sort-controls">
-                                <select id="sortBy" class="filter-select">
+                                <select id="sortBy_${this.containerId}" class="filter-select">
                                     <option value="blocks">Block Count</option>
                                     <option value="hp">HP</option>
                                     <option value="attack">Attack</option>
@@ -63,35 +63,35 @@ class PieceBrowser {
                                     <option value="speed">Speed</option>
                                     <option value="zoltan">Zoltan Price</option>
                                 </select>
-                                <button id="sortToggle" class="sort-toggle" title="Toggle sort direction">
+                                <button id="sortToggle_${this.containerId}" class="sort-toggle" title="Toggle sort direction">
                                     ↓
                                 </button>
                             </div>
                         </div>
                         
                         <!-- Reset filters -->
-                        <button id="resetFilters" class="filter-reset-btn">Reset</button>
+                        <button id="resetFilters_${this.containerId}" class="filter-reset-btn">Reset</button>
                     </div>
                 </div>
                 
                 <!-- Pieces grid -->
-                <div class="pieces-grid" id="piecesGrid">
+                <div class="pieces-grid" id="piecesGrid_${this.containerId}">
                     <!-- Pieces will be rendered here -->
                 </div>
                 
                 <!-- Pagination -->
-                <div class="pagination" id="pagination">
+                <div class="pagination" id="pagination_${this.containerId}">
                     <!-- Pagination controls will be rendered here -->
                 </div>
                 
                 <!-- Loading state -->
-                <div class="loading-state" id="loadingState" style="display: none;">
+                <div class="loading-state" id="loadingState_${this.containerId}" style="display: none;">
                     <div class="loading-spinner"></div>
                     <p>Loading pieces...</p>
                 </div>
                 
                 <!-- Empty state -->
-                <div class="empty-state" id="emptyState" style="display: none;">
+                <div class="empty-state" id="emptyState_${this.containerId}" style="display: none;">
                     <p>No pieces found matching your criteria.</p>
                 </div>
             </div>
@@ -100,9 +100,9 @@ class PieceBrowser {
     
     bindEvents() {
         // Block count range sliders
-        const minSlider = document.getElementById('blockCountMin');
-        const maxSlider = document.getElementById('blockCountMax');
-        const display = document.getElementById('blockCountDisplay');
+        const minSlider = document.getElementById(`blockCountMin_${this.containerId}`);
+        const maxSlider = document.getElementById(`blockCountMax_${this.containerId}`);
+        const display = document.getElementById(`blockCountDisplay_${this.containerId}`);
         
         const updateBlockCountFilter = () => {
             const min = parseInt(minSlider.value);
@@ -128,21 +128,21 @@ class PieceBrowser {
         maxSlider.addEventListener('input', updateBlockCountFilter);
         
         // Sort controls
-        document.getElementById('sortBy').addEventListener('change', (e) => {
+        document.getElementById(`sortBy_${this.containerId}`).addEventListener('change', (e) => {
             this.filters.sortBy = e.target.value;
             this.applyFilters();
         });
         
-        document.getElementById('sortToggle').addEventListener('click', () => {
+        document.getElementById(`sortToggle_${this.containerId}`).addEventListener('click', () => {
             this.sortAscending = !this.sortAscending;
-            const toggle = document.getElementById('sortToggle');
+            const toggle = document.getElementById(`sortToggle_${this.containerId}`);
             toggle.textContent = this.sortAscending ? '↑' : '↓';
             toggle.title = this.sortAscending ? 'High to Low' : 'Low to High';
             this.applyFilters();
         });
         
         // Reset filters
-        document.getElementById('resetFilters').addEventListener('click', () => {
+        document.getElementById(`resetFilters_${this.containerId}`).addEventListener('click', () => {
             this.resetFilters();
         });
     }
@@ -156,11 +156,11 @@ class PieceBrowser {
         this.currentPage = 1;
         
         // Reset UI
-        document.getElementById('blockCountMin').value = 1;
-        document.getElementById('blockCountMax').value = 120;
-        document.getElementById('blockCountDisplay').textContent = '1 - 120';
-        document.getElementById('sortBy').value = 'blocks';
-        document.getElementById('sortToggle').textContent = '↓';
+        document.getElementById(`blockCountMin_${this.containerId}`).value = 1;
+        document.getElementById(`blockCountMax_${this.containerId}`).value = 120;
+        document.getElementById(`blockCountDisplay_${this.containerId}`).textContent = '1 - 120';
+        document.getElementById(`sortBy_${this.containerId}`).value = 'blocks';
+        document.getElementById(`sortToggle_${this.containerId}`).textContent = '↓';
         
         this.applyFilters();
     }
@@ -322,8 +322,8 @@ class PieceBrowser {
     }
     
     renderPieces() {
-        const grid = document.getElementById('piecesGrid');
-        const emptyState = document.getElementById('emptyState');
+        const grid = document.getElementById(`piecesGrid_${this.containerId}`);
+        const emptyState = document.getElementById(`emptyState_${this.containerId}`);
         
         if (this.filteredPieces.length === 0) {
             grid.style.display = 'none';
@@ -422,7 +422,7 @@ class PieceBrowser {
     }
     
     renderPagination() {
-        const pagination = document.getElementById('pagination');
+        const pagination = document.getElementById(`pagination_${this.containerId}`);
         const totalPages = Math.ceil(this.filteredPieces.length / this.piecesPerPage);
         
         if (totalPages <= 1) {
@@ -577,9 +577,9 @@ class PieceBrowser {
     }
     
     showLoading(show) {
-        const loading = document.getElementById('loadingState');
-        const grid = document.getElementById('piecesGrid');
-        const pagination = document.getElementById('pagination');
+        const loading = document.getElementById(`loadingState_${this.containerId}`);
+        const grid = document.getElementById(`piecesGrid_${this.containerId}`);
+        const pagination = document.getElementById(`pagination_${this.containerId}`);
         
         if (show) {
             loading.style.display = 'block';
@@ -591,7 +591,7 @@ class PieceBrowser {
     }
     
     showError(message) {
-        const grid = document.getElementById('piecesGrid');
+        const grid = document.getElementById(`piecesGrid_${this.containerId}`);
         grid.innerHTML = `
             <div class="error-state">
                 <p>Error: ${message}</p>

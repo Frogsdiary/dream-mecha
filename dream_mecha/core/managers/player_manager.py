@@ -120,6 +120,11 @@ class Player:
         self.ui_layout: Dict[str, Any] = {}  # Store UI layout preferences
         self.setup_completed = False  # Track if first-time setup is done
         
+        # Daily login bonus system
+        self.last_login_date = datetime.now().date()
+        self.login_streak = 1
+        self.max_login_streak = 7
+        
         # Give new players starter pieces (only for truly new players)
         if give_starter_pieces:
             self._give_starter_pieces()
@@ -158,6 +163,50 @@ class Player:
         else:
             raise ValueError("Layout data must be a dictionary")
     
+    def check_daily_login_bonus(self) -> Dict[str, Any]:
+        """Check and award daily login bonus"""
+        today = datetime.now().date()
+        bonus_info = {
+            'bonus_awarded': False,
+            'zoltans_awarded': 0,
+            'login_streak': self.login_streak,
+            'is_consecutive': False
+        }
+        
+        if self.last_login_date < today:
+            # Check if consecutive day
+            yesterday = today - timedelta(days=1)
+            if self.last_login_date == yesterday:
+                # Consecutive login - increase streak
+                self.login_streak = min(self.login_streak + 1, self.max_login_streak)
+                bonus_info['is_consecutive'] = True
+            else:
+                # Non-consecutive - reset streak
+                self.login_streak = 1
+            
+            # Calculate bonus based on streak
+            base_bonus = 500
+            streak_multiplier = self.login_streak
+            total_bonus = base_bonus * streak_multiplier
+            
+            # Award the bonus
+            if self.mecha:
+                self.mecha.zoltans += total_bonus
+            self.total_zoltans_earned += total_bonus
+            
+            # Update login date
+            self.last_login_date = today
+            
+            bonus_info.update({
+                'bonus_awarded': True,
+                'zoltans_awarded': total_bonus,
+                'login_streak': self.login_streak
+            })
+            
+            print(f"🎁 Daily login bonus for {self.username}: {total_bonus} zoltans (streak: {self.login_streak})")
+        
+        return bonus_info
+    
     def get_repair_discount(self) -> float:
         """Calculate repair discount based on inactivity"""
         days_inactive = (datetime.now() - self.last_active).days
@@ -182,7 +231,10 @@ class Player:
             'grid_data': self.grid_system.to_json() if self.grid_system else None,
             'mecha_data': self.mecha.to_dict() if self.mecha else None,
             'ui_layout': self.ui_layout,
-            'setup_completed': self.setup_completed
+            'setup_completed': self.setup_completed,
+            'last_login_date': self.last_login_date.isoformat(),
+            'login_streak': self.login_streak,
+            'max_login_streak': self.max_login_streak
         }
     
     @classmethod
@@ -198,6 +250,14 @@ class Player:
         player.piece_library = data.get('piece_library', [])
         player.ui_layout = data.get('ui_layout', {})
         player.setup_completed = data.get('setup_completed', False)
+        
+        # Load daily login bonus data (with defaults for backwards compatibility)
+        if 'last_login_date' in data:
+            player.last_login_date = datetime.fromisoformat(data['last_login_date']).date()
+        if 'login_streak' in data:
+            player.login_streak = data['login_streak']
+        if 'max_login_streak' in data:
+            player.max_login_streak = data['max_login_streak']
         
         # Load grid data
         if data.get('grid_data'):

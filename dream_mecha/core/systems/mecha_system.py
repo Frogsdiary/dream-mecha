@@ -7,6 +7,7 @@ Handles individual mecha stats, upgrades, and state management.
 from typing import Dict, List, Optional, Tuple, Any
 from dataclasses import dataclass
 from enum import Enum
+from datetime import datetime, date
 
 
 class MechaState(Enum):
@@ -88,12 +89,37 @@ class Mecha:
         self.piece_library: List[Dict] = []
         self.zoltans = 5000  # Starting currency (reduced from 50000)
         
+        # Daily healing and launch tracking
+        self.last_daily_heal = date.today()
+        self.launches_today = 0
+        self.max_launches_per_day = 3
+        
+    def check_daily_reset(self):
+        """Check if daily reset should happen and perform it"""
+        today = date.today()
+        if self.last_daily_heal < today:
+            # Daily reset: heal to full and reset launches
+            self.stats.hp = self.stats.max_hp
+            self.state = MechaState.READY  # Reset from DOWNED state
+            self.launches_today = 0
+            self.last_daily_heal = today
+            print(f"🌅 Daily reset for {self.name}: HP restored, {self.max_launches_per_day} launches available")
+    
+    def can_launch(self) -> bool:
+        """Check if mecha can launch (health + launch limit)"""
+        self.check_daily_reset()  # Auto-check daily reset
+        return (self.stats.hp > 0 and 
+                self.state != MechaState.DOWNED and 
+                self.launches_today < self.max_launches_per_day)
+    
     def launch(self) -> bool:
         """Launch mecha for combat"""
-        if not self.stats.is_launchable():
+        if not self.can_launch():
             return False
         
+        self.launches_today += 1
         self.state = MechaState.LAUNCHED
+        print(f"🚀 {self.name} launched! ({self.launches_today}/{self.max_launches_per_day} launches used today)")
         return True
     
     def take_damage(self, damage: int) -> int:
@@ -143,7 +169,10 @@ class Mecha:
             'grid_size': self.grid_size,
             'grid': self.grid,
             'piece_library': self.piece_library,
-            'zoltans': self.zoltans
+            'zoltans': self.zoltans,
+            'last_daily_heal': self.last_daily_heal.isoformat(),
+            'launches_today': self.launches_today,
+            'max_launches_per_day': self.max_launches_per_day
         }
     
     @classmethod
@@ -160,4 +189,14 @@ class Mecha:
         mecha.grid = data['grid']
         mecha.piece_library = data['piece_library']
         mecha.zoltans = data['zoltans']
+        
+        # Handle daily healing fields (with defaults for backwards compatibility)
+        if 'last_daily_heal' in data:
+            from datetime import datetime
+            mecha.last_daily_heal = datetime.fromisoformat(data['last_daily_heal']).date()
+        if 'launches_today' in data:
+            mecha.launches_today = data['launches_today']
+        if 'max_launches_per_day' in data:
+            mecha.max_launches_per_day = data['max_launches_per_day']
+        
         return mecha 

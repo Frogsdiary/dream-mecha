@@ -49,8 +49,46 @@ class Fortress:
             'fortress_fallen': self.current_hp <= 0
         }
     
-    def repair(self, amount: int) -> int:
-        """Repair fortress HP (for future mechanics)"""
+    def repair(self, zoltans_spent: int) -> Dict[str, Any]:
+        """Repair fortress using Zoltans (100 Zoltans = 1 million HP)"""
+        if zoltans_spent <= 0:
+            return {
+                'success': False,
+                'message': 'Invalid Zoltan amount',
+                'hp_repaired': 0
+            }
+        
+        if self.current_hp >= self.max_hp:
+            return {
+                'success': False,
+                'message': 'Fortress is already at full health',
+                'hp_repaired': 0
+            }
+        
+        # Calculate repair amount: 100 Zoltans = 1 million HP
+        hp_to_repair = zoltans_spent * 10_000  # 1 Zoltan = 10,000 HP
+        max_repair_possible = self.max_hp - self.current_hp
+        actual_repair = min(hp_to_repair, max_repair_possible)
+        
+        self.current_hp += actual_repair
+        
+        # Calculate actual Zoltans used (in case we hit max HP)
+        zoltans_actually_used = actual_repair // 10_000
+        zoltans_refunded = zoltans_spent - zoltans_actually_used
+        
+        return {
+            'success': True,
+            'hp_repaired': actual_repair,
+            'zoltans_used': zoltans_actually_used,
+            'zoltans_refunded': zoltans_refunded,
+            'current_hp': self.current_hp,
+            'max_hp': self.max_hp,
+            'hp_percentage': (self.current_hp / self.max_hp) * 100,
+            'message': f'Repaired {actual_repair:,} HP for {zoltans_actually_used:,} Zoltans'
+        }
+    
+    def repair_basic(self, amount: int) -> int:
+        """Basic repair fortress HP (for internal use)"""
         if self.current_hp >= self.max_hp:
             return 0
         

@@ -104,6 +104,18 @@ def require_auth(f):
         return f(*args, **kwargs)
     return decorated_function
 
+def get_player_id():
+    """Get player ID from session (Discord or guest)"""
+    if 'discord_user_id' in session:
+        return session['discord_user_id']
+    elif 'guest_id' in session:
+        return session['guest_id']
+    return None
+
+def is_guest():
+    """Check if current session is a guest"""
+    return 'guest_id' in session and 'discord_user_id' not in session
+
 def validate_json_schema(data, schema):
     """Validate JSON data against schema"""
     try:
@@ -252,6 +264,29 @@ def oauth_callback():
         print(f"❌ Unexpected error during OAuth: {e}")
         return f"Unexpected error during authentication: {e}", 500
 
+@app.route('/guest')
+def play_as_guest():
+    """Play as guest without Discord authentication"""
+    import uuid
+    
+    # Check if already a guest
+    if 'guest_id' not in session:
+        # Generate unique guest ID
+        guest_id = f"guest_{uuid.uuid4().hex[:12]}"
+        session['guest_id'] = guest_id
+        session['guest_username'] = f"Guest_{guest_id[-6:]}"
+        
+        # Initialize guest with starter pieces and zoltans
+        from create_starter_pieces import generate_starter_pieces
+        session['guest_library'] = generate_starter_pieces()
+        session['guest_zoltans'] = 10000  # Starting zoltans for guests
+        
+        print(f"✅ New guest session created: {guest_id}")
+    else:
+        print(f"✅ Existing guest session found: {session['guest_id']}")
+    
+    return redirect(url_for('index'))
+
 @app.route('/logout')
 def logout():
     """Logout and clear session"""
@@ -364,94 +399,178 @@ def get_shop_items():
         return jsonify({'error': str(e)}), 500
 
 @app.route('/api/player/shop/buy', methods=['POST'])
-@require_auth
 # @limiter.limit("20 per hour")  # DISABLED FOR DEVELOPMENT
 def buy_shop_item():
-    """Purchase an item from the shop"""
+    """Purchase an item from the shop - supports guests and Discord users"""
     try:
         data = request.get_json()
         if not data or 'piece_id' not in data:
             return jsonify({'error': 'Missing piece_id'}), 400
         
-        player_id = session['discord_user_id']
         piece_id = data['piece_id']
         
-        # Get or create player
-        player = player_manager.get_player(player_id)
-        if not player:
-            # Create new player if doesn't exist
-            player = player_manager.create_player(player_id, session.get('discord_username', 'Unknown'))
+        # Handle guest purchases
+        if 'guest_id' in session:
+            # Get guest zoltans
+            guest_zoltans = session.get('guest_zoltans', 0)
+            
+            # Find piece in shop
+            if not shop_system.daily_inventory:
+                player_count = len(player_manager.players) if player_manager.players else 1
+                voidstate = 0
+                shop_system.generate_daily_shop(voidstate, player_count)
+            
+            # Look for piece in daily items
+            purchased_piece = None
+            for item in shop_system.daily_inventory:
+                if item.piece_id == piece_id:
+                    if guest_zoltans >= item.price:
+                        purchased_piece = item
+                        session['guest_zoltans'] = guest_zoltans - item.price
+                        break
+                    else:
+                        return jsonify({'error': 'Insufficient Zoltans'}), 400
+            
+            if not purchased_piece:
+                return jsonify({'error': 'Item not found or no longer available'}), 404
+            
+            # Add to guest library
+            guest_library = session.get('guest_library', [])
+            guest_library.append({
+                'piece_id': purchased_piece.piece_id,
+                'name': purchased_piece.name,
+                'shape': purchased_piece.shape,
+                'stats': purchased_piece.stats,
+                'piece_type': purchased_piece.piece_type,
+                'price': purchased_piece.price
+            })
+            session['guest_library'] = guest_library
+            
+            return jsonify({
+                'success': True,
+                'piece_name': purchased_piece.name,
+                'player_zoltans': session['guest_zoltans']
+            })
         
-        # Attempt to purchase piece
-        purchased_piece = shop_system.purchase_piece(player_id, piece_id)
-        if not purchased_piece:
-            return jsonify({'error': 'Purchase failed - item not available or insufficient funds'}), 400
+        # Handle Discord user purchases
+        elif 'discord_user_id' in session:
+            player_id = session['discord_user_id']
+            
+            # Get or create player
+            player = player_manager.get_player(player_id)
+            if not player:
+                # Create new player if doesn't exist
+                player = player_manager.create_player(player_id, session.get('discord_username', 'Unknown'))
+            
+            # Attempt to purchase piece
+            purchased_piece = shop_system.purchase_piece(player_id, piece_id)
+            if not purchased_piece:
+                return jsonify({'error': 'Purchase failed - item not available or insufficient funds'}), 400
+            
+            # Add piece to player's library
+            player.add_piece_to_library({
+                'piece_id': purchased_piece.piece_id,
+                'name': purchased_piece.name,
+                'shape': purchased_piece.shape,
+                'stats': purchased_piece.stats,
+                'piece_type': purchased_piece.piece_type
+            })
+            
+            # Save player data
+            player_manager.save_player_data()
+            
+            return jsonify({
+                'success': True,
+                'piece_name': purchased_piece.name,
+                'player_zoltans': player.zoltans
+            })
         
-        # Add piece to player's library
-        player.add_piece_to_library({
-            'piece_id': purchased_piece.piece_id,
-            'name': purchased_piece.name,
-            'shape': purchased_piece.shape,
-            'stats': purchased_piece.stats,
-            'piece_type': purchased_piece.piece_type
-        })
-        
-        # Save player data
-        player_manager.save_player_data()
-        
-        return jsonify({
-            'success': True,
-            'piece_name': purchased_piece.name,
-            'player_zoltans': player.zoltans
-        })
+        else:
+            return jsonify({'error': 'Authentication required'}), 401
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
 @app.route('/api/player/sell-piece', methods=['POST'])
-@require_auth
 def sell_piece_to_shop():
-    """Sell a piece back to the shop for zoltans (piece gets deleted)"""
+    """Sell a piece back to the shop for zoltans (piece gets deleted) - supports guests"""
     try:
         data = request.get_json()
         if not data or 'piece_id' not in data:
             return jsonify({'error': 'Missing piece_id'}), 400
             
-        player_id = session['discord_user_id']
         piece_name = data['piece_id']  # piece_id is actually piece name in our system
         
-        # Get player
-        player = player_manager.get_player(player_id)
-        if not player:
-            return jsonify({'error': 'Player not found'}), 404
+        # Handle guest sales
+        if 'guest_id' in session:
+            guest_library = session.get('guest_library', [])
+            guest_zoltans = session.get('guest_zoltans', 0)
             
-        # Find the piece in player's inventory
-        piece_to_sell = None
-        for piece in player.pieces:
-            if piece.name == piece_name:
-                piece_to_sell = piece
-                break
-        
-        if not piece_to_sell:
-            return jsonify({'error': 'Piece not found in inventory'}), 404
+            # Find piece in guest library
+            piece_to_sell = None
+            for i, piece in enumerate(guest_library):
+                if piece.get('name') == piece_name:
+                    piece_to_sell = piece
+                    guest_library.pop(i)
+                    break
             
-        # Calculate sell price (50% of market value, minimum 10 zoltans)
-        sell_price = max(10, (piece_to_sell.price or 100) // 2)
+            if not piece_to_sell:
+                return jsonify({'error': 'Piece not found in library'}), 404
+            
+            # Calculate sell price (50% of price, minimum 10 zoltans)
+            sell_price = max(10, (piece_to_sell.get('price', 100) // 2))
+            guest_zoltans += sell_price
+            
+            # Update session
+            session['guest_library'] = guest_library
+            session['guest_zoltans'] = guest_zoltans
+            
+            return jsonify({
+                'success': True,
+                'message': f'Sold {piece_to_sell.get("name", "piece")} for {sell_price} zoltans',
+                'zoltans_gained': sell_price,
+                'player_zoltans': guest_zoltans
+            })
         
-        # Remove piece from player inventory
-        player.pieces.remove(piece_to_sell)
+        # Handle Discord user sales
+        elif 'discord_user_id' in session:
+            player_id = session['discord_user_id']
+            
+            # Get player
+            player = player_manager.get_player(player_id)
+            if not player:
+                return jsonify({'error': 'Player not found'}), 404
+                
+            # Find the piece in player's inventory
+            piece_to_sell = None
+            for piece in player.pieces:
+                if piece.name == piece_name:
+                    piece_to_sell = piece
+                    break
+            
+            if not piece_to_sell:
+                return jsonify({'error': 'Piece not found in inventory'}), 404
+                
+            # Calculate sell price (50% of market value, minimum 10 zoltans)
+            sell_price = max(10, (piece_to_sell.price or 100) // 2)
+            
+            # Remove piece from player inventory
+            player.pieces.remove(piece_to_sell)
+            
+            # Add zoltans to player
+            player.zoltans += sell_price
+            
+            # Save player data
+            player_manager.save_player_data()
+            
+            return jsonify({
+                'success': True,
+                'message': f'Sold {piece_to_sell.name} for {sell_price} zoltans',
+                'zoltans_gained': sell_price,
+                'player_zoltans': player.zoltans
+            })
         
-        # Add zoltans to player
-        player.zoltans += sell_price
-        
-        # Save player data
-        player_manager.save_player_data()
-        
-        return jsonify({
-            'success': True,
-            'message': f'Sold {piece_to_sell.name} for {sell_price} zoltans',
-            'zoltans_gained': sell_price,
-            'player_zoltans': player.zoltans
-        })
+        else:
+            return jsonify({'error': 'Authentication required'}), 401
         
     except Exception as e:
         return jsonify({'error': f'Sell failed: {str(e)}'}), 500
@@ -649,13 +768,23 @@ def auth_status():
             
             return jsonify({
                 'authenticated': True,
+                'is_guest': False,
                 'user_id': player_id,
                 'username': session.get('discord_username', 'Unknown'),
                 'setup_completed': setup_completed
             })
+        elif 'guest_id' in session:
+            return jsonify({
+                'authenticated': True,
+                'is_guest': True,
+                'user_id': session['guest_id'],
+                'username': session.get('guest_username', 'Guest'),
+                'setup_completed': True  # Guests don't need setup
+            })
         else:
             return jsonify({
                 'authenticated': False,
+                'is_guest': False,
                 'user_id': None,
                 'username': None,
                 'setup_completed': False
@@ -664,27 +793,48 @@ def auth_status():
         return jsonify({'error': str(e)}), 500
 
 @app.route('/api/player/data', methods=['GET'])
-@require_auth
 # @limiter.limit("100 per hour")  # DISABLED FOR DEVELOPMENT
 def get_player_data():
-    """Get player data and stats"""
+    """Get player data and stats - supports guests and Discord users"""
     try:
-        player_id = session['discord_user_id']
-        player = player_manager.get_player(player_id)
+        # Handle guest sessions
+        if 'guest_id' in session:
+            guest_library = session.get('guest_library', [])
+            return jsonify({
+                'player_id': session['guest_id'],
+                'username': session.get('guest_username', 'Guest'),
+                'zoltans': session.get('guest_zoltans', 10000),
+                'piece_library': guest_library,
+                'mecha_stats': None,  # Guests don't have persistent mecha stats
+                'days_played': 1,
+                'total_zoltans_earned': 0,
+                'combat_participation': 0,
+                'is_guest': True
+            })
         
-        if not player:
-            return jsonify({'error': 'Player not found'}), 404
+        # Handle Discord authenticated users
+        elif 'discord_user_id' in session:
+            player_id = session['discord_user_id']
+            player = player_manager.get_player(player_id)
+            
+            if not player:
+                return jsonify({'error': 'Player not found'}), 404
+            
+            return jsonify({
+                'player_id': player.player_id,
+                'username': player.username,
+                'zoltans': player.zoltans,
+                'piece_library': player.piece_library,
+                'mecha_stats': player.mecha.stats.__dict__ if player.mecha else None,
+                'days_played': player.days_played,
+                'total_zoltans_earned': player.total_zoltans_earned,
+                'combat_participation': player.combat_participation,
+                'is_guest': False
+            })
         
-        return jsonify({
-            'player_id': player.player_id,
-            'username': player.username,
-            'zoltans': player.zoltans,
-            'piece_library': player.piece_library,
-            'mecha_stats': player.mecha.stats.__dict__ if player.mecha else None,
-            'days_played': player.days_played,
-            'total_zoltans_earned': player.total_zoltans_earned,
-            'combat_participation': player.combat_participation
-        })
+        else:
+            return jsonify({'error': 'Authentication required'}), 401
+            
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
@@ -711,24 +861,38 @@ def complete_setup():
 
 @app.route('/api/player/pieces', methods=['GET'])
 def get_player_pieces():
-    """Get player's piece library - works without auth for demo"""
+    """Get player's piece library - supports guests and Discord users"""
     try:
-        # Try to get authenticated player first
-        if 'discord_user_id' in session:
+        # Handle guest sessions
+        if 'guest_id' in session:
+            guest_library = session.get('guest_library', [])
+            print(f"✅ Returning {len(guest_library)} pieces for guest {session.get('guest_username', 'Unknown')}")
+            return jsonify(guest_library)
+        
+        # Handle Discord authenticated users
+        elif 'discord_user_id' in session:
             player_id = session['discord_user_id']
             player = player_manager.get_player(player_id)
-            if player and player.piece_library:
-                return jsonify(player.piece_library)
+            
+            if not player:
+                print(f"⚠️ Player {player_id} not found in database")
+                return jsonify({'error': 'Player not found'}), 404
+            
+            # Return player's actual piece library
+            pieces = getattr(player, 'piece_library', []) or []
+            print(f"✅ Returning {len(pieces)} pieces for authenticated player {player.username}")
+            return jsonify(pieces)
         
-        # Fallback: return starter pieces for demo
-        from create_starter_pieces import generate_starter_pieces
-        starter_pieces = generate_starter_pieces()
-        return jsonify(starter_pieces)
+        # Unauthenticated users get starter pieces for demo
+        else:
+            print("⚠️ Library access without authentication - returning starter pieces for demo")
+            from create_starter_pieces import generate_starter_pieces
+            starter_pieces = generate_starter_pieces()
+            return jsonify(starter_pieces)
         
     except Exception as e:
-        print(f"⚠️ Error loading pieces: {e}")
-        # Final fallback: return empty array
-        return jsonify([])
+        print(f"❌ Error loading player pieces: {e}")
+        return jsonify({'error': f'Failed to load pieces: {str(e)}'}), 500
 
 @app.route('/api/player/layout', methods=['GET'])
 @require_auth
@@ -798,7 +962,7 @@ def status():
     return jsonify({
         'status': 'online',
         'timestamp': datetime.now().isoformat(),
-        'version': '0.4.0'
+        'version': '0.4.1'
     })
 
 if __name__ == '__main__':
