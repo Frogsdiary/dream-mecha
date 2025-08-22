@@ -867,7 +867,19 @@ def get_player_pieces():
         if 'guest_id' in session:
             guest_library = session.get('guest_library', [])
             print(f"✅ Returning {len(guest_library)} pieces for guest {session.get('guest_username', 'Unknown')}")
-            return jsonify(guest_library)
+            
+            # Add icon paths to guest pieces
+            formatted_pieces = []
+            for piece in guest_library:
+                formatted_piece = piece.copy() if isinstance(piece, dict) else dict(piece)
+                # Generate icon path for guest pieces
+                if 'piece_id' in formatted_piece:
+                    import re
+                    icon_name = re.sub(r'[^a-zA-Z0-9_-]', '_', formatted_piece['piece_id'])
+                    formatted_piece['icon_path'] = f"/static/guest_pieces/{icon_name}.webp"
+                formatted_pieces.append(formatted_piece)
+            
+            return jsonify(formatted_pieces)
         
         # Handle Discord authenticated users
         elif 'discord_user_id' in session:
@@ -881,14 +893,38 @@ def get_player_pieces():
             # Return player's actual piece library
             pieces = getattr(player, 'piece_library', []) or []
             print(f"✅ Returning {len(pieces)} pieces for authenticated player {player.username}")
-            return jsonify(pieces)
+            
+            # Add icon paths to pieces
+            formatted_pieces = []
+            for piece in pieces:
+                formatted_piece = piece.copy() if isinstance(piece, dict) else dict(piece)
+                # Generate icon path for player pieces
+                if 'piece_id' in formatted_piece:
+                    import re
+                    icon_name = re.sub(r'[^a-zA-Z0-9_-]', '_', formatted_piece['piece_id'])
+                    formatted_piece['icon_path'] = f"/static/player_pieces/{icon_name}.webp"
+                formatted_pieces.append(formatted_piece)
+            
+            return jsonify(formatted_pieces)
         
         # Unauthenticated users get starter pieces for demo
         else:
             print("⚠️ Library access without authentication - returning starter pieces for demo")
             from create_starter_pieces import generate_starter_pieces
             starter_pieces = generate_starter_pieces()
-            return jsonify(starter_pieces)
+            
+            # Add icon paths to starter pieces
+            formatted_pieces = []
+            for piece in starter_pieces:
+                formatted_piece = piece.copy() if isinstance(piece, dict) else dict(piece)
+                # Generate icon path for starter pieces
+                if 'piece_id' in formatted_piece:
+                    import re
+                    icon_name = re.sub(r'[^a-zA-Z0-9_-]', '_', formatted_piece['piece_id'])
+                    formatted_piece['icon_path'] = f"/static/starter_pieces/{icon_name}.webp"
+                formatted_pieces.append(formatted_piece)
+            
+            return jsonify(formatted_pieces)
         
     except Exception as e:
         print(f"❌ Error loading player pieces: {e}")
@@ -962,7 +998,7 @@ def status():
     return jsonify({
         'status': 'online',
         'timestamp': datetime.now().isoformat(),
-        'version': '0.4.1'
+        'version': '0.4.2'
     })
 
 if __name__ == '__main__':

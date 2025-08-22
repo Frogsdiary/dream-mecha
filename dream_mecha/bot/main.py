@@ -85,20 +85,20 @@ class DreamMechaBot(commands.Bot):
             player_count=len(self.player_manager.players)
         )
         
-        # Announce daily boss
-        await self.announce_daily_boss()
+        # DISABLED: Discord announcements temporarily disabled
+        # await self.announce_daily_boss()
         
         # Resolve combat if mechas are launched
         if self.game_manager.combat_system.launched_mechas:
             print("⚔️ Resolving combat...")
             combat_result = self.game_manager.resolve_combat()
-            await self.announce_combat_results(combat_result)
+            # await self.announce_combat_results(combat_result)
         
         # Check if fortress needs status update
-        await self.check_fortress_status()
+        # await self.check_fortress_status()
         
         # TEST: Trigger fortress attack for testing
-        await self.test_fortress_attack()
+        # await self.test_fortress_attack()
         
         # Reset player launch status
         for player in self.player_manager.players.values():
@@ -376,7 +376,8 @@ class DreamMechaBot(commands.Bot):
         
         # Send startup message
         if self.debug_mode:
-            await self.send_announcement("🤖 Bot Online", "Dream Mecha Bot is online and ready!", 0x00ff00)
+            print("🤖 Bot Online - Dream Mecha Bot is online and ready!")
+            # await self.send_announcement("🤖 Bot Online", "Dream Mecha Bot is online and ready!", 0x00ff00)
     
     async def on_command_error(self, ctx, error):
         """Handle command errors"""

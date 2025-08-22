@@ -518,7 +518,7 @@ class PieceBrowser {
     placePiece(piece) {
         // Integration with existing placement system
         if (window.mechaGrid) {
-            window.mechaGrid.placePieceFromLibrary(piece);
+            window.mechaGrid.setActivePiece(piece);
         }
     }
     

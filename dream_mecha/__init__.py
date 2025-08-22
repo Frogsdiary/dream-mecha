@@ -5,7 +5,7 @@ A cooperative mecha combat game where players manage upgrade grids
 and fight void enemies through Discord integration and web UI.
 """
 
-__version__ = "0.4.1"
+__version__ = "0.4.2"
 __author__ = "Dream Mecha Development Team"
 
 # Core imports
