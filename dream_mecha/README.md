@@ -1,7 +1,7 @@
 # Dream Mecha - Advanced Grid-Based Strategy Game
 
-**Current Version**: 0.3.5  
-**Last Updated**: August 3, 2025  
+**Current Version**: 0.4.1  
+**Last Updated**: August 29, 2025  
 **Status**: Core systems complete with production-ready security
 
 ## 🎮 **GAME OVERVIEW**
@@ -193,8 +193,34 @@ For questions or issues:
 - **Security**: Run `python test_security.py`
 - **Testing**: Run `python -m pytest tests/`
 
+## 📋 **VERSION HISTORY**
+
+### **v0.4.1** - August 29, 2025
+**🎯 Enhanced Shop-to-Library-to-Grid Integration**
+- ✅ **Grid-Piece Integration Bridge**: Seamless piece placement from library to grid
+- ✅ **Centralized Icon Management**: Unified icon system with fallback generation
+- ✅ **Enhanced Error Feedback**: Loading states and success/error messages
+- ✅ **Auto-refresh System**: Cross-browser synchronization and updates
+- ✅ **Visual Feedback**: Real-time placement previews and collision detection
+- ✅ **Event-driven Architecture**: Custom events for component communication
+- ✅ **Consistent Icon Paths**: Backend-to-frontend icon path standardization
+
+### **v0.4.0** - August 17, 2025
+**🔧 Combat System Analysis and Icon Generation**
+- ✅ **Icon Generation System**: Automated piece icon creation
+- ✅ **Unified Browser Interface**: Combined shop/library piece browser
+- ✅ **Enhanced OAuth**: Discord authentication improvements
+
+### **v0.3.5** - August 3, 2025
+**🔒 Production-Ready Security Implementation**
+- ✅ **Discord OAuth2 Authentication**: Secure user authentication
+- ✅ **Rate Limiting**: API abuse protection
+- ✅ **Input Validation**: JSON schema validation
+- ✅ **CORS Configuration**: Cross-site attack prevention
+- ✅ **Comprehensive Security Testing**: 25+ security tests
+
 ---
 
-**Overall Project Status**: **85% Complete** with production-ready security  
+**Overall Project Status**: **90% Complete** with enhanced integration system  
 **Security Status**: **✅ PRODUCTION READY**  
-**Next Priority**: Daily cycle automation and Web UI drag-and-drop 
+**Next Priority**: Daily cycle automation and advanced combat features 

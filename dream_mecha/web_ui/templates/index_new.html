@@ -9,7 +9,7 @@
     <!-- Header Section -->
     <div class="header">
         <h1>Dream Mecha</h1>
-        <p>Neural Interface v0.4.0</p>
+        <p>Neural Interface v0.4.1</p>
         <div class="pilot-info">
             <div class="pilot-names">
                 <span class="operator-name">Operator: <strong id="operatorName">Unknown</strong></span>
@@ -349,42 +349,109 @@
 {% endblock %}
 
 {% block extra_js %}
+<script src="{{ url_for('static', filename='js/icon-manager.js') }}"></script>
+<script src="{{ url_for('static', filename='js/grid-integration.js') }}"></script>
 <script src="{{ url_for('static', filename='js/piece-browser.js') }}"></script>
 <script>
-    // Initialize the grid system
+    // Initialize the enhanced integration system
     document.addEventListener('DOMContentLoaded', () => {
-        if (window.mechaGrid) {
-            console.log('MechaGrid already initialized');
-        } else {
-            console.log('Initializing MechaGrid...');
-            // The main.js file will handle the initialization
-        }
+        console.log('🚀 Initializing Dream Mecha Enhanced System...');
         
-        // Initialize piece browsers
-        window.libraryBrowser = new PieceBrowser('libraryBrowser', 'library');
-        
-        // Initialize shop browser  
-        window.shopBrowser = new PieceBrowser('shopBrowser', 'shop');
-        
-        // Integration with existing system
-        if (window.mechaGrid) {
-            // Add refresh method to existing grid system
-            const originalLoadSamplePieces = window.mechaGrid.loadSamplePieces;
-            window.mechaGrid.loadSamplePieces = function() {
-                originalLoadSamplePieces.call(this);
-                if (window.libraryBrowser) {
+        // Wait for grid system to be ready
+        const initializeEnhancedSystem = () => {
+            if (window.mechaGrid) {
+                console.log('🎯 MechaGrid found, initializing grid integration...');
+                
+                // Initialize grid integration bridge
+                window.gridIntegration = new GridIntegration(window.mechaGrid);
+                console.log('✅ Grid integration bridge initialized');
+                
+                // Initialize piece browsers with enhanced features
+                window.libraryBrowser = new PieceBrowser('libraryBrowser', 'library');
+                window.shopBrowser = new PieceBrowser('shopBrowser', 'shop');
+                
+                // Create browser registry for cross-communication
+                window.pieceBrowsers = {
+                    libraryBrowser: window.libraryBrowser,
+                    shopBrowser: window.shopBrowser
+                };
+                console.log('✅ Piece browsers initialized with registry');
+                
+                // Enhanced grid system integration
+                const originalLoadSamplePieces = window.mechaGrid.loadSamplePieces;
+                window.mechaGrid.loadSamplePieces = function() {
+                    originalLoadSamplePieces.call(this);
                     window.libraryBrowser.refresh();
-                }
-            };
-            
-            const originalLoadShopItems = window.mechaGrid.loadShopItems;
-            window.mechaGrid.loadShopItems = function() {
-                originalLoadShopItems.call(this);
-                if (window.shopBrowser) {
+                };
+                
+                const originalLoadShopItems = window.mechaGrid.loadShopItems;
+                window.mechaGrid.loadShopItems = function() {
+                    originalLoadShopItems.call(this);
                     window.shopBrowser.refresh();
-                }
-            };
-        }
+                };
+                
+                // Enhanced update stats method
+                const originalUpdateStats = window.mechaGrid.updateStats;
+                window.mechaGrid.updateStats = function() {
+                    originalUpdateStats.call(this);
+                    
+                    // Dispatch stats update event for other components
+                    const event = new CustomEvent('statsUpdated', {
+                        detail: {
+                            hp: this.maxHp,
+                            currentHp: this.currentHp,
+                            zoltans: this.zoltans,
+                            timestamp: Date.now()
+                        }
+                    });
+                    document.dispatchEvent(event);
+                };
+                
+                console.log('✅ Enhanced grid system integration complete');
+                
+                // Listen for global events
+                document.addEventListener('pieceePlaced', (e) => {
+                    console.log('🎯 Piece placed:', e.detail.piece.name);
+                    
+                    // Refresh browsers
+                    Object.values(window.pieceBrowsers).forEach(browser => browser.refresh());
+                    
+                    // Update grid display and stats
+                    if (window.mechaGrid) {
+                        window.mechaGrid.updateStats();
+                        window.mechaGrid.updateDisplay();
+                    }
+                });
+                
+                document.addEventListener('currencyUpdated', (e) => {
+                    console.log('💰 Currency updated:', e.detail.newBalance);
+                    
+                    // Update currency display in stats
+                    const zoltansElement = document.getElementById('zoltansStat');
+                    if (zoltansElement && e.detail.newBalance !== undefined) {
+                        zoltansElement.textContent = e.detail.newBalance.toLocaleString();
+                    }
+                });
+                
+                document.addEventListener('browserAction', (e) => {
+                    console.log(`📊 Browser Action [${e.detail.browser}]:`, e.detail.action);
+                    
+                    // Handle cross-browser refresh logic if needed
+                    if (e.detail.action === 'refresh') {
+                        // Additional refresh logic can go here
+                    }
+                });
+                
+                console.log('🎉 Dream Mecha Enhanced System fully initialized!');
+                
+            } else {
+                console.log('⏳ Waiting for MechaGrid...');
+                setTimeout(initializeEnhancedSystem, 100);
+            }
+        };
+        
+        // Start initialization
+        initializeEnhancedSystem();
     });
 </script>
 {% endblock %} 

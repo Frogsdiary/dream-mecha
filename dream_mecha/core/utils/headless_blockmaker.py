@@ -64,7 +64,8 @@ class HeadlessIconGenerator:
             icon_path = os.path.join(output_dir, f"{piece_id}.webp")
             icon.save(icon_path, 'WEBP', quality=85, method=6)
             
-            return icon_path
+            # Return web-compatible path
+            return self.to_web_path(icon_path)
             
         except Exception as e:
             print(f"Icon generation failed for {piece_id}: {e}")
@@ -126,6 +127,38 @@ class HeadlessIconGenerator:
                 )
         
         return icon
+    
+    def to_web_path(self, file_path: str) -> str:
+        """Convert file system path to web-compatible path"""
+        try:
+            # Normalize path separators
+            normalized = file_path.replace('\\', '/')
+            
+            # Find web_ui directory in path
+            if 'web_ui' in normalized:
+                web_ui_index = normalized.find('web_ui')
+                # Return path relative to web_ui as /static/...
+                relative_path = normalized[web_ui_index + len('web_ui'):]
+                if relative_path.startswith('/'):
+                    relative_path = relative_path[1:]
+                return '/static/' + relative_path
+            
+            # Look for static directory
+            if 'static' in normalized:
+                static_index = normalized.find('static')
+                return '/' + normalized[static_index:]
+            
+            # Fallback: assume it's a daily icon path
+            if 'daily' in normalized:
+                daily_index = normalized.find('daily')
+                return '/static/' + normalized[daily_index:]
+            
+            # Final fallback
+            return normalized
+            
+        except Exception as e:
+            print(f"Path conversion failed: {e}")
+            return file_path
 
 
 class HeadlessBlockmaker:

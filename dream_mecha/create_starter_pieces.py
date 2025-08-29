@@ -96,7 +96,7 @@ def create_starter_pieces():
     with open(output_file, 'w') as f:
         json.dump({
             'generated_at': datetime.now().isoformat(),
-            'version': '0.4.2',
+            'version': '0.4.1',
             'description': 'Dream Mecha starter pieces for new players',
             'pieces': starter_pieces
         }, f, indent=2)

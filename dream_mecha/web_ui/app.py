@@ -449,7 +449,8 @@ def buy_shop_item():
             return jsonify({
                 'success': True,
                 'piece_name': purchased_piece.name,
-                'player_zoltans': session['guest_zoltans']
+                'player_zoltans': session['guest_zoltans'],
+                'new_zoltan_balance': session['guest_zoltans']
             })
         
         # Handle Discord user purchases
@@ -482,7 +483,8 @@ def buy_shop_item():
             return jsonify({
                 'success': True,
                 'piece_name': purchased_piece.name,
-                'player_zoltans': player.zoltans
+                'player_zoltans': player.zoltans,
+                'new_zoltan_balance': player.zoltans
             })
         
         else:
@@ -528,7 +530,8 @@ def sell_piece_to_shop():
                 'success': True,
                 'message': f'Sold {piece_to_sell.get("name", "piece")} for {sell_price} zoltans',
                 'zoltans_gained': sell_price,
-                'player_zoltans': guest_zoltans
+                'player_zoltans': guest_zoltans,
+                'new_zoltan_balance': guest_zoltans
             })
         
         # Handle Discord user sales
@@ -566,7 +569,8 @@ def sell_piece_to_shop():
                 'success': True,
                 'message': f'Sold {piece_to_sell.name} for {sell_price} zoltans',
                 'zoltans_gained': sell_price,
-                'player_zoltans': player.zoltans
+                'player_zoltans': player.zoltans,
+                'new_zoltan_balance': player.zoltans
             })
         
         else:
@@ -998,7 +1002,7 @@ def status():
     return jsonify({
         'status': 'online',
         'timestamp': datetime.now().isoformat(),
-        'version': '0.4.2'
+        'version': '0.4.1'
     })
 
 if __name__ == '__main__':

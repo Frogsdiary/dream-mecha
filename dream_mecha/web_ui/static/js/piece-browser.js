@@ -252,20 +252,22 @@ class PieceBrowser {
     }
     
     getIconUrl(piece) {
-        // Try to get icon URL from piece data
+        // Use centralized icon manager
+        if (window.iconManager) {
+            return window.iconManager.getIconUrl(piece);
+        }
+        
+        // Fallback if icon manager not available
         if (piece.icon_path) {
-            // If it's already a web path, use as-is
             if (piece.icon_path.startsWith('/static/') || piece.icon_path.startsWith('http')) {
                 return piece.icon_path;
             }
-            // Convert file path to web path - look for 'daily' in the path
             const dailyIndex = piece.icon_path.indexOf('daily');
             if (dailyIndex !== -1) {
                 return '/static/' + piece.icon_path.substring(dailyIndex);
             }
         }
         
-        // Fallback to generated icon path based on piece ID and date
         const today = new Date().toISOString().split('T')[0];
         const iconName = (piece.piece_id || piece.name || 'unknown').replace(/[^a-zA-Z0-9_-]/g, '_');
         return `/static/daily/${today}/icons/${iconName}.webp`;
@@ -354,7 +356,8 @@ class PieceBrowser {
             <div class="piece-card ${statClass}" data-piece-id="${piece.id}">
                 <div class="piece-icon">
                     <img src="${piece.iconUrl}" alt="${piece.name}" 
-                         onerror="this.style.display='none'; this.nextElementSibling.style.display='block';">
+                         data-piece='${JSON.stringify(piece).replace(/'/g, "&#39;").replace(/"/g, "&quot;")}' 
+                         onerror="if(window.pieceBrowsers && window.pieceBrowsers['${this.containerId}']) { window.pieceBrowsers['${this.containerId}'].handleIconError(this, JSON.parse(this.dataset.piece)); } else { this.style.display='none'; this.nextElementSibling.style.display='block'; }">
                     <div class="piece-icon-fallback" style="display: none;">
                         <span class="block-count">${piece.blockCount}</span>
                     </div>
@@ -516,16 +519,26 @@ class PieceBrowser {
     }
     
     placePiece(piece) {
-        // Integration with existing placement system
-        if (window.mechaGrid) {
+        // Use new grid integration system
+        if (window.gridIntegration) {
+            const success = window.gridIntegration.startPiecePlacement(piece);
+            if (success) {
+                this.showFeedback(`Ready to place ${piece.name}. Click on the grid to place it.`, 'info');
+            }
+        } else if (window.mechaGrid) {
+            // Fallback to old system
             window.mechaGrid.setActivePiece(piece);
+        } else {
+            this.showError('Grid system not available');
         }
     }
     
     async sellPiece(piece) {
-        // TODO: Implement sell functionality
-        const confirmed = confirm(`Sell ${piece.name} for ${Math.floor(piece.zoltan * 0.5)} Zoltans?`);
+        const sellPrice = Math.floor(piece.zoltan * 0.5);
+        const confirmed = confirm(`Sell ${piece.name} for ${sellPrice} Zoltans?`);
         if (confirmed) {
+            this.showLoading(true, 'Processing sale...');
+            
             try {
                 const response = await fetch('/api/player/sell-piece', {
                     method: 'POST',
@@ -533,17 +546,29 @@ class PieceBrowser {
                     body: JSON.stringify({ piece_id: piece.id })
                 });
                 
+                const result = await response.json();
                 if (response.ok) {
-                    await this.loadPieces(); // Refresh
-                    // Update zoltans display if available
+                    this.showFeedback(`Successfully sold ${piece.name} for ${sellPrice} Zoltans!`, 'success');
+                    
+                    // Refresh browsers
+                    await this.loadPieces();
+                    this.notifyOtherBrowsers('refresh');
+                    
+                    // Update stats
                     if (window.mechaGrid) {
                         window.mechaGrid.updateStats();
                     }
+                    
+                    // Update currency display
+                    this.updateCurrencyDisplay(result.new_zoltan_balance);
+                    
                 } else {
-                    throw new Error('Sell failed');
+                    throw new Error(result.error || 'Sell failed');
                 }
             } catch (error) {
-                alert(`Failed to sell piece: ${error.message}`);
+                this.showError(`Failed to sell piece: ${error.message}`);
+            } finally {
+                this.showLoading(false);
             }
         }
     }
@@ -552,6 +577,8 @@ class PieceBrowser {
         // Integration with existing purchase system
         const confirmed = confirm(`Buy ${piece.name} for ${piece.zoltan} Zoltans?`);
         if (confirmed) {
+            this.showLoading(true, 'Processing purchase...');
+            
             try {
                 const response = await fetch('/api/player/shop/buy', {
                     method: 'POST',
@@ -561,17 +588,28 @@ class PieceBrowser {
                 
                 const result = await response.json();
                 if (response.ok) {
-                    await this.loadPieces(); // Refresh
-                    // Update library and stats if available
+                    this.showFeedback(`Successfully purchased ${piece.name}!`, 'success');
+                    
+                    // Refresh both browsers
+                    await this.loadPieces();
+                    this.notifyOtherBrowsers('refresh');
+                    
+                    // Update grid and stats
                     if (window.mechaGrid) {
                         window.mechaGrid.loadSamplePieces();
                         window.mechaGrid.updateStats();
                     }
+                    
+                    // Update currency display
+                    this.updateCurrencyDisplay(result.new_zoltan_balance);
+                    
                 } else {
                     throw new Error(result.error || 'Purchase failed');
                 }
             } catch (error) {
-                alert(`Purchase failed: ${error.message}`);
+                this.showError(`Purchase failed: ${error.message}`);
+            } finally {
+                this.showLoading(false);
             }
         }
     }
@@ -598,6 +636,143 @@ class PieceBrowser {
                 <button onclick="location.reload()">Retry</button>
             </div>
         `;
+        
+        // Also show as feedback message
+        this.showFeedback(message, 'error');
+    }
+    
+    /**
+     * Show feedback message to user
+     * @param {string} message - Message to show
+     * @param {string} type - Message type (success, error, info)
+     */
+    showFeedback(message, type = 'info') {
+        // Clear any existing feedback for this browser
+        this.clearFeedback();
+        
+        const feedbackElement = document.createElement('div');
+        feedbackElement.id = `feedback_${this.containerId}`;
+        feedbackElement.className = `browser-feedback ${type}`;
+        feedbackElement.textContent = message;
+        
+        // Add to container
+        const container = document.getElementById(this.containerId);
+        if (container) {
+            container.appendChild(feedbackElement);
+            
+            // Auto-hide after delay
+            const delay = type === 'error' ? 5000 : 3000;
+            setTimeout(() => {
+                this.clearFeedback();
+            }, delay);
+        }
+        
+        console.log(`Browser Feedback [${type.toUpperCase()}]:`, message);
+    }
+    
+    /**
+     * Clear feedback message
+     */
+    clearFeedback() {
+        const existing = document.getElementById(`feedback_${this.containerId}`);
+        if (existing) {
+            existing.remove();
+        }
+    }
+    
+    /**
+     * Enhanced loading state with message
+     * @param {boolean} show - Show or hide loading
+     * @param {string} message - Optional loading message
+     */
+    showLoading(show, message = 'Loading pieces...') {
+        const loading = document.getElementById(`loadingState_${this.containerId}`);
+        const grid = document.getElementById(`piecesGrid_${this.containerId}`);
+        const pagination = document.getElementById(`pagination_${this.containerId}`);
+        
+        if (show) {
+            loading.style.display = 'block';
+            loading.querySelector('p').textContent = message;
+            grid.style.display = 'none';
+            pagination.style.display = 'none';
+        } else {
+            loading.style.display = 'none';
+            loading.querySelector('p').textContent = 'Loading pieces...'; // Reset default
+        }
+    }
+    
+    /**
+     * Handle icon loading errors with fallback generation
+     * @param {HTMLImageElement} imgElement - Failed image element
+     * @param {Object} piece - Piece data for fallback generation
+     */
+    handleIconError(imgElement, piece) {
+        if (imgElement.dataset.fallbackAttempted) return;
+        
+        imgElement.dataset.fallbackAttempted = 'true';
+        
+        // Try to use icon manager for fallback
+        if (window.iconManager) {
+            try {
+                const fallbackUrl = window.iconManager.generateFallbackIcon(piece);
+                imgElement.src = fallbackUrl;
+                return;
+            } catch (error) {
+                console.log('Fallback icon generation failed:', error);
+            }
+        }
+        
+        // Final fallback: hide image and show text
+        imgElement.style.display = 'none';
+        const fallback = imgElement.nextElementSibling;
+        if (fallback) {
+            fallback.style.display = 'block';
+        }
+    }
+    
+    /**
+     * Notify other browsers to refresh (for cross-browser updates)
+     * @param {string} action - Action that occurred
+     */
+    notifyOtherBrowsers(action) {
+        if (window.pieceBrowsers) {
+            Object.values(window.pieceBrowsers).forEach(browser => {
+                if (browser !== this && browser.refresh) {
+                    browser.refresh();
+                }
+            });
+        }
+        
+        // Dispatch custom event
+        const event = new CustomEvent('browserAction', {
+            detail: {
+                action,
+                browser: this.mode,
+                timestamp: Date.now()
+            }
+        });
+        document.dispatchEvent(event);
+    }
+    
+    /**
+     * Update currency display across the application
+     * @param {number} newBalance - New zoltan balance
+     */
+    updateCurrencyDisplay(newBalance) {
+        // Update main stats display
+        const zoltansElement = document.getElementById('zoltansStat');
+        if (zoltansElement && newBalance !== undefined) {
+            zoltansElement.textContent = newBalance.toLocaleString();
+        }
+        
+        // Dispatch currency update event
+        const event = new CustomEvent('currencyUpdated', {
+            detail: {
+                newBalance,
+                timestamp: Date.now()
+            }
+        });
+        document.dispatchEvent(event);
     }
     
     // Public API
